@@ -1,40 +1,43 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <title>Menu IPEV</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>Controle de Logística IPEV</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
       background-image: url('Logo Ipev Registrado.jpg');
-      background-repeat: no-repeat;
-      background-position: left center;
       background-size: contain;
-      background-color: #ffffff;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-attachment: fixed;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-content: right p-8 bg-white bg-opacity-70">
-  <div class="bg-white bg-opacity-50 rounded-lg p-8 shadow-xl">
-    <h1 class="text-3xl font-bold text-blue-800 mb-10 text-center">Sistema de Logística IPEV</h1>
+<body class="flex items-center justify-center h-screen bg-white bg-opacity-90">
+  <div class="text-center space-y-4">
+    <h1 class="text-3xl font-bold mb-8 text-blue-800 drop-shadow">Sistema de Logística IPEV</h1>
 
-    <div class="grid gap-6 justify-items-center">
-      <a href="controle_diario.html">
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded shadow text-lg w-64">Controle Diário</button>
-      </a>
+    <!-- BOTÃO CONTROLE DIÁRIO -->
+    <a href="controle_diario.html">
+      <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded shadow">
+        Controle Diário
+      </button>
+    </a>
 
-     <a href="consumo_motoristas_restaurado_final.html">
-  <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-    Consumo Total
-  </button>
-</a>
+    <!-- BOTÃO CONSUMO TOTAL -->
+    <a href="consumo_motoristas_restaurado_final.html">
+      <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded shadow">
+        Consumo Total
+      </button>
+    </a>
 
-
-      <a href="relatorio_mensal.html">
-        <button class="bg-gray-700 hover:bg-gray-800 text-white px-8 py-3 rounded shadow text-lg w-64">Relatório Mensal</button>
-      </a>
-    </div>
+    <!-- BOTÃO RELATÓRIO MENSAL -->
+    <a href="relatorio_mensal.html">
+      <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded shadow">
+        Relatório Mensal
+      </button>
+    </a>
   </div>
 </body>
 </html>
