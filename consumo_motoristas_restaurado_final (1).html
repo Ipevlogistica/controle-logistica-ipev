@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Consumo Total dos Motoristas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-sm">
+  <div class="p-4">
+    <h1 class="text-xl font-bold mb-4">Consumo Total por Motorista</h1>
+    <table class="min-w-full bg-white border border-gray-300">
+      <thead class="bg-blue-100">
+        <tr>
+          <th class="border px-2 py-1">Motorista</th>
+          <th class="border px-2 py-1">Valor Recarregado (R$)</th>
+          <th class="border px-2 py-1">Recarga Adicional (R$)</th>
+          <th class="border px-2 py-1">Total Recarregado (R$)</th>
+          <th class="border px-2 py-1">Dia 1</th>
+          <th class="border px-2 py-1">Dia 2</th>
+          <th class="border px-2 py-1">Dia 3</th>
+          <th class="border px-2 py-1">Dia 4</th>
+          <th class="border px-2 py-1">Saldo Final (R$)</th>
+          <th class="border px-2 py-1">Excluir</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="border px-2 py-1">João</td>
+          <td><input type="number" class="w-24 text-center border rounded recarga-inicial" value="200"></td>
+          <td><input type="number" class="w-24 text-center border rounded recarga-adicional" value="50"></td>
+          <td class="border px-2 py-1 text-blue-700 font-bold total-recarregado">0.00</td>
+          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="30"></td>
+          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="20"></td>
+          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="40"></td>
+          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="15"></td>
+          <td class="border px-2 py-1 font-bold text-green-700 saldo-final">0.00</td>
+          <td class="border px-2 py-1 text-center"><button onclick="this.closest('tr').remove()" class="text-red-600 font-bold text-lg hover:text-red-800">🗑️</button></td>
+        </tr>
+        <tr>
+          <td class="border px-2 py-1">Maria</td>
+          <td><input type="number" class="w-24 text-center border rounded recarga-inicial" value="180"></td>
+          <td><input type="number" class="w-24 text-center border rounded recarga-adicional" value="20"></td>
+          <td class="border px-2 py-1 text-blue-700 font-bold total-recarregado">0.00</td>
+          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="25"></td>
+          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="10"></td>
+          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="30"></td>
+          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="15"></td>
+          <td class="border px-2 py-1 font-bold text-green-700 saldo-final">0.00</td>
+          <td class="border px-2 py-1 text-center"><button onclick="this.closest('tr').remove()" class="text-red-600 font-bold text-lg hover:text-red-800">🗑️</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+<script>
+  function atualizarTotais(row) {
+    const recargaInicial = parseFloat(row.querySelector('.recarga-inicial')?.value) || 0;
+    const recargaAdicional = parseFloat(row.querySelector('.recarga-adicional')?.value) || 0;
+    const totalRecarregado = recargaInicial + recargaAdicional;
+
+    const totalRecarregadoCell = row.querySelector('.total-recarregado');
+    totalRecarregadoCell.textContent = totalRecarregado.toFixed(2);
+
+    let totalGasto = 0;
+    row.querySelectorAll('.gasto-dia').forEach(input => {
+      totalGasto += parseFloat(input.value) || 0;
+    });
+
+    const saldo = totalRecarregado - totalGasto;
+    const saldoFinal = row.querySelector('.saldo-final');
+    saldoFinal.textContent = saldo.toFixed(2);
+
+    if (saldo <= 100) {
+      row.classList.add('bg-red-100');
+    } else {
+      row.classList.remove('bg-red-100');
+    }
+  }
+
+  document.querySelectorAll('tbody tr').forEach(row => {
+    row.querySelectorAll('input').forEach(input => {
+      input.addEventListener('input', () => atualizarTotais(row));
+    });
+    atualizarTotais(row); // inicializa
+  });
+</script>
+</body>
+</html>
