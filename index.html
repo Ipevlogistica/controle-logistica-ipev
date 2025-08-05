@@ -7,37 +7,39 @@
   <style>
     body {
       background-image: url('Logo Ipev Registrado.jpg');
-      background-size: contain;
+      background-size: 80%;
       background-repeat: no-repeat;
-      background-position: center;
+      background-position: center center;
       background-attachment: fixed;
     }
   </style>
 </head>
-<body class="flex items-center justify-center h-screen bg-white bg-opacity-90">
-  <div class="text-center space-y-4">
-    <h1 class="text-3xl font-bold mb-8 text-blue-800 drop-shadow">Sistema de Logística IPEV</h1>
+<body class="bg-white bg-opacity-80 min-h-screen flex flex-col justify-center items-center">
+  <div class="text-center mt-8 space-y-6">
+    <h1 class="text-4xl font-bold text-blue-900 mb-6">Sistema de Logística IPEV</h1>
 
-    <!-- BOTÃO CONTROLE DIÁRIO -->
-    <a href="controle_diario.html">
-      <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded shadow">
-        Controle Diário
-      </button>
-    </a>
+    <div class="space-y-5">
+      <!-- BOTÃO CONTROLE DIÁRIO -->
+      <a href="controle_diario.html">
+        <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 px-12 rounded shadow text-lg">
+          Controle Diário
+        </button>
+      </a>
 
-    <!-- BOTÃO CONSUMO TOTAL -->
-    <a href="consumo_motoristas_restaurado_final.html">
-      <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded shadow">
-        Consumo Total
-      </button>
-    </a>
+      <!-- BOTÃO CONSUMO TOTAL (COR VERDE) -->
+      <a href="consumo_motoristas_restaurado_final.html">
+        <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-12 rounded shadow text-lg">
+          Consumo Total
+        </button>
+      </a>
 
-    <!-- BOTÃO RELATÓRIO MENSAL -->
-    <a href="relatorio_mensal.html">
-      <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded shadow">
-        Relatório Mensal
-      </button>
-    </a>
+      <!-- BOTÃO RELATÓRIO MENSAL -->
+      <a href="relatorio_mensal.html">
+        <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 px-12 rounded shadow text-lg">
+          Relatório Mensal
+        </button>
+      </a>
+    </div>
   </div>
 </body>
 </html>
