@@ -1,44 +1,111 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Controle de Logística IPEV</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <title>Controle IPEV - Página Inicial</title>
   <style>
     body {
-      background-image: url('Logo Ipev Registrado.jpg');
-      background-size: 80%;
-      background-repeat: no-repeat;
-      background-position: center center;
-      background-attachment: fixed;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #e5e5e5;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      align-items: center;
+      justify-content: space-between;
+      padding: 40px;
+    }
+
+    .logo-left {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .logo-left img {
+      max-width: 100%;
+      max-height: 80vh;
+      opacity: 0.5;
+    }
+
+    .buttons-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: #1e3a8a;
+      font-size: 32px;
+      margin-bottom: 40px;
+    }
+
+    .btn {
+      display: inline-block;
+      background-color: #1e40af;
+      color: white;
+      padding: 15px 30px;
+      margin: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      text-decoration: none;
+      width: 280px;
+      text-align: center;
+    }
+
+    .btn:hover {
+      background-color: #374fc7;
+    }
+
+    .btn-relatorio {
+      background-color: #15803d;
+    }
+
+    .btn-relatorio:hover {
+      background-color: #1f9f4c;
+    }
+
+    @media (max-width: 800px) {
+      .container {
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .logo-left, .buttons-right {
+        flex: unset;
+        width: 100%;
+      }
+
+      .logo-left img {
+        max-height: 30vh;
+        margin-bottom: 20px;
+      }
+
+      .btn {
+        width: 90%;
+      }
     }
   </style>
 </head>
-<body class="bg-white bg-opacity-80 min-h-screen flex flex-col justify-center items-center">
-  <div class="text-center mt-8 space-y-6">
-    <h1 class="text-4xl font-bold text-blue-900 mb-6">Sistema de Logística IPEV</h1>
+<body>
+  <div class="container">
+    <div class="logo-left">
+      <img src="Logo Ipev Registrado.jpg" alt="Logo IPEV">
+    </div>
+    <div class="buttons-right">
+      <h1>Controle de Logística IPEV</h1>
 
-    <div class="space-y-5">
-      <!-- BOTÃO CONTROLE DIÁRIO -->
-      <a href="controle_diario.html">
-        <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 px-12 rounded shadow text-lg">
-          Controle Diário
-        </button>
-      </a>
-
-      <!-- BOTÃO CONSUMO TOTAL (COR VERDE) -->
-      <a href="consumo_motoristas_restaurado_final.html">
-        <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-12 rounded shadow text-lg">
-          Consumo Total
-        </button>
-      </a>
-
-      <!-- BOTÃO RELATÓRIO MENSAL -->
-      <a href="relatorio_mensal.html">
-        <button class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 px-12 rounded shadow text-lg">
-          Relatório Mensal
-        </button>
-      </a>
+      <a href="index_final_motorista.html" class="btn">📝 Controle Diário</a>
+      <a href="consumo_total_motoristas_alerta.html" class="btn">⛽ Consumo Total</a>
+      <a href="relatorio_mensal_dinamico.html" class="btn btn-relatorio">📊 Relatório Mensal</a>
     </div>
   </div>
 </body>
