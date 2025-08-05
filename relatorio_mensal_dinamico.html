@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório Mensal - IPEV</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    h1 {
+      color: #1e40af;
+      text-align: center;
+    }
+    .filters {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    select {
+      padding: 6px;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #1e3a8a;
+      color: white;
+    }
+    th:first-child {
+      width: 100px;
+    }
+    .btn-top-right {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+    .btn-top-right button {
+      background-color: #1e40af;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .readonly {
+      background-color: #f9f9f9;
+      font-weight: bold;
+    }
+    @media print {
+      @page {
+        size: landscape;
+        margin: 1cm;
+      }
+      .btn-top-right {
+        display: none;
+      }
+    }
+  </style>
+  <script>
+    function gerarTabela() {
+      const mes = document.getElementById("mes").value;
+      const ano = document.getElementById("ano").value;
+      const diasNoMes = new Date(ano, mes, 0).getDate();
+      let html = "";
+      for (let dia = 1; dia <= diasNoMes; dia++) {
+        const data = ("0" + dia).slice(-2) + "/" + ("0" + mes).slice(-2) + "/" + ano;
+        html += "<tr><td>" + data + "</td>";
+        for (let i = 0; i < 8; i++) {
+          html += "<td class='readonly'>--</td>";
+        }
+        html += "</tr>";
+      }
+      document.getElementById("tabela-dias").innerHTML = html;
+    }
+
+    window.onload = gerarTabela;
+  </script>
+</head>
+<body>
+
+  <div class="btn-top-right">
+    <a href="index.html">
+      <button>⬅ Início</button>
+    </a>
+    <button onclick="window.print()">🖨 Imprimir Relatório</button>
+  </div>
+
+  <h1>Relatório Mensal - IPEV</h1>
+
+  <div class="filters">
+    <label for="mes">Mês:</label>
+    <select id="mes" name="mes" onchange="gerarTabela()">
+      <option value='1'>Janeiro</option>
+<option value='2'>Fevereiro</option>
+<option value='3'>Março</option>
+<option value='4'>Abril</option>
+<option value='5'>Maio</option>
+<option value='6'>Junho</option>
+<option value='7'>Julho</option>
+<option value='8'>Agosto</option>
+<option value='9'>Setembro</option>
+<option value='10'>Outubro</option>
+<option value='11'>Novembro</option>
+<option value='12'>Dezembro</option>
+    </select>
+
+    <label for="ano">Ano:</label>
+    <select id="ano" name="ano" onchange="gerarTabela()">
+      <option value='2025'>2025</option>
+<option value='2026'>2026</option>
+<option value='2027'>2027</option>
+<option value='2028'>2028</option>
+<option value='2029'>2029</option>
+<option value='2030'>2030</option>
+    </select>
+  </div>
+
+  <table>
+    <tr>
+      <th>Data</th>
+      <th>João</th>
+<th>Maria</th>
+<th>Carlos</th>
+<th>Bruno</th>
+<th>Fernanda</th>
+<th>Lúcia</th>
+<th>Rafael</th>
+<th>Paula</th>
+    </tr>
+    <tbody id="tabela-dias">
+      <!-- Preenchido por JS -->
+    </tbody>
+    <tr>
+      <th>Total em KM</th>
+      <td class='readonly'>--</td><td class='readonly'>--</td><td class='readonly'>--</td>
+      <td class='readonly'>--</td><td class='readonly'>--</td><td class='readonly'>--</td>
+      <td class='readonly'>--</td><td class='readonly'>--</td>
+    </tr>
+    <tr>
+      <th>Valor Usado (R$)</th>
+      <td class='readonly'>--</td><td class='readonly'>--</td><td class='readonly'>--</td>
+      <td class='readonly'>--</td><td class='readonly'>--</td><td class='readonly'>--</td>
+      <td class='readonly'>--</td><td class='readonly'>--</td>
+    </tr>
+    <tr>
+      <th>Resquício (R$)</th>
+      <td class='readonly'>--</td><td class='readonly'>--</td><td class='readonly'>--</td>
+      <td class='readonly'>--</td><td class='readonly'>--</td><td class='readonly'>--</td>
+      <td class='readonly'>--</td><td class='readonly'>--</td>
+    </tr>
+  </table>
+
+</body>
+</html>
