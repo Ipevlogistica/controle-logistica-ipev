@@ -1,183 +1,37 @@
-
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Controle de Logística IPEV</title>
-<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
-<style>
+  <meta charset="UTF-8" />
+  <title>Menu IPEV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
     body {
-      font-family: 'Inter', sans-serif;
+      background-image: url('Logo Ipev Registrado.jpg');
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: contain;
+      background-color: #ffffff;
     }
   </style>
 </head>
-<body class="bg-blue-50 text-gray-900">
-<header class="bg-white shadow p-4 flex items-center justify-between">
-<div class="flex items-center gap-4">
-<img alt="Logo IPEV" class="h-12" src="Logo Ipev Registrado.jpg"/> <!-- Você pode ajustar o link real -->
-<h1 class="text-2xl font-bold text-blue-800">Controle de Logística IPEV</h1>
-</div>
-</header>
-<main class="p-6">
-<form class="bg-white p-6 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto" id="logForm">
-<div>
-<label class="text-sm font-semibold text-blue-700">Data</label>
-<input class="border p-2 rounded w-full mt-1" id="data" required="" type="date"/>
-</div>
-<div>
-<label class="text-sm font-semibold text-blue-700">Motorista</label>
-<div class="flex gap-2 items-center mt-1">
-<select class="border p-2 rounded w-full" id="motorista" onchange="atualizarPlaca()"></select>
-<button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow" onclick="abrirGerenciar()" type="button">Gerenciar</button>
-</div>
-</div>
-<div>
-<label class="text-sm font-semibold text-blue-700">Placa do veículo</label>
-<input class="border p-2 rounded w-full mt-1" id="placa" readonly="" type="text"/>
-</div>
-<div>
-<label class="text-sm font-semibold text-blue-700">Rota</label>
-<input class="border p-2 rounded w-full mt-1" id="rota" list="rotas" required=""/>
-<datalist id="rotas">
-<option value="A"><option value="B"><option value="C"><option value="D">
-<option value="E"><option value="F"><option value="G"><option value="H">
-<option value="A/D"><option value="B/F"><option value="C/E">
-</option></option></option></option></option></option></option></option></option></option></option></datalist>
-</div>
-<div>
-<label class="text-sm font-semibold text-blue-700">1ª rota (km)</label>
-<input class="border p-2 rounded w-full mt-1" id="kmRota1" step="1" type="number"/>
-</div>
-<div>
-<label class="text-sm font-semibold text-blue-700">2ª rota (km)</label>
-<input class="border p-2 rounded w-full mt-1" id="kmRota2" step="1" type="number"/>
-</div>
-<div>
-<label class="text-sm font-semibold text-blue-700">Adicional (km)</label>
-<input class="border p-2 rounded w-full mt-1" id="kmAdicional" step="1" type="number" value="10"/>
-</div>
-<div>
-<label class="text-sm font-semibold text-blue-700">Combustível consumido no dia (litros)</label>
-<input class="border p-2 rounded w-full mt-1 bg-gray-100" id="combustivelConsumido" readonly="" type="number"/>
-</div>
-<div>
-<label class="text-sm font-semibold text-blue-700">Valor da gasolina (R$)</label>
-<input class="border p-2 rounded w-full mt-1" id="valorGasolina" step="0.01" type="number" value="5.99"/>
-</div>
-<div>
-<label class="text-sm font-semibold text-blue-700">Valor total gasto (R$)</label>
-<input class="border p-2 rounded w-full mt-1 bg-gray-100" id="valorTotalGasto" readonly="" type="number"/>
-</div>
-</form>
-</main>
-<div class="hidden fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-white p-4 border rounded shadow-lg z-50 w-full max-w-md" id="gerenciarMotoristasBox">
-<h2 class="text-lg font-bold mb-2">Gerenciar Motoristas</h2>
-<div class="mb-2">
-<input class="border p-2 rounded w-full mb-2" id="novoMotorista" placeholder="Nome do motorista" type="text"/>
-<input class="border p-2 rounded w-full mb-2" id="novaPlaca" placeholder="Placa do veículo" type="text"/>
-<button class="bg-green-600 text-white px-4 py-1 rounded mr-2" onclick="incluirMotorista()">Incluir</button>
-<button class="bg-gray-400 text-white px-4 py-1 rounded" onclick="fecharGerenciar()">Fechar</button>
-</div>
-<div class="max-h-40 overflow-y-auto border-t pt-2" id="listaMotoristas"></div>
-</div>
-<script>
-  let motoristas = {};
+<body class="min-h-screen flex flex-col items-center justify-center p-8 bg-white bg-opacity-70">
+  <div class="bg-white bg-opacity-50 rounded-lg p-8 shadow-xl">
+    <h1 class="text-3xl font-bold text-blue-800 mb-10 text-center">Sistema de Logística IPEV</h1>
 
-  function abrirGerenciar() {
-    document.getElementById("gerenciarMotoristasBox").style.display = "block";
-    atualizarListaMotoristas();
-  }
+    <div class="grid gap-6 justify-items-center">
+      <a href="controle_diario.html">
+        <button class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded shadow text-lg w-64">Controle Diário</button>
+      </a>
 
-  function fecharGerenciar() {
-    document.getElementById("gerenciarMotoristasBox").style.display = "none";
-  }
+      <a href="consumo_total.html">
+        <button class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded shadow text-lg w-64">Consumo Total</button>
+      </a>
 
-  function incluirMotorista() {
-    const nome = document.getElementById("novoMotorista").value.trim();
-    const placa = document.getElementById("novaPlaca").value.trim();
-    if (nome && placa) {
-      if (confirm(`Tem certeza que deseja adicionar o motorista "${nome}" com placa "${placa}"?`)) {
-        motoristas[nome] = placa;
-        atualizarListaMotoristas();
-        atualizarSelectMotoristas();
-        document.getElementById("novoMotorista").value = "";
-        document.getElementById("novaPlaca").value = "";
-      }
-    }
-  }
-
-  function excluirMotorista(nome) {
-    if (confirm(`Tem certeza que deseja excluir o motorista "${nome}"?`)) {
-      delete motoristas[nome];
-      atualizarListaMotoristas();
-      atualizarSelectMotoristas();
-      document.getElementById("placa").value = "";
-    }
-  }
-
-  function atualizarListaMotoristas() {
-    const lista = document.getElementById("listaMotoristas");
-    lista.innerHTML = "";
-    for (const nome in motoristas) {
-      const item = document.createElement("div");
-      item.className = "flex justify-between items-center border-b py-1";
-      item.innerHTML = `
-        <div><strong>${nome}</strong> - Placa: ${motoristas[nome]}</div>
-        <button onclick="excluirMotorista('${nome}')" class="text-red-600 hover:underline">Excluir</button>
-      `;
-      lista.appendChild(item);
-    }
-  }
-
-  function atualizarSelectMotoristas() {
-    const select = document.getElementById("motorista");
-    select.innerHTML = '<option value="">Selecione</option>';
-    for (const nome in motoristas) {
-      const option = document.createElement("option");
-      option.value = nome;
-      option.textContent = nome;
-      select.appendChild(option);
-    }
-  }
-
-  function atualizarPlaca() {
-    const nomeSelecionado = document.getElementById("motorista").value;
-    document.getElementById("placa").value = motoristas[nomeSelecionado] || "";
-  }
-
-  function calcularLitrosPorKm() {
-    const km1 = parseFloat(document.getElementById("kmRota1")?.value) || 0;
-    const km2 = parseFloat(document.getElementById("kmRota2")?.value) || 0;
-    const kmAdic = parseFloat(document.getElementById("kmAdicional")?.value) || 0;
-    const somaKm = km1 + km2 + kmAdic;
-    const litros = somaKm / 35;
-    const campoLitros = document.getElementById("combustivelConsumido");
-    if (campoLitros) campoLitros.value = litros.toFixed(2);
-    calcularValorTotal();
-  }
-
-  function calcularValorTotal() {
-    const litros = parseFloat(document.getElementById("combustivelConsumido")?.value) || 0;
-    const preco = parseFloat(document.getElementById("valorGasolina")?.value) || 0;
-    const total = litros * preco;
-    const campoTotal = document.getElementById("valorTotalGasto");
-    if (campoTotal) campoTotal.value = total.toFixed(2);
-  }
-
-  window.addEventListener("DOMContentLoaded", function () {
-    ['kmRota1', 'kmRota2', 'kmAdicional'].forEach(id => {
-      const input = document.getElementById(id);
-      if (input) input.addEventListener("input", calcularLitrosPorKm);
-    });
-
-    const precoInput = document.getElementById("valorGasolina");
-    if (precoInput) precoInput.addEventListener("input", calcularValorTotal);
-
-    
-  });
-</script>
+      <a href="relatorio_mensal.html">
+        <button class="bg-gray-700 hover:bg-gray-800 text-white px-8 py-3 rounded shadow text-lg w-64">Relatório Mensal</button>
+      </a>
+    </div>
+  </div>
 </body>
 </html>
