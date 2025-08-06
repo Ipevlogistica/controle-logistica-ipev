@@ -225,6 +225,38 @@
     transition: background-color 0.3s ease;
   ">💾 Salvar</button>
 </div>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  document.getElementById("btnSalvar").addEventListener("click", async () => {
+    const data = {
+      data: document.getElementById("data").value,
+      motorista: document.getElementById("motorista").value,
+      placa: document.getElementById("placa").value,
+      rota: document.getElementById("rota").value,
+      chegada1: document.getElementById("chegada1").value,
+      chegada2: document.getElementById("chegada2").value,
+      km_rota1: Number(document.getElementById("kmRota1").value || 0),
+      km_rota2: Number(document.getElementById("kmRota2").value || 0),
+      km_adicional: Number(document.getElementById("kmAdicional").value || 0),
+      combustivel_consumido: Number(document.getElementById("combustivelConsumido").value || 0),
+      valor_gasolina: Number(document.getElementById("valorGasolina").value || 0),
+      valor_total_gasto: Number(document.getElementById("valorTotalGasto").value || 0),
+    };
+
+    const { error } = await supabase.from('controle_diario').insert([data]);
+
+    if (error) {
+      alert("Erro ao salvar: " + error.message);
+    } else {
+      alert("Dados salvos com sucesso!");
+    }
+  });
+</script>
 
 </body>
 </html>
