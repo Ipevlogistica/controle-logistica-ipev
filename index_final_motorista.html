@@ -3,9 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Controle de Logística IPEV</title>
+  <title>Controle Diário de Consumo das Motos</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>body { font-family: 'Inter', sans-serif; }</style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
 </head>
 <body class="bg-blue-50 text-gray-900">
   <header class="bg-white shadow p-4 flex items-center justify-between">
@@ -13,27 +18,90 @@
       <img src="Logo Ipev Registrado.jpg" alt="Logo IPEV" class="h-12 opacity-70">
       <h1 class="text-2xl font-bold text-blue-800">Controle de Logística IPEV</h1>
     </div>
-    <a href="index.html"><button class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded shadow">Menu Inicial</button></a>
+    <a href="index.html">
+      <button class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded shadow">
+        Menu Inicial
+      </button>
+    </a>
   </header>
 
   <main class="p-6">
     <form id="logForm" class="bg-white p-6 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-      <!-- CAMPOS DO FORMULÁRIO AQUI (igual já usamos) -->
-      <!-- ... -->
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Data</label>
+        <input type="date" id="data" class="border p-2 rounded w-full mt-1" required>
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Motorista</label>
+        <div class="flex gap-2 items-center mt-1">
+          <select id="motorista" class="border p-2 rounded w-full" onchange="atualizarPlaca()"></select>
+          <button type="button" onclick="abrirGerenciar()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow">Gerenciar</button>
+        </div>
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Placa do veículo</label>
+        <input type="text" id="placa" class="border p-2 rounded w-full mt-1" readonly>
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Rota</label>
+        <input list="rotas" id="rota" class="border p-2 rounded w-full mt-1" required>
+        <datalist id="rotas">
+          <option value="A"><option value="B"><option value="C"><option value="D">
+          <option value="E"><option value="F"><option value="G"><option value="H">
+          <option value="A/D"><option value="B/F"><option value="C/E">
+        </datalist>
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Chegada da 1ª rota</label>
+        <input type="time" id="chegada1" class="border p-2 rounded w-full mt-1">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Chegada da 2ª rota</label>
+        <input type="time" id="chegada2" class="border p-2 rounded w-full mt-1">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">1ª rota (km)</label>
+        <input type="number" id="kmRota1" class="border p-2 rounded w-full mt-1" step="1">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">2ª rota (km)</label>
+        <input type="number" id="kmRota2" class="border p-2 rounded w-full mt-1" step="1">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Adicional (km)</label>
+        <input type="number" id="kmAdicional" class="border p-2 rounded w-full mt-1" step="1" value="10">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Combustível consumido (L)</label>
+        <input type="number" id="combustivelConsumido" class="border p-2 rounded w-full mt-1 bg-gray-100" readonly>
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Valor da gasolina (R$)</label>
+        <input type="number" id="valorGasolina" class="border p-2 rounded w-full mt-1" value="5.99" step="0.01">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Valor total gasto (R$)</label>
+        <input type="number" id="valorTotalGasto" class="border p-2 rounded w-full mt-1 bg-gray-100" readonly>
+      </div>
     </form>
 
     <div class="text-center mt-6">
       <button id="btnSalvar" class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg text-lg">💾 Salvar</button>
     </div>
-
-    <div class="mt-10 max-w-5xl mx-auto">
-      <label class="text-sm font-semibold text-blue-700">Consultar por Data:</label>
-      <input type="date" id="filtroData" class="border p-2 rounded ml-2">
-      <div id="registrosData" class="mt-4 bg-white p-4 rounded shadow hidden"></div>
-    </div>
   </main>
 
-  <!-- MODAL GERENCIAR -->
+  <!-- Modal de gerenciamento de motoristas -->
   <div id="gerenciarMotoristasBox" class="hidden fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-white p-4 border rounded shadow-lg z-50 w-full max-w-md">
     <h2 class="text-lg font-bold mb-2">Gerenciar Motoristas</h2>
     <input type="text" id="novoMotorista" placeholder="Nome do motorista" class="border p-2 rounded w-full mb-2">
@@ -50,49 +118,37 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
     );
 
-    // LÓGICA DE MOTORISTAS
     let motoristas = {};
+
     async function carregarMotoristas() {
-      const { data } = await supabase.from("motoristas").select("*");
+      const { data, error } = await supabase.from('motoristas').select('*');
+      if (error) return alert("Erro ao carregar motoristas: " + error.message);
       motoristas = {};
-      const select = document.getElementById("motorista");
-      select.innerHTML = '<option value="">Selecione</option>';
-      data.forEach(({ motorista, placa }) => {
-        motoristas[motorista] = placa;
-        const op = document.createElement("option");
-        op.value = motorista;
-        op.textContent = motorista;
-        select.appendChild(op);
+      document.getElementById("motorista").innerHTML = '<option value="">Selecione</option>';
+      data.forEach(({ nome, placa }) => {
+        motoristas[nome] = placa;
+        const option = document.createElement("option");
+        option.value = nome;
+        option.textContent = nome;
+        document.getElementById("motorista").appendChild(option);
       });
       atualizarListaMotoristas();
     }
 
-    async function salvarMotorista(motorista, placa) {
-      const existe = await supabase.from("motoristas").select().eq("motorista", motorista);
-      if (existe.data.length > 0) return alert("Motorista já cadastrado!");
-      await supabase.from("motoristas").insert([{ motorista, placa }]);
+    async function salvarMotorista(nome, placa) {
+      const { error } = await supabase.from('motoristas').insert([{ nome, placa }]);
+      if (error) alert("Erro ao salvar motorista: " + error.message);
     }
 
-    async function deletarMotorista(motorista) {
-      await supabase.from("motoristas").delete().eq("motorista", motorista);
-    }
-
-    function atualizarListaMotoristas() {
-      const div = document.getElementById("listaMotoristas");
-      div.innerHTML = "";
-      for (let nome in motoristas) {
-        div.innerHTML += `
-          <div class="flex justify-between border-b py-1">
-            <span><strong>${nome}</strong> - Placa: ${motoristas[nome]}</span>
-            <button onclick="excluirMotorista('${nome}')" class="text-red-600 hover:underline">Excluir</button>
-          </div>`;
-      }
+    async function deletarMotorista(nome) {
+      const { error } = await supabase.from('motoristas').delete().eq('nome', nome);
+      if (error) alert("Erro ao excluir motorista: " + error.message);
     }
 
     window.incluirMotorista = async function () {
       const nome = document.getElementById("novoMotorista").value.trim();
       const placa = document.getElementById("novaPlaca").value.trim();
-      if (nome && placa) {
+      if (nome && placa && confirm(`Deseja incluir "${nome}" com placa "${placa}"?`)) {
         await salvarMotorista(nome, placa);
         document.getElementById("novoMotorista").value = "";
         document.getElementById("novaPlaca").value = "";
@@ -101,47 +157,54 @@
     };
 
     window.excluirMotorista = async function (nome) {
-      await deletarMotorista(nome);
-      carregarMotoristas();
+      if (confirm(`Deseja excluir "${nome}"?`)) {
+        await deletarMotorista(nome);
+        carregarMotoristas();
+        document.getElementById("placa").value = "";
+      }
     };
+
+    function atualizarListaMotoristas() {
+      const lista = document.getElementById("listaMotoristas");
+      lista.innerHTML = "";
+      for (const nome in motoristas) {
+        const item = document.createElement("div");
+        item.className = "flex justify-between items-center border-b py-1";
+        item.innerHTML = `
+          <div><strong>${nome}</strong> - Placa: ${motoristas[nome]}</div>
+          <button onclick="excluirMotorista('${nome}')" class="text-red-600 hover:underline">Excluir</button>
+        `;
+        lista.appendChild(item);
+      }
+    }
 
     window.abrirGerenciar = () => document.getElementById("gerenciarMotoristasBox").classList.remove("hidden");
     window.fecharGerenciar = () => document.getElementById("gerenciarMotoristasBox").classList.add("hidden");
+
     window.atualizarPlaca = () => {
       const nome = document.getElementById("motorista").value;
       document.getElementById("placa").value = motoristas[nome] || "";
     };
 
-    // CALCULOS
-    function calcularLitros() {
-      const km1 = +document.getElementById("kmRota1").value || 0;
-      const km2 = +document.getElementById("kmRota2").value || 0;
-      const adic = +document.getElementById("kmAdicional").value || 0;
-      const litros = (km1 + km2 + adic) / 35;
+    function calcularLitrosPorKm() {
+      const km1 = parseFloat(document.getElementById("kmRota1")?.value) || 0;
+      const km2 = parseFloat(document.getElementById("kmRota2")?.value) || 0;
+      const kmAdic = parseFloat(document.getElementById("kmAdicional")?.value) || 0;
+      const litros = (km1 + km2 + kmAdic) / 35;
       document.getElementById("combustivelConsumido").value = litros.toFixed(2);
-      const preco = +document.getElementById("valorGasolina").value || 0;
+      calcularValorTotal();
+    }
+
+    function calcularValorTotal() {
+      const litros = parseFloat(document.getElementById("combustivelConsumido").value) || 0;
+      const preco = parseFloat(document.getElementById("valorGasolina").value) || 0;
       document.getElementById("valorTotalGasto").value = (litros * preco).toFixed(2);
     }
 
-    // SALVAR
     document.getElementById("btnSalvar").addEventListener("click", async () => {
-      const data = document.getElementById("data").value;
-      const motorista = document.getElementById("motorista").value;
-
-      const { data: existente } = await supabase
-        .from("controle_diario")
-        .select()
-        .eq("data", data)
-        .eq("motorista", motorista);
-
-      if (existente.length > 0) {
-        if (!confirm("Já existe registro deste motorista nesta data. Deseja substituir?")) return;
-        await supabase.from("controle_diario").delete().eq("data", data).eq("motorista", motorista);
-      }
-
-      const novo = {
-        data,
-        motorista,
+      const data = {
+        data: document.getElementById("data").value,
+        motorista: document.getElementById("motorista").value,
         placa: document.getElementById("placa").value,
         rota: document.getElementById("rota").value,
         chegada1: document.getElementById("chegada1").value,
@@ -154,38 +217,32 @@
         valor_total_gasto: +document.getElementById("valorTotalGasto").value || 0,
       };
 
-      await supabase.from("controle_diario").insert([novo]);
-      alert("Registro salvo!");
-      document.getElementById("logForm").reset();
-    });
-
-    // CONSULTAR POR DATA
-    document.getElementById("filtroData").addEventListener("change", async () => {
-      const data = document.getElementById("filtroData").value;
-      const { data: registros } = await supabase
-        .from("controle_diario")
-        .select()
-        .eq("data", data);
-
-      const div = document.getElementById("registrosData");
-      if (!registros.length) {
-        div.innerHTML = "<p>Nenhum registro encontrado.</p>";
+      const { error } = await supabase.from("controle_diario").insert([data]);
+      if (error) {
+        alert("Erro ao salvar: " + error.message);
       } else {
-        div.innerHTML = registros.map(r => `
-          <div class="border-b py-2">
-            <strong>${r.motorista}</strong> - ${r.rota}, Total: R$ ${r.valor_total_gasto}
-          </div>
-        `).join("");
+        alert("Dados salvos com sucesso!");
+
+        // Limpa os campos após salvar (exceto kmAdicional e valorGasolina)
+        document.getElementById("data").value = "";
+        document.getElementById("motorista").value = "";
+        document.getElementById("placa").value = "";
+        document.getElementById("rota").value = "";
+        document.getElementById("chegada1").value = "";
+        document.getElementById("chegada2").value = "";
+        document.getElementById("kmRota1").value = "";
+        document.getElementById("kmRota2").value = "";
+        document.getElementById("combustivelConsumido").value = "";
+        document.getElementById("valorTotalGasto").value = "";
       }
-      div.classList.remove("hidden");
     });
 
-    // EVENTOS INICIAIS
     window.addEventListener("DOMContentLoaded", () => {
       carregarMotoristas();
-      ['kmRota1', 'kmRota2', 'kmAdicional', 'valorGasolina'].forEach(id =>
-        document.getElementById(id)?.addEventListener("input", calcularLitros)
-      );
+      ['kmRota1', 'kmRota2', 'kmAdicional'].forEach(id => {
+        document.getElementById(id)?.addEventListener("input", calcularLitrosPorKm);
+      });
+      document.getElementById("valorGasolina")?.addEventListener("input", calcularValorTotal);
     });
   </script>
 </body>
