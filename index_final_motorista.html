@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Controle Diário de Consumo das Motos</title>
+  <title>Controle de Logística IPEV</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -36,7 +36,7 @@
         <label class="text-sm font-semibold text-blue-700">Motorista</label>
         <div class="flex gap-2 items-center mt-1">
           <select id="motorista" class="border p-2 rounded w-full" onchange="atualizarPlaca()"></select>
-          <button type="button" onclick="abrirGerenciarMotoristas()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow">Gerenciar</button>
+          <button type="button" onclick="abrirGerenciar()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow">Gerenciar</button>
         </div>
       </div>
 
@@ -101,15 +101,16 @@
     </div>
   </main>
 
+  <!-- Modal de gerenciamento de motoristas -->
   <div id="gerenciarMotoristasBox" class="hidden fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-white p-4 border rounded shadow-lg z-50 w-full max-w-md">
     <h2 class="text-lg font-bold mb-2">Gerenciar Motoristas</h2>
     <input type="text" id="novoMotorista" placeholder="Nome do motorista" class="border p-2 rounded w-full mb-2">
     <input type="text" id="novaPlaca" placeholder="Placa do veículo" class="border p-2 rounded w-full mb-2">
     <button onclick="incluirMotorista()" class="bg-green-600 text-white px-4 py-1 rounded mr-2">Incluir</button>
-    <button onclick="fecharGerenciarMotoristas()" class="bg-gray-400 text-white px-4 py-1 rounded">Fechar</button>
+    <button onclick="fecharGerenciar()" class="bg-gray-400 text-white px-4 py-1 rounded">Fechar</button>
     <div id="listaMotoristas" class="max-h-40 overflow-y-auto border-t mt-2 pt-2"></div>
   </div>
 
-  <script src="js/logica.js"></script> <!-- o script corrigido será salvo nesse arquivo -->
+  <script type="module" src="logica.js"></script>
 </body>
 </html>
