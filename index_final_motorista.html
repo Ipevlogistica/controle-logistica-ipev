@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Controle Diário de Consumo das Motos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de Logística IPEV</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -29,9 +29,8 @@
     <form id="logForm" class="bg-white p-6 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
       <div>
         <label class="text-sm font-semibold text-blue-700">Data</label>
-        <input type="date" id="data" class="border p-2 rounded w-full mt-1" required>
+        <input type="date" id="data" class="border p-2 rounded w-full mt-1" required onchange="carregarRegistrosPorData()">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Motorista</label>
         <div class="flex gap-2 items-center mt-1">
@@ -39,12 +38,10 @@
           <button type="button" onclick="abrirGerenciar()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow">Gerenciar</button>
         </div>
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Placa do veículo</label>
         <input type="text" id="placa" class="border p-2 rounded w-full mt-1" readonly>
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Rota</label>
         <input list="rotas" id="rota" class="border p-2 rounded w-full mt-1" required>
@@ -54,59 +51,48 @@
           <option value="A/D"><option value="B/F"><option value="C/E">
         </datalist>
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Chegada da 1ª rota</label>
         <input type="time" id="chegada1" class="border p-2 rounded w-full mt-1">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Chegada da 2ª rota</label>
         <input type="time" id="chegada2" class="border p-2 rounded w-full mt-1">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">1ª rota (km)</label>
         <input type="number" id="kmRota1" class="border p-2 rounded w-full mt-1" step="1">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">2ª rota (km)</label>
         <input type="number" id="kmRota2" class="border p-2 rounded w-full mt-1" step="1">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Adicional (km)</label>
         <input type="number" id="kmAdicional" class="border p-2 rounded w-full mt-1" step="1" value="10">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Combustível consumido (L)</label>
         <input type="number" id="combustivelConsumido" class="border p-2 rounded w-full mt-1 bg-gray-100" readonly>
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Valor da gasolina (R$)</label>
         <input type="number" id="valorGasolina" class="border p-2 rounded w-full mt-1" value="5.99" step="0.01">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Valor total gasto (R$)</label>
         <input type="number" id="valorTotalGasto" class="border p-2 rounded w-full mt-1 bg-gray-100" readonly>
       </div>
     </form>
-
     <div class="text-center mt-6">
       <button id="btnSalvar" class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg text-lg">💾 Salvar</button>
     </div>
-
-    <div class="mt-10 max-w-5xl mx-auto">
-      <h3 class="text-blue-800 font-bold mb-2">Registros cadastrados para o dia:</h3>
-      <div id="listaRegistros" class="bg-white rounded-xl p-4 shadow"></div>
+    <div id="listaRegistros" class="mt-10 max-w-5xl mx-auto bg-white rounded-xl shadow p-4 hidden">
+      <h2 class="text-lg font-bold mb-2 text-blue-800">Registros do dia selecionado:</h2>
+      <ul id="registrosDia" class="space-y-2"></ul>
     </div>
   </main>
 
-  <!-- Modal de gerenciamento de motoristas -->
   <div id="gerenciarMotoristasBox" class="hidden fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-white p-4 border rounded shadow-lg z-50 w-full max-w-md">
     <h2 class="text-lg font-bold mb-2">Gerenciar Motoristas</h2>
     <input type="text" id="novoMotorista" placeholder="Nome do motorista" class="border p-2 rounded w-full mb-2">
@@ -116,6 +102,7 @@
     <div id="listaMotoristas" class="max-h-40 overflow-y-auto border-t mt-2 pt-2"></div>
   </div>
 
+  <!-- SCRIPT SUPABASE E FUNCIONALIDADES AQUI -->
   <script type="module" src="script.js"></script>
 </body>
 </html>
