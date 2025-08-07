@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Controle Diário de consumo das motos </title>
+  <title>Controle Diário de Consumo das Motos</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -15,9 +15,14 @@
 <body class="bg-blue-50 text-gray-900">
   <header class="bg-white shadow p-4 flex items-center justify-between">
     <div class="flex items-center gap-4">
-      <img src="Logo Ipev Registrado.jpg" alt="Logo IPEV" class="h-12"> <!-- Você pode ajustar o link real -->
+      <img src="Logo Ipev Registrado.jpg" alt="Logo IPEV" class="h-12 opacity-70">
       <h1 class="text-2xl font-bold text-blue-800">Controle de Logística IPEV</h1>
     </div>
+    <a href="index.html">
+      <button class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded shadow">
+        Menu Inicial
+      </button>
+    </a>
   </header>
 
   <main class="p-6">
@@ -50,19 +55,16 @@
         </datalist>
       </div>
 
-       <div class="mb-2">
-  <label for="chegada1" class="block text-sm font-medium text-gray-700">Chegada da 1ª rota</label>
-  <input type="time" id="chegada1" name="chegada1"
-         class="p-2 border rounded w-32" />
-</div>
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Chegada da 1ª rota</label>
+        <input type="time" id="chegada1" class="border p-2 rounded w-full mt-1">
+      </div>
 
-<!-- Chegada da 2ª rota -->
-<div class="mb-2">
-  <label for="chegada2" class="block text-sm font-medium text-gray-700">Chegada da 2ª rota</label>
-  <input type="time" id="chegada2" name="chegada2"
-         class="p-2 border rounded w-32" />
-</div>
-      
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Chegada da 2ª rota</label>
+        <input type="time" id="chegada2" class="border p-2 rounded w-full mt-1">
+      </div>
+
       <div>
         <label class="text-sm font-semibold text-blue-700">1ª rota (km)</label>
         <input type="number" id="kmRota1" class="border p-2 rounded w-full mt-1" step="1">
@@ -79,7 +81,7 @@
       </div>
 
       <div>
-        <label class="text-sm font-semibold text-blue-700">Combustível consumido no dia (litros)</label>
+        <label class="text-sm font-semibold text-blue-700">Combustível consumido (L)</label>
         <input type="number" id="combustivelConsumido" class="border p-2 rounded w-full mt-1 bg-gray-100" readonly>
       </div>
 
@@ -93,243 +95,142 @@
         <input type="number" id="valorTotalGasto" class="border p-2 rounded w-full mt-1 bg-gray-100" readonly>
       </div>
     </form>
+
+    <div class="text-center mt-6">
+      <button id="btnSalvar" class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg text-lg">💾 Salvar</button>
+    </div>
   </main>
 
-<div id="gerenciarMotoristasBox" class="hidden fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-white p-4 border rounded shadow-lg z-50 w-full max-w-md">
-  <h2 class="text-lg font-bold mb-2">Gerenciar Motoristas</h2>
-  <div class="mb-2">
+  <!-- Modal de gerenciamento de motoristas -->
+  <div id="gerenciarMotoristasBox" class="hidden fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-white p-4 border rounded shadow-lg z-50 w-full max-w-md">
+    <h2 class="text-lg font-bold mb-2">Gerenciar Motoristas</h2>
     <input type="text" id="novoMotorista" placeholder="Nome do motorista" class="border p-2 rounded w-full mb-2">
     <input type="text" id="novaPlaca" placeholder="Placa do veículo" class="border p-2 rounded w-full mb-2">
     <button onclick="incluirMotorista()" class="bg-green-600 text-white px-4 py-1 rounded mr-2">Incluir</button>
     <button onclick="fecharGerenciar()" class="bg-gray-400 text-white px-4 py-1 rounded">Fechar</button>
+    <div id="listaMotoristas" class="max-h-40 overflow-y-auto border-t mt-2 pt-2"></div>
   </div>
-  <div id="listaMotoristas" class="max-h-40 overflow-y-auto border-t pt-2"></div>
-</div>
 
-<script>
-  let motoristas = {};
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const supabase = createClient(
+      'https://ilsbyrvnrkutwynujfhs.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
+    );
 
-  function abrirGerenciar() {
-    document.getElementById("gerenciarMotoristasBox").style.display = "block";
-    atualizarListaMotoristas();
-  }
+    let motoristas = {};
 
-  function fecharGerenciar() {
-    document.getElementById("gerenciarMotoristasBox").style.display = "none";
-  }
-
-  function incluirMotorista() {
-    const nome = document.getElementById("novoMotorista").value.trim();
-    const placa = document.getElementById("novaPlaca").value.trim();
-    if (nome && placa) {
-      if (confirm(`Tem certeza que deseja adicionar o motorista "${nome}" com placa "${placa}"?`)) {
+    async function carregarMotoristas() {
+      const { data, error } = await supabase.from('motoristas').select('*');
+      if (error) return alert("Erro ao carregar motoristas: " + error.message);
+      motoristas = {};
+      document.getElementById("motorista").innerHTML = '<option value="">Selecione</option>';
+      data.forEach(({ nome, placa }) => {
         motoristas[nome] = placa;
-        atualizarListaMotoristas();
-        atualizarSelectMotoristas();
-        document.getElementById("novoMotorista").value = "";
-        document.getElementById("novaPlaca").value = "";
-      }
-    }
-  }
-
-  function excluirMotorista(nome) {
-    if (confirm(`Tem certeza que deseja excluir o motorista "${nome}"?`)) {
-      delete motoristas[nome];
+        const option = document.createElement("option");
+        option.value = nome;
+        option.textContent = nome;
+        document.getElementById("motorista").appendChild(option);
+      });
       atualizarListaMotoristas();
-      atualizarSelectMotoristas();
-      document.getElementById("placa").value = "";
     }
-  }
 
-  function atualizarListaMotoristas() {
-    const lista = document.getElementById("listaMotoristas");
-    lista.innerHTML = "";
-    for (const nome in motoristas) {
-      const item = document.createElement("div");
-      item.className = "flex justify-between items-center border-b py-1";
-      item.innerHTML = `
-        <div><strong>${nome}</strong> - Placa: ${motoristas[nome]}</div>
-        <button onclick="excluirMotorista('${nome}')" class="text-red-600 hover:underline">Excluir</button>
-      `;
-      lista.appendChild(item);
+    async function salvarMotorista(nome, placa) {
+      const { error } = await supabase.from('motoristas').insert([{ nome, placa }]);
+      if (error) alert("Erro ao salvar motorista: " + error.message);
     }
-  }
 
-  function atualizarSelectMotoristas() {
-    const select = document.getElementById("motorista");
-    select.innerHTML = '<option value="">Selecione</option>';
-    for (const nome in motoristas) {
-      const option = document.createElement("option");
-      option.value = nome;
-      option.textContent = nome;
-      select.appendChild(option);
+    async function deletarMotorista(nome) {
+      const { error } = await supabase.from('motoristas').delete().eq('nome', nome);
+      if (error) alert("Erro ao excluir motorista: " + error.message);
     }
-  }
 
-  function atualizarPlaca() {
-    const nomeSelecionado = document.getElementById("motorista").value;
-    document.getElementById("placa").value = motoristas[nomeSelecionado] || "";
-  }
-
-  function calcularLitrosPorKm() {
-    const km1 = parseFloat(document.getElementById("kmRota1")?.value) || 0;
-    const km2 = parseFloat(document.getElementById("kmRota2")?.value) || 0;
-    const kmAdic = parseFloat(document.getElementById("kmAdicional")?.value) || 0;
-    const somaKm = km1 + km2 + kmAdic;
-    const litros = somaKm / 35;
-    const campoLitros = document.getElementById("combustivelConsumido");
-    if (campoLitros) campoLitros.value = litros.toFixed(2);
-    calcularValorTotal();
-  }
-
-  function calcularValorTotal() {
-    const litros = parseFloat(document.getElementById("combustivelConsumido")?.value) || 0;
-    const preco = parseFloat(document.getElementById("valorGasolina")?.value) || 0;
-    const total = litros * preco;
-    const campoTotal = document.getElementById("valorTotalGasto");
-    if (campoTotal) campoTotal.value = total.toFixed(2);
-  }
-
-  window.addEventListener("DOMContentLoaded", function () {
-    ['kmRota1', 'kmRota2', 'kmAdicional'].forEach(id => {
-      const input = document.getElementById(id);
-      if (input) input.addEventListener("input", calcularLitrosPorKm);
-    });
-
-    const precoInput = document.getElementById("valorGasolina");
-    if (precoInput) precoInput.addEventListener("input", calcularValorTotal);
-
-    
-  });
-</script>
- <body>
-  <div style="position: absolute; top: 20px; right: 20px;">
-    <a href="index.html">
-      <button style="background-color: #1d4ed8; color: white; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer;">
-        Menu Inicial
-      </button>
-    </a>
-  </div>
-
-  <!-- restante da página abaixo -->
-
-<div style="text-align: center; margin-top: 20px;">
-  <button id="btnSalvar" style="
-    background-color: #1e40af;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  ">💾 Salvar</button>
-</div>
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-  const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  document.getElementById("btnSalvar").addEventListener("click", async () => {
-    const data = {
-      data: document.getElementById("data").value,
-      motorista: document.getElementById("motorista").value,
-      placa: document.getElementById("placa").value,
-      rota: document.getElementById("rota").value,
-      chegada1: document.getElementById("chegada1").value,
-      chegada2: document.getElementById("chegada2").value,
-      km_rota1: Number(document.getElementById("kmRota1").value || 0),
-      km_rota2: Number(document.getElementById("kmRota2").value || 0),
-      km_adicional: Number(document.getElementById("kmAdicional").value || 0),
-      combustivel_consumido: Number(document.getElementById("combustivelConsumido").value || 0),
-      valor_gasolina: Number(document.getElementById("valorGasolina").value || 0),
-      valor_total_gasto: Number(document.getElementById("valorTotalGasto").value || 0),
-    };
-
-    const { error } = await supabase.from('controle_diario').insert([data]);
-
-    if (error) {
-      alert("Erro ao salvar: " + error.message);
-    } else {
-      alert("Dados salvos com sucesso!");
-    }
-  });
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-  const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // use sua anon key
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  async function carregarMotoristas() {
-    const { data, error } = await supabase.from('motoristas').select('*');
-    if (error) {
-      alert("Erro ao carregar motoristas: " + error.message);
-      return;
-    }
-    motoristas = {};
-    data.forEach(m => {
-      motoristas[m.nome] = m.placa;
-    });
-    atualizarSelectMotoristas();
-  }
-
-  async function incluirMotorista() {
-    const nome = document.getElementById("novoMotorista").value.trim();
-    const placa = document.getElementById("novaPlaca").value.trim();
-    if (nome && placa) {
-      if (confirm(`Tem certeza que deseja adicionar o motorista "${nome}" com placa "${placa}"?`)) {
-        const { error } = await supabase.from('motoristas').insert([{ nome, placa }]);
-        if (error) {
-          alert("Erro ao salvar motorista: " + error.message);
-          return;
-        }
-        await carregarMotoristas();
+    window.incluirMotorista = async function () {
+      const nome = document.getElementById("novoMotorista").value.trim();
+      const placa = document.getElementById("novaPlaca").value.trim();
+      if (nome && placa && confirm(`Deseja incluir "${nome}" com placa "${placa}"?`)) {
+        await salvarMotorista(nome, placa);
         document.getElementById("novoMotorista").value = "";
         document.getElementById("novaPlaca").value = "";
-        fecharGerenciar();
+        carregarMotoristas();
       }
-    }
-  }
-
-  document.getElementById("btnSalvar").addEventListener("click", async () => {
-    const data = {
-      data: document.getElementById("data").value,
-      motorista: document.getElementById("motorista").value,
-      placa: document.getElementById("placa").value,
-      rota: document.getElementById("rota").value,
-      chegada1: document.getElementById("chegada1").value,
-      chegada2: document.getElementById("chegada2").value,
-      km_rota1: Number(document.getElementById("kmRota1").value || 0),
-      km_rota2: Number(document.getElementById("kmRota2").value || 0),
-      km_adicional: Number(document.getElementById("kmAdicional").value || 0),
-      combustivel_consumido: Number(document.getElementById("combustivelConsumido").value || 0),
-      valor_gasolina: Number(document.getElementById("valorGasolina").value || 0),
-      valor_total_gasto: Number(document.getElementById("valorTotalGasto").value || 0),
     };
 
-    const { error } = await supabase.from('controle_diario').insert([data]);
-    if (error) {
-      alert("Erro ao salvar: " + error.message);
-    } else {
-      alert("Dados salvos com sucesso!");
-    }
-  });
+    window.excluirMotorista = async function (nome) {
+      if (confirm(`Deseja excluir "${nome}"?`)) {
+        await deletarMotorista(nome);
+        carregarMotoristas();
+        document.getElementById("placa").value = "";
+      }
+    };
 
-  window.addEventListener("DOMContentLoaded", () => {
-    carregarMotoristas();
-    ['kmRota1', 'kmRota2', 'kmAdicional'].forEach(id => {
-      const input = document.getElementById(id);
-      if (input) input.addEventListener("input", calcularLitrosPorKm);
+    function atualizarListaMotoristas() {
+      const lista = document.getElementById("listaMotoristas");
+      lista.innerHTML = "";
+      for (const nome in motoristas) {
+        const item = document.createElement("div");
+        item.className = "flex justify-between items-center border-b py-1";
+        item.innerHTML = `
+          <div><strong>${nome}</strong> - Placa: ${motoristas[nome]}</div>
+          <button onclick="excluirMotorista('${nome}')" class="text-red-600 hover:underline">Excluir</button>
+        `;
+        lista.appendChild(item);
+      }
+    }
+
+    window.abrirGerenciar = () => document.getElementById("gerenciarMotoristasBox").classList.remove("hidden");
+    window.fecharGerenciar = () => document.getElementById("gerenciarMotoristasBox").classList.add("hidden");
+
+    window.atualizarPlaca = () => {
+      const nome = document.getElementById("motorista").value;
+      document.getElementById("placa").value = motoristas[nome] || "";
+    };
+
+    function calcularLitrosPorKm() {
+      const km1 = parseFloat(document.getElementById("kmRota1")?.value) || 0;
+      const km2 = parseFloat(document.getElementById("kmRota2")?.value) || 0;
+      const kmAdic = parseFloat(document.getElementById("kmAdicional")?.value) || 0;
+      const litros = (km1 + km2 + kmAdic) / 35;
+      document.getElementById("combustivelConsumido").value = litros.toFixed(2);
+      calcularValorTotal();
+    }
+
+    function calcularValorTotal() {
+      const litros = parseFloat(document.getElementById("combustivelConsumido").value) || 0;
+      const preco = parseFloat(document.getElementById("valorGasolina").value) || 0;
+      document.getElementById("valorTotalGasto").value = (litros * preco).toFixed(2);
+    }
+
+    document.getElementById("btnSalvar").addEventListener("click", async () => {
+      const data = {
+        data: document.getElementById("data").value,
+        motorista: document.getElementById("motorista").value,
+        placa: document.getElementById("placa").value,
+        rota: document.getElementById("rota").value,
+        chegada1: document.getElementById("chegada1").value,
+        chegada2: document.getElementById("chegada2").value,
+        km_rota1: +document.getElementById("kmRota1").value || 0,
+        km_rota2: +document.getElementById("kmRota2").value || 0,
+        km_adicional: +document.getElementById("kmAdicional").value || 0,
+        combustivel_consumido: +document.getElementById("combustivelConsumido").value || 0,
+        valor_gasolina: +document.getElementById("valorGasolina").value || 0,
+        valor_total_gasto: +document.getElementById("valorTotalGasto").value || 0,
+      };
+      const { error } = await supabase.from("controle_diario").insert([data]);
+      if (error) {
+        alert("Erro ao salvar: " + error.message);
+      } else {
+        alert("Dados salvos com sucesso!");
+      }
     });
 
-    const precoInput = document.getElementById("valorGasolina");
-    if (precoInput) precoInput.addEventListener("input", calcularValorTotal);
-  });
-</script>
-
-
+    window.addEventListener("DOMContentLoaded", () => {
+      carregarMotoristas();
+      ['kmRota1', 'kmRota2', 'kmAdicional'].forEach(id => {
+        document.getElementById(id)?.addEventListener("input", calcularLitrosPorKm);
+      });
+      document.getElementById("valorGasolina")?.addEventListener("input", calcularValorTotal);
+    });
+  </script>
 </body>
 </html>
