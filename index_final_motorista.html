@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Controle Diário de Consumo das Motos</title>
+  <title>Controle de Logística IPEV</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; }
-    #registrosExistentes div { padding: 0.25rem 0; border-bottom: 1px solid #ddd; }
   </style>
 </head>
 <body class="bg-blue-50 text-gray-900">
@@ -21,12 +20,14 @@
       <button class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded shadow">Menu Inicial</button>
     </a>
   </header>
+
   <main class="p-6">
     <form id="logForm" class="bg-white p-6 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
       <div>
         <label class="text-sm font-semibold text-blue-700">Data</label>
-        <input type="date" id="data" class="border p-2 rounded w-full mt-1" required>
+        <input type="date" id="data" class="border p-2 rounded w-full mt-1" required onchange="buscarRegistrosPorData()">
       </div>
+
       <div>
         <label class="text-sm font-semibold text-blue-700">Motorista</label>
         <div class="flex gap-2 items-center mt-1">
@@ -34,10 +35,12 @@
           <button type="button" onclick="abrirGerenciar()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow">Gerenciar</button>
         </div>
       </div>
+
       <div>
         <label class="text-sm font-semibold text-blue-700">Placa do veículo</label>
         <input type="text" id="placa" class="border p-2 rounded w-full mt-1" readonly>
       </div>
+
       <div>
         <label class="text-sm font-semibold text-blue-700">Rota</label>
         <input list="rotas" id="rota" class="border p-2 rounded w-full mt-1" required>
@@ -47,47 +50,55 @@
           <option value="A/D"><option value="B/F"><option value="C/E">
         </datalist>
       </div>
+
       <div>
         <label class="text-sm font-semibold text-blue-700">Chegada da 1ª rota</label>
         <input type="time" id="chegada1" class="border p-2 rounded w-full mt-1">
       </div>
+
       <div>
         <label class="text-sm font-semibold text-blue-700">Chegada da 2ª rota</label>
         <input type="time" id="chegada2" class="border p-2 rounded w-full mt-1">
       </div>
+
       <div>
         <label class="text-sm font-semibold text-blue-700">1ª rota (km)</label>
         <input type="number" id="kmRota1" class="border p-2 rounded w-full mt-1" step="1">
       </div>
+
       <div>
         <label class="text-sm font-semibold text-blue-700">2ª rota (km)</label>
         <input type="number" id="kmRota2" class="border p-2 rounded w-full mt-1" step="1">
       </div>
+
       <div>
         <label class="text-sm font-semibold text-blue-700">Adicional (km)</label>
         <input type="number" id="kmAdicional" class="border p-2 rounded w-full mt-1" step="1" value="10">
       </div>
+
       <div>
         <label class="text-sm font-semibold text-blue-700">Combustível consumido (L)</label>
         <input type="number" id="combustivelConsumido" class="border p-2 rounded w-full mt-1 bg-gray-100" readonly>
       </div>
+
       <div>
         <label class="text-sm font-semibold text-blue-700">Valor da gasolina (R$)</label>
         <input type="number" id="valorGasolina" class="border p-2 rounded w-full mt-1" value="5.99" step="0.01">
       </div>
+
       <div>
         <label class="text-sm font-semibold text-blue-700">Valor total gasto (R$)</label>
         <input type="number" id="valorTotalGasto" class="border p-2 rounded w-full mt-1 bg-gray-100" readonly>
       </div>
     </form>
+
     <div class="text-center mt-6">
       <button id="btnSalvar" class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg text-lg">💾 Salvar</button>
     </div>
-    <div class="mt-8 max-w-5xl mx-auto">
-      <h2 class="text-xl font-semibold text-blue-800 mb-2">Registros do dia</h2>
-      <div id="registrosExistentes" class="bg-white p-4 rounded-xl shadow-inner"></div>
-    </div>
+
+    <div id="registrosExistentes" class="max-w-5xl mx-auto mt-6 p-4 bg-white rounded-xl shadow"></div>
   </main>
+
   <div id="gerenciarMotoristasBox" class="hidden fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-white p-4 border rounded shadow-lg z-50 w-full max-w-md">
     <h2 class="text-lg font-bold mb-2">Gerenciar Motoristas</h2>
     <input type="text" id="novoMotorista" placeholder="Nome do motorista" class="border p-2 rounded w-full mb-2">
@@ -96,6 +107,195 @@
     <button onclick="fecharGerenciar()" class="bg-gray-400 text-white px-4 py-1 rounded">Fechar</button>
     <div id="listaMotoristas" class="max-h-40 overflow-y-auto border-t mt-2 pt-2"></div>
   </div>
-  <script type="module" src="script.js"></script>
+
+  <!-- JavaScript integrado -->
+  <script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  const supabase = createClient(
+    'https://ilsbyrvnrkutwynujfhs.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
+  );
+
+  const motoristasSelect = document.getElementById('motorista');
+  const placaInput = document.getElementById('placa');
+  const dataInput = document.getElementById('data');
+  const listaInferior = document.getElementById('listaRegistros');
+
+  let motoristas = {};
+  let editando = false;
+  let idEditando = null;
+
+  async function carregarMotoristas() {
+    const { data, error } = await supabase.from('motoristas').select('*');
+    if (error) {
+      alert("Erro ao carregar motoristas: " + error.message);
+      return;
+    }
+    motoristas = {};
+    motoristasSelect.innerHTML = '<option value="">Selecione</option>';
+    data.forEach(({ motorista, placa }) => {
+      motoristas[motorista] = placa;
+      const opt = document.createElement('option');
+      opt.value = motorista;
+      opt.textContent = motorista;
+      motoristasSelect.appendChild(opt);
+    });
+  }
+
+  window.atualizarPlaca = () => {
+    const nome = motoristasSelect.value;
+    placaInput.value = motoristas[nome] || '';
+  };
+
+  dataInput.addEventListener('change', carregarRegistrosPorData);
+
+  async function carregarRegistrosPorData() {
+    const dataSelecionada = dataInput.value;
+    listaInferior.innerHTML = '';
+    if (!dataSelecionada) return;
+
+    const { data, error } = await supabase
+      .from('controle_diario')
+      .select('*')
+      .eq('data', dataSelecionada);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    if (data.length === 0) {
+      listaInferior.innerHTML = '<p class="text-gray-500">Nenhum registro para esta data.</p>';
+      return;
+    }
+
+    const tabela = document.createElement('table');
+    tabela.className = 'w-full mt-4 table-auto border-collapse';
+    tabela.innerHTML = `
+      <thead>
+        <tr class="bg-blue-100 text-left">
+          <th class="p-2 border">Motorista</th>
+          <th class="p-2 border">Rota</th>
+          <th class="p-2 border">KM Total</th>
+          <th class="p-2 border">Editar</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data
+          .map(
+            (item) => `
+          <tr class="bg-white">
+            <td class="p-2 border">${item.motorista}</td>
+            <td class="p-2 border">${item.rota}</td>
+            <td class="p-2 border">${
+              (item.km_rota1 || 0) + (item.km_rota2 || 0) + (item.km_adicional || 0)
+            }</td>
+            <td class="p-2 border">
+              <button class="text-blue-600 underline" onclick="window.editarRegistro(${item.id})">Editar</button>
+            </td>
+          </tr>`
+          )
+          .join('')}
+      </tbody>
+    `;
+    listaInferior.appendChild(tabela);
+  }
+
+  window.editarRegistro = async (id) => {
+    const { data, error } = await supabase.from('controle_diario').select('*').eq('id', id).single();
+    if (error) {
+      alert('Erro ao carregar registro para edição.');
+      return;
+    }
+
+    editando = true;
+    idEditando = id;
+
+    document.getElementById("data").value = data.data;
+    document.getElementById("motorista").value = data.motorista;
+    document.getElementById("placa").value = data.placa;
+    document.getElementById("rota").value = data.rota;
+    document.getElementById("chegada1").value = data.chegada1;
+    document.getElementById("chegada2").value = data.chegada2;
+    document.getElementById("kmRota1").value = data.km_rota1;
+    document.getElementById("kmRota2").value = data.km_rota2;
+    document.getElementById("kmAdicional").value = data.km_adicional;
+    document.getElementById("combustivelConsumido").value = data.combustivel_consumido;
+    document.getElementById("valorGasolina").value = data.valor_gasolina;
+    document.getElementById("valorTotalGasto").value = data.valor_total_gasto;
+
+    document.getElementById("data").readOnly = true;
+    document.getElementById("motorista").disabled = true;
+  };
+
+  document.getElementById("btnSalvar").addEventListener("click", async () => {
+    const registro = {
+      data: document.getElementById("data").value,
+      motorista: document.getElementById("motorista").value,
+      placa: document.getElementById("placa").value,
+      rota: document.getElementById("rota").value,
+      chegada1: document.getElementById("chegada1").value,
+      chegada2: document.getElementById("chegada2").value,
+      km_rota1: +document.getElementById("kmRota1").value || 0,
+      km_rota2: +document.getElementById("kmRota2").value || 0,
+      km_adicional: +document.getElementById("kmAdicional").value || 0,
+      combustivel_consumido: +document.getElementById("combustivelConsumido").value || 0,
+      valor_gasolina: +document.getElementById("valorGasolina").value || 0,
+      valor_total_gasto: +document.getElementById("valorTotalGasto").value || 0,
+    };
+
+    if (!registro.data || !registro.motorista) {
+      alert("Preencha todos os campos obrigatórios!");
+      return;
+    }
+
+    if (editando) {
+      const { error } = await supabase.from("controle_diario").update(registro).eq("id", idEditando);
+      if (error) {
+        alert("Erro ao atualizar: " + error.message);
+      } else {
+        alert("Registro atualizado com sucesso!");
+        editando = false;
+        idEditando = null;
+        document.getElementById("data").readOnly = false;
+        document.getElementById("motorista").disabled = false;
+        document.getElementById("logForm").reset();
+        carregarRegistrosPorData();
+      }
+      return;
+    }
+
+    const duplicado = await supabase
+      .from("controle_diario")
+      .select("id")
+      .eq("data", registro.data)
+      .eq("motorista", registro.motorista);
+
+    if (duplicado.data.length > 0) {
+      const confirmacao = confirm("Já existe registro desse motorista nesta data. Deseja editar?");
+      if (confirmacao) {
+        window.editarRegistro(duplicado.data[0].id);
+        return;
+      } else {
+        return;
+      }
+    }
+
+    const { error } = await supabase.from("controle_diario").insert([registro]);
+    if (error) {
+      alert("Erro ao salvar: " + error.message);
+    } else {
+      alert("Salvo com sucesso!");
+      document.getElementById("logForm").reset();
+      carregarRegistrosPorData();
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    carregarMotoristas();
+  });
+</script>
+
 </body>
 </html>
