@@ -31,7 +31,6 @@
         <label class="text-sm font-semibold text-blue-700">Data</label>
         <input type="date" id="data" class="border p-2 rounded w-full mt-1" required>
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Motorista</label>
         <div class="flex gap-2 items-center mt-1">
@@ -39,12 +38,10 @@
           <button type="button" onclick="abrirGerenciar()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow">Gerenciar</button>
         </div>
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Placa do veículo</label>
         <input type="text" id="placa" class="border p-2 rounded w-full mt-1" readonly>
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Rota</label>
         <input list="rotas" id="rota" class="border p-2 rounded w-full mt-1" required>
@@ -54,42 +51,34 @@
           <option value="A/D"><option value="B/F"><option value="C/E">
         </datalist>
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Chegada da 1ª rota</label>
         <input type="time" id="chegada1" class="border p-2 rounded w-full mt-1">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Chegada da 2ª rota</label>
         <input type="time" id="chegada2" class="border p-2 rounded w-full mt-1">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">1ª rota (km)</label>
         <input type="number" id="kmRota1" class="border p-2 rounded w-full mt-1" step="1">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">2ª rota (km)</label>
         <input type="number" id="kmRota2" class="border p-2 rounded w-full mt-1" step="1">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Adicional (km)</label>
         <input type="number" id="kmAdicional" class="border p-2 rounded w-full mt-1" step="1" value="10">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Combustível consumido (L)</label>
         <input type="number" id="combustivelConsumido" class="border p-2 rounded w-full mt-1 bg-gray-100" readonly>
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Valor da gasolina (R$)</label>
         <input type="number" id="valorGasolina" class="border p-2 rounded w-full mt-1" value="5.99" step="0.01">
       </div>
-
       <div>
         <label class="text-sm font-semibold text-blue-700">Valor total gasto (R$)</label>
         <input type="number" id="valorTotalGasto" class="border p-2 rounded w-full mt-1 bg-gray-100" readonly>
@@ -99,151 +88,12 @@
     <div class="text-center mt-6">
       <button id="btnSalvar" class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg text-lg">💾 Salvar</button>
     </div>
+
+    <div class="mt-10 max-w-5xl mx-auto">
+      <h2 class="text-lg font-bold text-blue-700 mb-2">Registros da data selecionada</h2>
+      <div id="listaRegistrosPorData" class="bg-white p-4 rounded shadow overflow-x-auto"></div>
+    </div>
   </main>
-
-  <!-- Modal de gerenciamento de motoristas -->
-  <div id="gerenciarMotoristasBox" class="hidden fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-white p-4 border rounded shadow-lg z-50 w-full max-w-md">
-    <h2 class="text-lg font-bold mb-2">Gerenciar Motoristas</h2>
-    <input type="text" id="novoMotorista" placeholder="Nome do motorista" class="border p-2 rounded w-full mb-2">
-    <input type="text" id="novaPlaca" placeholder="Placa do veículo" class="border p-2 rounded w-full mb-2">
-    <button onclick="incluirMotorista()" class="bg-green-600 text-white px-4 py-1 rounded mr-2">Incluir</button>
-    <button onclick="fecharGerenciar()" class="bg-gray-400 text-white px-4 py-1 rounded">Fechar</button>
-    <div id="listaMotoristas" class="max-h-40 overflow-y-auto border-t mt-2 pt-2"></div>
-  </div>
-
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const supabase = createClient(
-      'https://ilsbyrvnrkutwynujfhs.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
-    );
-
-    let motoristas = {};
-
-    async function carregarMotoristas() {
-      const { data, error } = await supabase.from('motoristas').select('*');
-      if (error) return alert("Erro ao carregar motoristas: " + error.message);
-      motoristas = {};
-      document.getElementById("motorista").innerHTML = '<option value="">Selecione</option>';
-      data.forEach(({ nome, placa }) => {
-        motoristas[nome] = placa;
-        const option = document.createElement("option");
-        option.value = nome;
-        option.textContent = nome;
-        document.getElementById("motorista").appendChild(option);
-      });
-      atualizarListaMotoristas();
-    }
-
-    async function salvarMotorista(nome, placa) {
-      const { error } = await supabase.from('motoristas').insert([{ nome, placa }]);
-      if (error) alert("Erro ao salvar motorista: " + error.message);
-    }
-
-    async function deletarMotorista(nome) {
-      const { error } = await supabase.from('motoristas').delete().eq('nome', nome);
-      if (error) alert("Erro ao excluir motorista: " + error.message);
-    }
-
-    window.incluirMotorista = async function () {
-      const nome = document.getElementById("novoMotorista").value.trim();
-      const placa = document.getElementById("novaPlaca").value.trim();
-      if (nome && placa && confirm(`Deseja incluir "${nome}" com placa "${placa}"?`)) {
-        await salvarMotorista(nome, placa);
-        document.getElementById("novoMotorista").value = "";
-        document.getElementById("novaPlaca").value = "";
-        carregarMotoristas();
-      }
-    };
-
-    window.excluirMotorista = async function (nome) {
-      if (confirm(`Deseja excluir "${nome}"?`)) {
-        await deletarMotorista(nome);
-        carregarMotoristas();
-        document.getElementById("placa").value = "";
-      }
-    };
-
-    function atualizarListaMotoristas() {
-      const lista = document.getElementById("listaMotoristas");
-      lista.innerHTML = "";
-      for (const nome in motoristas) {
-        const item = document.createElement("div");
-        item.className = "flex justify-between items-center border-b py-1";
-        item.innerHTML = `
-          <div><strong>${nome}</strong> - Placa: ${motoristas[nome]}</div>
-          <button onclick="excluirMotorista('${nome}')" class="text-red-600 hover:underline">Excluir</button>
-        `;
-        lista.appendChild(item);
-      }
-    }
-
-    window.abrirGerenciar = () => document.getElementById("gerenciarMotoristasBox").classList.remove("hidden");
-    window.fecharGerenciar = () => document.getElementById("gerenciarMotoristasBox").classList.add("hidden");
-
-    window.atualizarPlaca = () => {
-      const nome = document.getElementById("motorista").value;
-      document.getElementById("placa").value = motoristas[nome] || "";
-    };
-
-    function calcularLitrosPorKm() {
-      const km1 = parseFloat(document.getElementById("kmRota1")?.value) || 0;
-      const km2 = parseFloat(document.getElementById("kmRota2")?.value) || 0;
-      const kmAdic = parseFloat(document.getElementById("kmAdicional")?.value) || 0;
-      const litros = (km1 + km2 + kmAdic) / 35;
-      document.getElementById("combustivelConsumido").value = litros.toFixed(2);
-      calcularValorTotal();
-    }
-
-    function calcularValorTotal() {
-      const litros = parseFloat(document.getElementById("combustivelConsumido").value) || 0;
-      const preco = parseFloat(document.getElementById("valorGasolina").value) || 0;
-      document.getElementById("valorTotalGasto").value = (litros * preco).toFixed(2);
-    }
-
-    document.getElementById("btnSalvar").addEventListener("click", async () => {
-      const data = {
-        data: document.getElementById("data").value,
-        motorista: document.getElementById("motorista").value,
-        placa: document.getElementById("placa").value,
-        rota: document.getElementById("rota").value,
-        chegada1: document.getElementById("chegada1").value,
-        chegada2: document.getElementById("chegada2").value,
-        km_rota1: +document.getElementById("kmRota1").value || 0,
-        km_rota2: +document.getElementById("kmRota2").value || 0,
-        km_adicional: +document.getElementById("kmAdicional").value || 0,
-        combustivel_consumido: +document.getElementById("combustivelConsumido").value || 0,
-        valor_gasolina: +document.getElementById("valorGasolina").value || 0,
-        valor_total_gasto: +document.getElementById("valorTotalGasto").value || 0,
-      };
-
-      const { error } = await supabase.from("controle_diario").insert([data]);
-      if (error) {
-        alert("Erro ao salvar: " + error.message);
-      } else {
-        alert("Dados salvos com sucesso!");
-
-        // Limpa os campos após salvar (exceto kmAdicional e valorGasolina)
-        document.getElementById("data").value = "";
-        document.getElementById("motorista").value = "";
-        document.getElementById("placa").value = "";
-        document.getElementById("rota").value = "";
-        document.getElementById("chegada1").value = "";
-        document.getElementById("chegada2").value = "";
-        document.getElementById("kmRota1").value = "";
-        document.getElementById("kmRota2").value = "";
-        document.getElementById("combustivelConsumido").value = "";
-        document.getElementById("valorTotalGasto").value = "";
-      }
-    });
-
-    window.addEventListener("DOMContentLoaded", () => {
-      carregarMotoristas();
-      ['kmRota1', 'kmRota2', 'kmAdicional'].forEach(id => {
-        document.getElementById(id)?.addEventListener("input", calcularLitrosPorKm);
-      });
-      document.getElementById("valorGasolina")?.addEventListener("input", calcularValorTotal);
-    });
-  </script>
 </body>
 </html>
+
