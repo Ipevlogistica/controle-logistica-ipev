@@ -88,6 +88,58 @@
     document.getElementById("valorTotalGasto").value = (litros * preco).toFixed(2);
   }
 
+  async function buscarRegistrosPorData(dataSelecionada) {
+    const { data, error } = await supabase
+      .from("controle_diario")
+      .select("*")
+      .eq("data", dataSelecionada)
+      .order("motorista", { ascending: true });
+
+    const container = document.getElementById("listaRegistrosPorData");
+    if (error || !data) {
+      container.innerHTML = "<p class='text-red-600'>Erro ao carregar registros.</p>";
+      return;
+    }
+
+    if (data.length === 0) {
+      container.innerHTML = "<p class='text-gray-600'>Nenhum registro encontrado para a data selecionada.</p>";
+      return;
+    }
+
+    const linhas = data.map(r => `
+      <tr class="border-t">
+        <td class="px-2 py-1">${r.motorista}</td>
+        <td class="px-2 py-1">${r.placa}</td>
+        <td class="px-2 py-1">${r.rota}</td>
+        <td class="px-2 py-1">${r.km_rota1}</td>
+        <td class="px-2 py-1">${r.km_rota2}</td>
+        <td class="px-2 py-1">${r.km_adicional}</td>
+        <td class="px-2 py-1">${r.combustivel_consumido.toFixed(2)}</td>
+        <td class="px-2 py-1">R$ ${r.valor_total_gasto.toFixed(2)}</td>
+      </tr>
+    `).join("");
+
+    container.innerHTML = `
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-left border">
+          <thead class="bg-blue-100 font-semibold">
+            <tr>
+              <th class="px-2 py-1">Motorista</th>
+              <th class="px-2 py-1">Placa</th>
+              <th class="px-2 py-1">Rota</th>
+              <th class="px-2 py-1">KM Rota 1</th>
+              <th class="px-2 py-1">KM Rota 2</th>
+              <th class="px-2 py-1">Adicional</th>
+              <th class="px-2 py-1">Litros</th>
+              <th class="px-2 py-1">Total</th>
+            </tr>
+          </thead>
+          <tbody>${linhas}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
   document.getElementById("btnSalvar").addEventListener("click", async () => {
     const data = {
       data: document.getElementById("data").value,
@@ -120,58 +172,7 @@
       document.getElementById("combustivelConsumido").value = "";
       document.getElementById("valorTotalGasto").value = "";
     }
-
-    carregarRegistrosPorData(); // Atualiza a lista após salvar
   });
-
-  async function carregarRegistrosPorData() {
-    const dataSelecionada = document.getElementById("data").value;
-    const lista = document.getElementById("listaRegistrosPorData");
-    lista.innerHTML = "";
-    if (!dataSelecionada) return;
-
-    const { data, error } = await supabase
-      .from("controle_diario")
-      .select("*")
-      .eq("data", dataSelecionada)
-      .order("motorista", { ascending: true });
-
-    if (error) {
-      lista.innerHTML = `<p class="text-red-600">Erro ao carregar registros: ${error.message}</p>`;
-      return;
-    }
-
-    if (data.length === 0) {
-      lista.innerHTML = `<p class="text-gray-600">Nenhum registro encontrado para a data selecionada.</p>`;
-      return;
-    }
-
-    const table = document.createElement("table");
-    table.className = "w-full mt-4 text-sm";
-    table.innerHTML = `
-      <thead>
-        <tr class="bg-blue-200 text-blue-800">
-          <th class="p-2 text-left">Motorista</th>
-          <th class="p-2 text-left">Placa</th>
-          <th class="p-2 text-left">Rota</th>
-          <th class="p-2 text-left">Combustível (L)</th>
-          <th class="p-2 text-left">Total (R$)</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${data.map(item => `
-          <tr class="border-b">
-            <td class="p-2">${item.motorista}</td>
-            <td class="p-2">${item.placa}</td>
-            <td class="p-2">${item.rota}</td>
-            <td class="p-2">${item.combustivel_consumido.toFixed(2)}</td>
-            <td class="p-2">${item.valor_total_gasto.toFixed(2)}</td>
-          </tr>
-        `).join("")}
-      </tbody>
-    `;
-    lista.appendChild(table);
-  }
 
   window.addEventListener("DOMContentLoaded", () => {
     carregarMotoristas();
@@ -179,6 +180,9 @@
       document.getElementById(id)?.addEventListener("input", calcularLitrosPorKm);
     });
     document.getElementById("valorGasolina")?.addEventListener("input", calcularValorTotal);
-    document.getElementById("data")?.addEventListener("change", carregarRegistrosPorData);
+    document.getElementById("data").addEventListener("change", () => {
+      const dataSelecionada = document.getElementById("data").value;
+      if (dataSelecionada) buscarRegistrosPorData(dataSelecionada);
+    });
   });
 </script>
