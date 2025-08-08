@@ -7,11 +7,14 @@
   <script type="module" src="js/logica.js" defer></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-50 text-gray-800">
-  <div class="p-4 max-w-5xl mx-auto">
+<body class="bg-blue-50 text-gray-800">
+  <div class="p-4 max-w-6xl mx-auto">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-blue-900">Controle de Logística IPEV</h1>
-      <a href="index.html" class="bg-blue-600 text-white px-3 py-1 rounded shadow hover:bg-blue-700 text-sm">Voltar ao Menu</a>
+      <h1 class="text-2xl font-bold text-blue-900 flex items-center">
+        <img src="Logo Ipev Registrado.jpg" alt="Logo IPEV" class="h-10 mr-2" />
+        Controle de Logística IPEV
+      </h1>
+      <a href="index.html" class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 text-sm">Voltar ao Menu</a>
     </div>
 
     <div class="bg-white shadow-md rounded p-4 mb-6">
@@ -20,83 +23,66 @@
           <label for="data" class="block text-sm font-medium">Data</label>
           <input type="date" id="data" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
         </div>
-        <div class="col-span-2 flex gap-2 items-end">
-          <div class="w-full">
+        <div class="flex items-end gap-2">
+          <div class="flex-1">
             <label for="motorista" class="block text-sm font-medium">Motorista</label>
             <select id="motorista" onchange="atualizarPlaca()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></select>
           </div>
-          <button onclick="abrirGerenciar()" class="bg-blue-600 text-white px-3 py-2 rounded shadow hover:bg-blue-700 mt-6">Gerenciar</button>
+          <button onclick="abrirGerenciar()" class="h-10 mb-1 bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 text-sm">Gerenciar</button>
         </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
         <div>
-          <label for="placa" class="block text-sm font-medium">Placa</label>
+          <label for="placa" class="block text-sm font-medium">Placa do veículo</label>
           <input type="text" id="placa" readonly class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100" />
         </div>
-        <div>
-          <label for="rota" class="block text-sm font-medium">Rota</label>
-          <select id="rota" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-            <option value="">Selecione</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
-            <option value="E">E</option>
-            <option value="F">F</option>
-            <option value="G">G</option>
-            <option value="H">H</option>
-            <option value="A/D">A/D</option>
-            <option value="B/F">B/F</option>
-            <option value="C/E">C/E</option>
-            <option value="">(sem rota)</option>
-          </select>
-        </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
         <div>
-          <label for="chegada1" class="block text-sm font-medium">Chegada 1</label>
+          <label for="rota" class="block text-sm font-medium">Rota</label>
+          <input type="text" id="rota" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+        </div>
+        <div>
+          <label for="chegada1" class="block text-sm font-medium">Chegada da 1ª rota</label>
           <input type="time" id="chegada1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
         </div>
         <div>
-          <label for="chegada2" class="block text-sm font-medium">Chegada 2</label>
+          <label for="chegada2" class="block text-sm font-medium">Chegada da 2ª rota</label>
           <input type="time" id="chegada2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
-        </div>
-        <div>
-          <label for="kmAdicional" class="block text-sm font-medium">KM Adicional</label>
-          <input type="number" id="kmAdicional" value="10" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
         <div>
-          <label for="kmRota1" class="block text-sm font-medium">KM Rota 1</label>
+          <label for="kmRota1" class="block text-sm font-medium">1ª rota (km)</label>
           <input type="number" id="kmRota1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
         </div>
         <div>
-          <label for="kmRota2" class="block text-sm font-medium">KM Rota 2</label>
+          <label for="kmRota2" class="block text-sm font-medium">2ª rota (km)</label>
           <input type="number" id="kmRota2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
         </div>
         <div>
-          <label for="combustivelConsumido" class="block text-sm font-medium">Combustível Consumido (L)</label>
-          <input type="number" id="combustivelConsumido" readonly class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100" />
+          <label for="kmAdicional" class="block text-sm font-medium">Adicional (km)</label>
+          <input type="number" id="kmAdicional" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" value="10" />
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
         <div>
-          <label for="valorGasolina" class="block text-sm font-medium">Valor da Gasolina</label>
-          <input type="number" id="valorGasolina" value="5.99" step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+          <label for="combustivelConsumido" class="block text-sm font-medium">Combustível consumido (litros)</label>
+          <input type="number" id="combustivelConsumido" readonly class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100" />
         </div>
         <div>
-          <label for="valorTotalGasto" class="block text-sm font-medium">Valor Total</label>
+          <label for="valorGasolina" class="block text-sm font-medium">Valor da gasolina (R$)</label>
+          <input type="number" step="0.01" id="valorGasolina" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" value="5.99" />
+        </div>
+        <div>
+          <label for="valorTotalGasto" class="block text-sm font-medium">Valor total gasto (R$)</label>
           <input type="number" id="valorTotalGasto" readonly class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100" />
         </div>
       </div>
 
-      <div class="flex justify-end mt-6">
-        <button id="btnSalvar" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Salvar</button>
+      <div class="flex justify-center items-center mt-6">
+        <button id="btnSalvar" class="bg-blue-700 text-white px-6 py-2 rounded shadow hover:bg-blue-800">💾 Salvar</button>
       </div>
     </div>
 
