@@ -1,5 +1,3 @@
-// logica.js
-
 import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
 
 const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
@@ -9,7 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 document.addEventListener('DOMContentLoaded', async () => {
   await carregarMotoristas();
   carregarListaRegistros();
-  document.getElementById('data').value = '';
+  // Removido: document.getElementById('data').value = '';
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
 
@@ -57,17 +55,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     carregarListaRegistros();
   });
 
-  // Detecta mudança de motorista para atualizar a placa
   document.getElementById('motorista').addEventListener('change', atualizarPlaca);
 
-  // 🔽 ADICIONADO: Atualização ao mudar data
+  // Atualiza lista e exibição ao mudar data
   document.getElementById('data').addEventListener('change', () => {
     const dataISO = document.getElementById('data').value;
     if (dataISO) {
-      document.getElementById('minhaDiv').textContent = formatarDataBR(dataISO);
       carregarListaRegistros();
-    } else {
-      document.getElementById('minhaDiv').textContent = '';
     }
   });
 });
@@ -105,7 +99,6 @@ function atualizarPlaca() {
     });
 }
 
-// ✅ Botão GERENCIAR
 function abrirGerenciar() {
   document.getElementById('gerenciarMotoristasBox').classList.remove('hidden');
   carregarListaGerenciamento();
@@ -181,12 +174,6 @@ async function carregarListaRegistros() {
     ul.appendChild(li);
   });
   container.appendChild(ul);
-}
-
-// 🔽 ADICIONADO: Função para formatar data
-function formatarDataBR(dataISO) {
-  const [ano, mes, dia] = dataISO.split('-');
-  return `${dia}/${mes}/${ano}`;
 }
 
 window.abrirGerenciar = abrirGerenciar;
