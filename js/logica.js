@@ -151,3 +151,7 @@ async function carregarListaRegistros() {
   });
   container.appendChild(ul);
 }
+window.abrirGerenciar = abrirGerenciar;
+window.fecharGerenciar = fecharGerenciar;
+window.incluirMotorista = incluirMotorista;
+
