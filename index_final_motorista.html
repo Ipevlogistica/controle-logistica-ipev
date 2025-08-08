@@ -16,65 +16,65 @@
   <form id="formulario" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded shadow">
     <label class="block">
       <span class="text-gray-700">Data</span>
-      <input type="date" id="data" class="mt-1 block w-full rounded border-gray-300" />
+      <input type="date" id="data" class="mt-1 block w-40 rounded border-gray-300" />
     </label>
 
     <label class="block col-span-2">
       <span class="text-gray-700">Motorista</span>
       <div class="flex">
-        <select id="motorista" class="mt-1 block w-full rounded border-gray-300" onchange="atualizarPlaca()"></select>
+        <select id="motorista" class="mt-1 block w-64 rounded border-gray-300" onchange="atualizarPlaca()"></select>
         <button type="button" onclick="abrirGerenciar()" class="ml-2 bg-yellow-500 text-white px-4 py-2 rounded">Gerenciar</button>
       </div>
     </label>
 
     <label class="block">
       <span class="text-gray-700">Placa</span>
-      <input type="text" id="placa" class="mt-1 block w-full rounded border-gray-300 bg-gray-100" readonly />
+      <input type="text" id="placa" class="mt-1 block w-40 rounded border-gray-300 bg-gray-100" readonly />
     </label>
 
     <label class="block">
       <span class="text-gray-700">Rota</span>
-      <select id="rota" class="mt-1 block w-full rounded border-gray-300"></select>
+      <select id="rota" class="mt-1 block w-32 rounded border-gray-300"></select>
     </label>
 
     <label class="block">
       <span class="text-gray-700">KM Adicional</span>
-      <input type="number" step="0.01" id="kmAdicional" class="mt-1 block w-full rounded border-gray-300" />
+      <input type="number" step="0.01" id="kmAdicional" class="mt-1 block w-28 rounded border-gray-300" />
     </label>
 
     <label class="block">
       <span class="text-gray-700">Valor da Gasolina</span>
-      <input type="number" step="0.01" id="valorGasolina" class="mt-1 block w-full rounded border-gray-300" />
+      <input type="number" step="0.01" id="valorGasolina" class="mt-1 block w-28 rounded border-gray-300" />
     </label>
 
     <label class="block">
       <span class="text-gray-700">KM 1</span>
-      <input type="number" step="0.01" id="km1" class="mt-1 block w-full rounded border-gray-300" />
+      <input type="number" step="0.01" id="km1" class="mt-1 block w-28 rounded border-gray-300" />
     </label>
 
     <label class="block">
       <span class="text-gray-700">KM 2</span>
-      <input type="number" step="0.01" id="km2" class="mt-1 block w-full rounded border-gray-300" />
+      <input type="number" step="0.01" id="km2" class="mt-1 block w-28 rounded border-gray-300" />
     </label>
 
     <label class="block">
       <span class="text-gray-700">Chegada 1</span>
-      <input type="time" id="chegada1" class="mt-1 block w-full rounded border-gray-300" />
+      <input type="time" id="chegada1" class="mt-1 block w-28 rounded border-gray-300" />
     </label>
 
     <label class="block">
       <span class="text-gray-700">Chegada 2</span>
-      <input type="time" id="chegada2" class="mt-1 block w-full rounded border-gray-300" />
+      <input type="time" id="chegada2" class="mt-1 block w-28 rounded border-gray-300" />
     </label>
 
     <label class="block">
       <span class="text-gray-700">Litros</span>
-      <input type="number" step="0.01" id="litros" readonly class="mt-1 block w-full rounded border-gray-300 bg-gray-100" />
+      <input type="number" step="0.01" id="litros" readonly class="mt-1 block w-28 rounded border-gray-300 bg-gray-100" />
     </label>
 
     <label class="block">
       <span class="text-gray-700">Valor Total</span>
-      <input type="number" step="0.01" id="valorTotal" readonly class="mt-1 block w-full rounded border-gray-300 bg-gray-100" />
+      <input type="number" step="0.01" id="valorTotal" readonly class="mt-1 block w-28 rounded border-gray-300 bg-gray-100" />
     </label>
 
     <div class="col-span-3">
