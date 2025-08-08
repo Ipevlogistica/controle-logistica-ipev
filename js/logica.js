@@ -8,7 +8,7 @@ const supabase = createClient(
 
 let motoristas = {};
 
-// Carrega lista de motoristas no <select>
+// Carrega motoristas no <select>
 async function carregarMotoristas() {
   const { data, error } = await supabase.from('motoristas').select('*');
   if (error) return alert("Erro ao carregar motoristas: " + error.message);
@@ -25,32 +25,52 @@ async function carregarMotoristas() {
   atualizarListaMotoristas();
 }
 
-// Salva novo motorista no Supabase
+// Salvar novo motorista
 async function salvarMotorista(nome, placa) {
   const { error } = await supabase.from('motoristas').insert([{ nome, placa }]);
   if (error) alert("Erro ao salvar motorista: " + error.message);
 }
 
-// Remove motorista
+// Excluir motorista
 async function deletarMotorista(nome) {
   const { error } = await supabase.from('motoristas').delete().eq('nome', nome);
   if (error) alert("Erro ao excluir motorista: " + error.message);
 }
 
-// Incluir novo motorista no modal
-function incluirMotorista() {
+// Incluir motorista
+async function incluirMotorista() {
   const nome = document.getElementById("novoMotorista").value.trim();
   const placa = document.getElementById("novaPlaca").value.trim();
-  if (nome && placa && confirm(`Deseja incluir "${nome}" com placa "${placa}"?`)) {
-    salvarMotorista(nome, placa).then(() => {
-      document.getElementById("novoMotorista").value = "";
-      document.getElementById("novaPlaca").value = "";
-      carregarMotoristas();
-    });
+
+  if (!nome || !placa) {
+    alert("Preencha nome e placa.");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("motoristas")
+    .select("*")
+    .or(`nome.eq.${nome},placa.eq.${placa}`);
+
+  if (error) {
+    alert("Erro ao verificar duplicidade: " + error.message);
+    return;
+  }
+
+  if (data.length > 0) {
+    alert("Já existe um motorista com esse nome ou essa placa.");
+    return;
+  }
+
+  if (confirm(`Deseja incluir "${nome}" com placa "${placa}"?`)) {
+    await salvarMotorista(nome, placa);
+    document.getElementById("novoMotorista").value = "";
+    document.getElementById("novaPlaca").value = "";
+    carregarMotoristas();
   }
 }
 
-// Excluir motorista no modal
+// Excluir do modal
 function excluirMotorista(nome) {
   if (confirm(`Deseja excluir "${nome}"?`)) {
     deletarMotorista(nome).then(() => {
@@ -60,7 +80,7 @@ function excluirMotorista(nome) {
   }
 }
 
-// Atualiza lista de motoristas no modal
+// Lista no modal
 function atualizarListaMotoristas() {
   const lista = document.getElementById("listaMotoristas");
   lista.innerHTML = "";
@@ -75,23 +95,21 @@ function atualizarListaMotoristas() {
   }
 }
 
-// Abrir modal
+// Abrir e fechar modal
 function abrirGerenciar() {
   document.getElementById("gerenciarMotoristasBox").classList.remove("hidden");
 }
-
-// Fechar modal
 function fecharGerenciar() {
   document.getElementById("gerenciarMotoristasBox").classList.add("hidden");
 }
 
-// Atualiza campo placa ao selecionar motorista
+// Atualiza placa
 function atualizarPlaca() {
   const nome = document.getElementById("motorista").value;
   document.getElementById("placa").value = motoristas[nome] || "";
 }
 
-// Cálculo de combustível e valor
+// Cálculos
 function calcularLitrosPorKm() {
   const km1 = parseFloat(document.getElementById("kmRota1")?.value) || 0;
   const km2 = parseFloat(document.getElementById("kmRota2")?.value) || 0;
@@ -100,18 +118,36 @@ function calcularLitrosPorKm() {
   document.getElementById("combustivelConsumido").value = litros.toFixed(2);
   calcularValorTotal();
 }
-
 function calcularValorTotal() {
   const litros = parseFloat(document.getElementById("combustivelConsumido").value) || 0;
   const preco = parseFloat(document.getElementById("valorGasolina").value) || 0;
   document.getElementById("valorTotalGasto").value = (litros * preco).toFixed(2);
 }
 
-// Salva o formulário no Supabase
+// SALVAR — agora com verificação de duplicidade
 document.getElementById("btnSalvar").addEventListener("click", async () => {
+  const dataSelecionada = document.getElementById("data").value;
+  const motorista = document.getElementById("motorista").value;
+
+  const { data: registrosExistentes, error: erroBusca } = await supabase
+    .from("controle_diario")
+    .select("*")
+    .eq("data", dataSelecionada)
+    .eq("motorista", motorista);
+
+  if (erroBusca) {
+    alert("Erro ao verificar duplicidade: " + erroBusca.message);
+    return;
+  }
+
+  if (registrosExistentes.length > 0) {
+    alert(`Este motorista já foi cadastrado no dia ${dataSelecionada}.`);
+    return;
+  }
+
   const data = {
-    data: document.getElementById("data").value,
-    motorista: document.getElementById("motorista").value,
+    data: dataSelecionada,
+    motorista,
     placa: document.getElementById("placa").value,
     rota: document.getElementById("rota").value,
     chegada1: document.getElementById("chegada1").value,
@@ -208,7 +244,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Expor funções para uso no HTML
+// Torna as funções acessíveis via HTML
 window.abrirGerenciar = abrirGerenciar;
 window.fecharGerenciar = fecharGerenciar;
 window.incluirMotorista = incluirMotorista;
