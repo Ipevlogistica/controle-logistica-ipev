@@ -3,7 +3,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   'https://ilsbyrvnrkutwynujfhs.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZya3V0d3ludWpmaHMiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc1NDM0MDA0MSwiZXhwIjoyMDY5OTE2MDQxfQ.o56R-bf1Nt3PiqMZbG_ghEPYZzPrnEU-jCdYkKyjJ1TQ'
 );
 
 let motoristas = {};
@@ -86,9 +86,10 @@ function atualizarListaMotoristas() {
   });
 }
 
-// Rotas fixas
+// Rotas fixas e valores padrão ao carregar página
 window.onload = () => {
   carregarMotoristas();
+
   const rotaSelect = document.getElementById("rota");
   if (rotaSelect && rotaSelect.tagName.toLowerCase() === 'select') {
     const rotas = ["A", "B", "C", "D", "E", "F", "G", "H", "A/D", "B/G"];
@@ -100,6 +101,8 @@ window.onload = () => {
     });
   }
 
-  document.getElementById("valorGasolina").value = 5.99;
-  document.getElementById("kmAdicional").value = 10;
+  const gasolina = document.getElementById("valorGasolina");
+  const adicional = document.getElementById("kmAdicional");
+  if (gasolina) gasolina.value = 5.99;
+  if (adicional) adicional.value = 10;
 };
