@@ -92,7 +92,7 @@ function atualizarPlaca() {
 
 function abrirGerenciar() {
   document.getElementById('gerenciarMotoristasBox').classList.remove('hidden');
-  carregarListaGerenciamento();
+  carregarListaGerenciamento(); // <- carrega os motoristas já cadastrados
 }
 
 function fecharGerenciar() {
