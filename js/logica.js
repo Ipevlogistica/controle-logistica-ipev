@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await carregarMotoristas();
   carregarListaRegistros();
 
+  document.getElementById('data').value = '';
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
 
@@ -59,11 +60,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('valorGasolina').value = 5.99;
     carregarListaRegistros();
   });
+
+  document.getElementById('motorista').addEventListener('change', atualizarPlaca);
 });
 
 async function carregarMotoristas() {
   const select = document.getElementById('motorista');
-  select.innerHTML = '<option value="" disabled selected>Selecione</option>';
+  select.innerHTML = '<option value="">Selecione</option>';
   const { data: motoristas } = await supabase.from('motoristas').select('*');
   motoristas.forEach(({ nome }) => {
     const option = document.createElement('option');
@@ -71,22 +74,19 @@ async function carregarMotoristas() {
     option.textContent = nome;
     select.appendChild(option);
   });
-  atualizarPlaca();
 }
 
 function atualizarPlaca() {
   const motoristaSelecionado = document.getElementById('motorista').value;
-
   if (!motoristaSelecionado) {
     document.getElementById('placa').value = '';
     return;
   }
-
   supabase.from('motoristas')
     .select('placa')
     .eq('nome', motoristaSelecionado)
     .then(({ data }) => {
-      document.getElementById('placa').value = data?.[0]?.placa || '';
+      document.getElementById('placa').value = data[0]?.placa || '';
     });
 }
 
@@ -132,7 +132,7 @@ async function carregarListaRegistros() {
   const container = document.getElementById('listaRegistrosPorData');
   container.innerHTML = '';
 
-  if (!registros || registros.length === 0) {
+  if (registros.length === 0) {
     container.textContent = 'Nenhum registro encontrado para esta data.';
     return;
   }
