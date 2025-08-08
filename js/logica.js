@@ -41,6 +41,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('kmAdicional').value = 10;
         document.getElementById('valorGasolina').value = 5.99;
         return;
+      } else {
+        const { error: erroExclusao } = await supabase
+          .from('controle_diario')
+          .delete()
+          .eq('data', data)
+          .eq('motorista', motorista);
+        if (erroExclusao) {
+          alert('Erro ao excluir registro anterior.');
+          console.error(erroExclusao);
+          return;
+        }
       }
     }
 
@@ -75,13 +86,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.getElementById('motorista').addEventListener('change', atualizarPlaca);
+
   document.getElementById('data').addEventListener('change', () => {
     carregarListaRegistros();
-  });
-
-  // ⬇️ Novo: recalcular sempre que os campos relevantes forem alterados
-  ['km1', 'km2', 'kmAdicional', 'valorGasolina'].forEach(id => {
-    document.getElementById(id).addEventListener('input', atualizarCalculos);
   });
 });
 
@@ -175,7 +182,7 @@ async function carregarListaRegistros() {
   const dataSelecionada = document.getElementById('data').value;
   const { data: registros, error } = await supabase
     .from('controle_diario')
-    .select('motorista, rota, km1')
+    .select('motorista, rota, kmTotal')
     .eq('data', dataSelecionada);
 
   const container = document.getElementById('listaRegistrosPorData');
@@ -195,29 +202,12 @@ async function carregarListaRegistros() {
   const ul = document.createElement('ul');
   registros.forEach(r => {
     const li = document.createElement('li');
-    li.textContent = `Motorista: ${r.motorista}, Rota: ${r.rota}, KM1: ${r.km1}`;
+    li.textContent = `Motorista: ${r.motorista}, Rota: ${r.rota}, KM Total: ${r.kmTotal}`;
     ul.appendChild(li);
   });
   container.appendChild(ul);
 }
 
-// ⬇️ NOVO: função que atualiza os campos calculados automaticamente
-function atualizarCalculos() {
-  const km1 = parseFloat(document.getElementById('km1').value) || 0;
-  const km2 = parseFloat(document.getElementById('km2').value) || 0;
-  const kmAdicional = parseFloat(document.getElementById('kmAdicional').value) || 0;
-  const valorGasolina = parseFloat(document.getElementById('valorGasolina').value) || 0;
-
-  const kmTotal = (km1 + km2 + kmAdicional).toFixed(2);
-  const litros = (kmTotal / 35).toFixed(2);
-  const valorTotal = (litros * valorGasolina).toFixed(2);
-
-  document.getElementById('kmTotal').value = kmTotal;
-  document.getElementById('litros').value = litros;
-  document.getElementById('valorTotal').value = valorTotal;
-}
-
-// exportações globais para o HTML
 window.abrirGerenciar = abrirGerenciar;
 window.fecharGerenciar = fecharGerenciar;
 window.incluirMotorista = incluirMotorista;
