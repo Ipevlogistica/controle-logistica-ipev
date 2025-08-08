@@ -185,4 +185,6 @@
       if (dataSelecionada) buscarRegistrosPorData(dataSelecionada);
     });
   });
+console.log("Arquivo logica.js carregado com sucesso.");
+
 </script>
