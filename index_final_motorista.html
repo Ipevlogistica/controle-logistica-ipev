@@ -1,100 +1,103 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Controle de Logística IPEV</title>
-  <script type="module" src="logica.js" defer></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  <script type="module" src="js/logica.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-
-<body class="bg-gray-100">
-  <div class="flex justify-between items-center p-4 border-b bg-white">
-    <div class="flex items-center">
-      <img src="Logo Ipev Registrado.jpg" alt="Logo IPEV" class="w-10 h-10 mr-4">
-      <h1 class="text-xl font-bold text-blue-900">Controle de Logística IPEV</h1>
-    </div>
-    <a href="index.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Voltar ao Menu</a>
+<body class="bg-blue-100 p-4">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-2xl font-bold text-blue-900">Controle de Logística IPEV</h1>
+    <a href="index.html" class="bg-blue-700 text-white px-4 py-2 rounded">Voltar ao Menu</a>
   </div>
 
-  <div class="max-w-5xl mx-auto p-4">
-    <div class="bg-white p-6 rounded-lg shadow-md">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div>
-          <label class="block text-sm font-medium">Data</label>
-          <input type="date" id="data" class="mt-1 w-full border rounded px-2 py-1">
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Motorista</label>
-          <div class="flex gap-2">
-            <select id="motorista" onchange="atualizarPlaca()" class="mt-1 w-full border rounded px-2 py-1"></select>
-            <button onclick="abrirGerenciar()" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Gerenciar</button>
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Placa</label>
-          <input type="text" id="placa" class="mt-1 w-full border rounded px-2 py-1" readonly>
-        </div>
+  <form id="formulario" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded shadow">
+    <label class="block">
+      <span class="text-gray-700">Data</span>
+      <input type="date" id="data" class="mt-1 block w-full rounded border-gray-300" />
+    </label>
 
-        <div>
-          <label class="block text-sm font-medium">Rota</label>
-          <select id="rota" class="mt-1 w-full border rounded px-2 py-1"></select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Chegada 1</label>
-          <input type="time" id="chegada1" class="mt-1 w-full border rounded px-2 py-1">
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Chegada 2</label>
-          <input type="time" id="chegada2" class="mt-1 w-full border rounded px-2 py-1">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium">KM Rota 1</label>
-          <input type="number" id="kmRota1" class="mt-1 w-full border rounded px-2 py-1">
-        </div>
-        <div>
-          <label class="block text-sm font-medium">KM Rota 2</label>
-          <input type="number" id="kmRota2" class="mt-1 w-full border rounded px-2 py-1">
-        </div>
-        <div>
-          <label class="block text-sm font-medium">KM Adicional</label>
-          <input type="number" id="kmAdicional" class="mt-1 w-full border rounded px-2 py-1" value="10">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium">Combustível Consumido (L)</label>
-          <input type="text" id="litros" class="mt-1 w-full border rounded px-2 py-1 bg-gray-100" readonly>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Valor da Gasolina</label>
-          <input type="number" step="0.01" id="valorGasolina" class="mt-1 w-full border rounded px-2 py-1" value="5.99">
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Valor Total</label>
-          <input type="text" id="valorTotal" class="mt-1 w-full border rounded px-2 py-1 bg-gray-100" readonly>
-        </div>
+    <label class="block col-span-2">
+      <span class="text-gray-700">Motorista</span>
+      <div class="flex">
+        <select id="motorista" class="mt-1 block w-full rounded border-gray-300" onchange="atualizarPlaca()"></select>
+        <button type="button" onclick="abrirGerenciar()" class="ml-2 bg-yellow-500 text-white px-4 py-2 rounded">Gerenciar</button>
       </div>
+    </label>
 
-      <div class="text-center">
-        <button id="salvar" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Salvar</button>
-      </div>
+    <label class="block">
+      <span class="text-gray-700">Placa</span>
+      <input type="text" id="placa" class="mt-1 block w-full rounded border-gray-300 bg-gray-100" readonly />
+    </label>
+
+    <label class="block">
+      <span class="text-gray-700">Rota</span>
+      <select id="rota" class="mt-1 block w-full rounded border-gray-300"></select>
+    </label>
+
+    <label class="block">
+      <span class="text-gray-700">KM Adicional</span>
+      <input type="number" step="0.01" id="kmAdicional" class="mt-1 block w-full rounded border-gray-300" />
+    </label>
+
+    <label class="block">
+      <span class="text-gray-700">Valor da Gasolina</span>
+      <input type="number" step="0.01" id="valorGasolina" class="mt-1 block w-full rounded border-gray-300" />
+    </label>
+
+    <label class="block">
+      <span class="text-gray-700">KM 1</span>
+      <input type="number" step="0.01" id="km1" class="mt-1 block w-full rounded border-gray-300" />
+    </label>
+
+    <label class="block">
+      <span class="text-gray-700">KM 2</span>
+      <input type="number" step="0.01" id="km2" class="mt-1 block w-full rounded border-gray-300" />
+    </label>
+
+    <label class="block">
+      <span class="text-gray-700">Chegada 1</span>
+      <input type="time" id="chegada1" class="mt-1 block w-full rounded border-gray-300" />
+    </label>
+
+    <label class="block">
+      <span class="text-gray-700">Chegada 2</span>
+      <input type="time" id="chegada2" class="mt-1 block w-full rounded border-gray-300" />
+    </label>
+
+    <label class="block">
+      <span class="text-gray-700">Litros</span>
+      <input type="number" step="0.01" id="litros" readonly class="mt-1 block w-full rounded border-gray-300 bg-gray-100" />
+    </label>
+
+    <label class="block">
+      <span class="text-gray-700">Valor Total</span>
+      <input type="number" step="0.01" id="valorTotal" readonly class="mt-1 block w-full rounded border-gray-300 bg-gray-100" />
+    </label>
+
+    <div class="col-span-3">
+      <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded mt-4">Salvar</button>
     </div>
+  </form>
 
-    <div id="gerenciarMotoristasBox" class="hidden mt-6 bg-white p-4 rounded shadow">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-bold">Gerenciar Motoristas</h2>
-        <button onclick="fecharGerenciar()" class="text-red-600 font-bold">X</button>
+  <div class="mt-6 bg-white p-4 rounded shadow">
+    <h2 class="text-lg font-bold mb-2">Registros do dia</h2>
+    <div id="listaRegistrosPorData"></div>
+  </div>
+
+  <div id="gerenciarMotoristasBox" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white p-6 rounded shadow-lg w-full max-w-md">
+      <h3 class="text-lg font-bold mb-4">Gerenciar Motoristas</h3>
+      <div class="mb-2">
+        <input type="text" id="novoMotorista" placeholder="Nome do Motorista" class="w-full mb-2 rounded border-gray-300" />
+        <input type="text" id="novaPlaca" placeholder="Placa" class="w-full mb-2 rounded border-gray-300" />
+        <button onclick="incluirMotorista()" class="bg-blue-600 text-white px-4 py-2 rounded">Incluir</button>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input type="text" id="novoMotorista" placeholder="Nome do motorista" class="border rounded px-2 py-1">
-        <input type="text" id="novaPlaca" placeholder="Placa do veículo" class="border rounded px-2 py-1">
-        <button onclick="incluirMotorista()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 col-span-1 md:col-span-2">Incluir Motorista</button>
-      </div>
-      <div id="listaMotoristas" class="mt-4"></div>
+      <div id="listaMotoristas" class="mt-4 max-h-40 overflow-y-auto"></div>
+      <button onclick="fecharGerenciar()" class="mt-4 bg-red-600 text-white px-4 py-2 rounded">Fechar</button>
     </div>
   </div>
 </body>
-
 </html>
