@@ -95,7 +95,6 @@ function atualizarListaMotoristas() {
   }
 }
 
-// Abrir e fechar modal
 function abrirGerenciar() {
   document.getElementById("gerenciarMotoristasBox").classList.remove("hidden");
 }
@@ -103,13 +102,11 @@ function fecharGerenciar() {
   document.getElementById("gerenciarMotoristasBox").classList.add("hidden");
 }
 
-// Atualiza placa
 function atualizarPlaca() {
   const nome = document.getElementById("motorista").value;
   document.getElementById("placa").value = motoristas[nome] || "";
 }
 
-// Cálculos
 function calcularLitrosPorKm() {
   const km1 = parseFloat(document.getElementById("kmRota1")?.value) || 0;
   const km2 = parseFloat(document.getElementById("kmRota2")?.value) || 0;
@@ -118,13 +115,19 @@ function calcularLitrosPorKm() {
   document.getElementById("combustivelConsumido").value = litros.toFixed(2);
   calcularValorTotal();
 }
+
 function calcularValorTotal() {
   const litros = parseFloat(document.getElementById("combustivelConsumido").value) || 0;
   const preco = parseFloat(document.getElementById("valorGasolina").value) || 0;
   document.getElementById("valorTotalGasto").value = (litros * preco).toFixed(2);
 }
 
+// Botão Salvar com validação de duplicidade e opção de edição
+
 // SALVAR — agora com verificação de duplicidade
+
+// SALVAR — agora com verificação de duplicidade e opção de edição
+
 document.getElementById("btnSalvar").addEventListener("click", async () => {
   const dataSelecionada = document.getElementById("data").value;
   const motorista = document.getElementById("motorista").value;
@@ -141,7 +144,20 @@ document.getElementById("btnSalvar").addEventListener("click", async () => {
   }
 
   if (registrosExistentes.length > 0) {
-    alert(`Este motorista já foi cadastrado no dia ${dataSelecionada}.`);
+    const desejaEditar = confirm(`Este motorista já foi cadastrado no dia ${dataSelecionada}.\n\nDeseja editar o registro existente?`);
+    if (desejaEditar) {
+      alert("Função de edição ainda não implementada.");
+    } else {
+      document.getElementById("motorista").value = "";
+      document.getElementById("placa").value = "";
+      document.getElementById("rota").value = "";
+      document.getElementById("chegada1").value = "";
+      document.getElementById("chegada2").value = "";
+      document.getElementById("kmRota1").value = "";
+      document.getElementById("kmRota2").value = "";
+      document.getElementById("combustivelConsumido").value = "";
+      document.getElementById("valorTotalGasto").value = "";
+    }
     return;
   }
 
@@ -178,7 +194,7 @@ document.getElementById("btnSalvar").addEventListener("click", async () => {
   }
 });
 
-// Exibe registros por data
+// Exibir registros por data
 async function buscarRegistrosPorData(dataSelecionada) {
   const { data, error } = await supabase
     .from("controle_diario")
@@ -231,7 +247,6 @@ async function buscarRegistrosPorData(dataSelecionada) {
   `;
 }
 
-// Inicialização
 window.addEventListener("DOMContentLoaded", () => {
   carregarMotoristas();
   ['kmRota1', 'kmRota2', 'kmAdicional'].forEach(id => {
@@ -244,7 +259,6 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Torna as funções acessíveis via HTML
 window.abrirGerenciar = abrirGerenciar;
 window.fecharGerenciar = fecharGerenciar;
 window.incluirMotorista = incluirMotorista;
