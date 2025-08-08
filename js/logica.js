@@ -1,4 +1,4 @@
-""<script type="module">
+<script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
   const supabase = createClient(
     'https://ilsbyrvnrkutwynujfhs.supabase.co',
@@ -6,19 +6,23 @@
   );
 
   let motoristas = {};
-  let idEdicao = null;
+  let modoEdicao = false;
+  let idEmEdicao = null;
 
   async function carregarMotoristas() {
     const { data, error } = await supabase.from('motoristas').select('*');
     if (error) return alert("Erro ao carregar motoristas: " + error.message);
     motoristas = {};
-    document.getElementById("motorista").innerHTML = '<option value="">Selecione</option>';
+    const select = document.getElementById("motorista");
+    if (select) select.innerHTML = '<option value="">Selecione</option>';
     data.forEach(({ nome, placa }) => {
       motoristas[nome] = placa;
-      const option = document.createElement("option");
-      option.value = nome;
-      option.textContent = nome;
-      document.getElementById("motorista").appendChild(option);
+      if (select) {
+        const option = document.createElement("option");
+        option.value = nome;
+        option.textContent = nome;
+        select.appendChild(option);
+      }
     });
     atualizarListaMotoristas();
   }
@@ -54,6 +58,7 @@
 
   function atualizarListaMotoristas() {
     const lista = document.getElementById("listaMotoristas");
+    if (!lista) return;
     lista.innerHTML = "";
     for (const nome in motoristas) {
       const item = document.createElement("div");
@@ -66,8 +71,8 @@
     }
   }
 
-  window.abrirGerenciar = () => document.getElementById("gerenciarMotoristasBox").classList.remove("hidden");
-  window.fecharGerenciar = () => document.getElementById("gerenciarMotoristasBox").classList.add("hidden");
+  window.abrirGerenciar = () => document.getElementById("gerenciarMotoristasBox")?.classList.remove("hidden");
+  window.fecharGerenciar = () => document.getElementById("gerenciarMotoristasBox")?.classList.add("hidden");
 
   window.atualizarPlaca = () => {
     const nome = document.getElementById("motorista").value;
@@ -97,6 +102,8 @@
       .order("motorista", { ascending: true });
 
     const container = document.getElementById("listaRegistrosPorData");
+    if (!container) return;
+
     if (error || !data) {
       container.innerHTML = "<p class='text-red-600'>Erro ao carregar registros.</p>";
       return;
@@ -143,24 +150,58 @@
 
   document.getElementById("btnSalvar").addEventListener("click", async () => {
     const dataSelecionada = document.getElementById("data").value;
-    const motorista = document.getElementById("motorista").value;
+    const motoristaSelecionado = document.getElementById("motorista").value;
 
-    if (!dataSelecionada || !motorista) {
-      alert("Por favor, selecione a data e o motorista.");
+    if (modoEdicao && idEmEdicao) {
+      // Atualização
+      const dataAtualizada = coletarDadosFormulario();
+      const { error } = await supabase.from("controle_diario").update(dataAtualizada).eq("id", idEmEdicao);
+      if (error) {
+        alert("Erro ao atualizar: " + error.message);
+      } else {
+        alert("Registro atualizado com sucesso!");
+        limparFormulario();
+        modoEdicao = false;
+        idEmEdicao = null;
+      }
       return;
     }
 
+    // Verifica se já existe
     const { data: registrosExistentes, error } = await supabase
       .from("controle_diario")
       .select("*")
       .eq("data", dataSelecionada)
-      .eq("motorista", motorista);
+      .eq("motorista", motoristaSelecionado);
 
-    if (error) return alert("Erro ao verificar duplicidade: " + error.message);
+    if (registrosExistentes.length > 0) {
+      const desejaEditar = confirm(`Este motorista já foi cadastrado no dia ${dataSelecionada}.\n\nDeseja editar o registro existente?`);
+      if (desejaEditar) {
+        const registro = registrosExistentes[0];
+        preencherFormularioParaEdicao(registro);
+        modoEdicao = true;
+        idEmEdicao = registro.id;
+      } else {
+        limparFormulario();
+      }
+      return;
+    }
 
-    const dados = {
-      data: dataSelecionada,
-      motorista,
+    // Novo cadastro
+    const dados = coletarDadosFormulario();
+    const { error: erroInsercao } = await supabase.from("controle_diario").insert([dados]);
+    if (erroInsercao) {
+      alert("Erro ao salvar: " + erroInsercao.message);
+    } else {
+      alert("Dados salvos com sucesso!");
+      limparFormulario();
+    }
+  });
+
+  function coletarDadosFormulario() {
+    return {
+      data: document.getElementById("data").value,
+      motorista: document.getElementById("motorista").value,
       placa: document.getElementById("placa").value,
       rota: document.getElementById("rota").value,
       chegada1: document.getElementById("chegada1").value,
@@ -172,50 +213,36 @@
       valor_gasolina: +document.getElementById("valorGasolina").value || 0,
       valor_total_gasto: +document.getElementById("valorTotalGasto").value || 0,
     };
+  }
 
-    if (registrosExistentes.length > 0 && !idEdicao) {
-      const desejaEditar = confirm(`Este motorista já foi cadastrado no dia ${dataSelecionada}.\n\nDeseja editar o registro existente?`);
-      if (desejaEditar) {
-        const existente = registrosExistentes[0];
-        idEdicao = existente.id;
-        Object.entries(existente).forEach(([chave, valor]) => {
-          const campo = document.getElementById(chave);
-          if (campo) campo.value = valor;
-        });
-        document.getElementById("btnSalvar").textContent = "Atualizar";
-      } else {
-        ["motorista", "placa", "rota", "chegada1", "chegada2", "kmRota1", "kmRota2", "combustivelConsumido", "valorTotalGasto"].forEach(id => {
-          document.getElementById(id).value = "";
-        });
-      }
-      return;
-    }
+  function preencherFormularioParaEdicao(dado) {
+    document.getElementById("data").value = dado.data;
+    document.getElementById("motorista").value = dado.motorista;
+    document.getElementById("placa").value = dado.placa;
+    document.getElementById("rota").value = dado.rota;
+    document.getElementById("chegada1").value = dado.chegada1;
+    document.getElementById("chegada2").value = dado.chegada2;
+    document.getElementById("kmRota1").value = dado.km_rota1;
+    document.getElementById("kmRota2").value = dado.km_rota2;
+    document.getElementById("kmAdicional").value = dado.km_adicional;
+    document.getElementById("combustivelConsumido").value = dado.combustivel_consumido.toFixed(2);
+    document.getElementById("valorGasolina").value = dado.valor_gasolina.toFixed(2);
+    document.getElementById("valorTotalGasto").value = dado.valor_total_gasto.toFixed(2);
+  }
 
-    if (idEdicao) {
-      const { error: erroUpdate } = await supabase.from("controle_diario").update(dados).eq("id", idEdicao);
-      if (erroUpdate) {
-        alert("Erro ao atualizar: " + erroUpdate.message);
-      } else {
-        alert("Registro atualizado com sucesso!");
-        idEdicao = null;
-        document.getElementById("btnSalvar").textContent = "Salvar";
-      }
-    } else {
-      const { error: erroInsert } = await supabase.from("controle_diario").insert([dados]);
-      if (erroInsert) {
-        alert("Erro ao salvar: " + erroInsert.message);
-      } else {
-        alert("Dados salvos com sucesso!");
-      }
-    }
-
-    ["data", "motorista", "placa", "rota", "chegada1", "chegada2", "kmRota1", "kmRota2", "combustivelConsumido", "valorTotalGasto"].forEach(id => {
-      if (!['valorGasolina', 'kmAdicional'].includes(id)) {
-        const campo = document.getElementById(id);
-        if (campo) campo.value = "";
-      }
-    });
-  });
+  function limparFormulario() {
+    document.getElementById("data").value = "";
+    document.getElementById("motorista").value = "";
+    document.getElementById("placa").value = "";
+    document.getElementById("rota").value = "";
+    document.getElementById("chegada1").value = "";
+    document.getElementById("chegada2").value = "";
+    document.getElementById("kmRota1").value = "";
+    document.getElementById("kmRota2").value = "";
+    document.getElementById("combustivelConsumido").value = "";
+    document.getElementById("valorTotalGasto").value = "";
+    // mantêm kmAdicional e valorGasolina
+  }
 
   window.addEventListener("DOMContentLoaded", () => {
     carregarMotoristas();
