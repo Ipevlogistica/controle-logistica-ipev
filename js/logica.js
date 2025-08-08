@@ -7,20 +7,32 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 document.addEventListener('DOMContentLoaded', async () => {
   await carregarMotoristas();
   carregarListaRegistros();
-  // Removido: document.getElementById('data').value = '';
+  document.getElementById('data').value = ''; // para iniciar em branco
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
 
   document.getElementById('formulario').addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const data = document.getElementById('data').value;
     const motorista = document.getElementById('motorista').value;
 
-    const { data: registrosExistentes } = await supabase
+    if (!data || !motorista) {
+      alert('Preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    const { data: registrosExistentes, error: erroConsulta } = await supabase
       .from('controle_diario')
       .select('*')
       .eq('data', data)
       .eq('motorista', motorista);
+
+    if (erroConsulta) {
+      alert('Erro ao verificar duplicidade.');
+      console.error(erroConsulta);
+      return;
+    }
 
     if (registrosExistentes && registrosExistentes.length > 0) {
       const desejaEditar = confirm('Este motorista já foi cadastrado nesta data. Deseja editar o registro?');
@@ -44,9 +56,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const litros = ((km2 - km1 + kmAdicional) / 10).toFixed(2);
     const valorTotal = (litros * valorGasolina).toFixed(2);
 
-    await supabase.from('controle_diario').insert([
+    const { error: erroInsercao } = await supabase.from('controle_diario').insert([
       { data, motorista, placa, rota, kmAdicional, valorGasolina, km1, km2, chegada1, chegada2, litros, valorTotal }
     ]);
+
+    if (erroInsercao) {
+      alert('Erro ao salvar registro.');
+      console.error(erroInsercao);
+      return;
+    }
 
     alert('Registro salvo com sucesso!');
     document.getElementById('formulario').reset();
@@ -57,12 +75,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('motorista').addEventListener('change', atualizarPlaca);
 
-  // Atualiza lista e exibição ao mudar data
   document.getElementById('data').addEventListener('change', () => {
-    const dataISO = document.getElementById('data').value;
-    if (dataISO) {
-      carregarListaRegistros();
-    }
+    carregarListaRegistros();
   });
 });
 
@@ -154,13 +168,19 @@ async function carregarListaGerenciamento() {
 
 async function carregarListaRegistros() {
   const dataSelecionada = document.getElementById('data').value;
-  const { data: registros } = await supabase
+  const { data: registros, error } = await supabase
     .from('controle_diario')
     .select('motorista, rota, km1')
     .eq('data', dataSelecionada);
 
   const container = document.getElementById('listaRegistrosPorData');
   container.innerHTML = '';
+
+  if (error) {
+    container.textContent = 'Erro ao buscar registros.';
+    console.error(error);
+    return;
+  }
 
   if (!registros || registros.length === 0) {
     container.textContent = 'Nenhum registro encontrado para esta data.';
@@ -176,6 +196,7 @@ async function carregarListaRegistros() {
   container.appendChild(ul);
 }
 
+// Não há mais formatarDataBR nem minhaDiv
 window.abrirGerenciar = abrirGerenciar;
 window.fecharGerenciar = fecharGerenciar;
 window.incluirMotorista = incluirMotorista;
