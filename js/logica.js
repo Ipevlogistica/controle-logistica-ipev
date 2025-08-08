@@ -9,7 +9,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 document.addEventListener('DOMContentLoaded', async () => {
   await carregarMotoristas();
   carregarListaRegistros();
-  document.getElementById('data').valueAsDate = new Date();
+
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
 
@@ -63,14 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function carregarMotoristas() {
   const select = document.getElementById('motorista');
-  select.innerHTML = '';
-
-  // Adiciona manualmente a opção "Selecione"
-  const opcaoInicial = document.createElement('option');
-  opcaoInicial.value = '';
-  opcaoInicial.textContent = 'Selecione';
-  select.appendChild(opcaoInicial);
-
+  select.innerHTML = '<option value="" disabled selected>Selecione</option>';
   const { data: motoristas } = await supabase.from('motoristas').select('*');
   motoristas.forEach(({ nome }) => {
     const option = document.createElement('option');
@@ -78,6 +71,7 @@ async function carregarMotoristas() {
     option.textContent = nome;
     select.appendChild(option);
   });
+  atualizarPlaca();
 }
 
 function atualizarPlaca() {
@@ -95,7 +89,6 @@ function atualizarPlaca() {
       document.getElementById('placa').value = data?.[0]?.placa || '';
     });
 }
-
 
 function abrirGerenciar() {
   document.getElementById('gerenciarMotoristasBox').classList.remove('hidden');
