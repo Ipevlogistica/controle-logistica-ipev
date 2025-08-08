@@ -20,9 +20,12 @@
           <label for="data" class="block text-sm font-medium">Data</label>
           <input type="date" id="data" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
         </div>
-        <div>
+        <div class="relative">
           <label for="motorista" class="block text-sm font-medium">Motorista</label>
-          <select id="motorista" onchange="atualizarPlaca()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></select>
+          <div class="flex">
+            <select id="motorista" onchange="atualizarPlaca()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></select>
+            <button onclick="abrirGerenciar()" class="ml-2 px-3 text-sm text-blue-600 hover:underline">Gerenciar</button>
+          </div>
         </div>
         <div>
           <label for="placa" class="block text-sm font-medium">Placa</label>
@@ -35,9 +38,18 @@
           <label for="rota" class="block text-sm font-medium">Rota</label>
           <select id="rota" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
             <option value="">Selecione</option>
-            <option>A</option><option>B</option><option>C</option><option>D</option>
-            <option>E</option><option>F</option><option>G</option><option>H</option>
-            <option>A/D</option><option>B/F</option><option>C/E</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+            <option value="G">G</option>
+            <option value="H">H</option>
+            <option value="A/D">A/D</option>
+            <option value="C/E">C/E</option>
+            <option value="B/F">B/F</option>
+            <option value="Sem H">Sem H</option>
           </select>
         </div>
         <div>
@@ -61,7 +73,7 @@
         </div>
         <div>
           <label for="kmAdicional" class="block text-sm font-medium">KM Adicional</label>
-          <input type="number" id="kmAdicional" value="10" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+          <input type="number" id="kmAdicional" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" value="10" />
         </div>
       </div>
 
@@ -72,7 +84,7 @@
         </div>
         <div>
           <label for="valorGasolina" class="block text-sm font-medium">Valor da Gasolina</label>
-          <input type="number" id="valorGasolina" value="5.99" step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+          <input type="number" step="0.01" id="valorGasolina" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" value="5.99" />
         </div>
         <div>
           <label for="valorTotalGasto" class="block text-sm font-medium">Valor Total</label>
@@ -80,15 +92,14 @@
         </div>
       </div>
 
-      <div class="flex justify-between items-center mt-6">
+      <div class="flex justify-end mt-6">
         <button id="btnSalvar" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Salvar</button>
-        <button onclick="abrirGerenciar()" class="text-sm text-blue-600 hover:underline">Gerenciar Motoristas</button>
       </div>
     </div>
 
     <div class="bg-white p-4 rounded shadow" id="listaRegistrosPorData"></div>
 
-    <!-- Modal Gerenciar Motoristas -->
+    <!-- Modal -->
     <div id="gerenciarMotoristasBox" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center hidden">
       <div class="bg-white rounded-lg shadow p-6 w-full max-w-md">
         <div class="flex justify-between items-center mb-4">
