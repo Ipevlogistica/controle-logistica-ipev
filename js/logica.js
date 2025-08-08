@@ -82,17 +82,20 @@ async function carregarMotoristas() {
 
 function atualizarPlaca() {
   const motoristaSelecionado = document.getElementById('motorista').value;
-  if (motoristaSelecionado === '') {
+
+  if (!motoristaSelecionado) {
     document.getElementById('placa').value = '';
     return;
   }
+
   supabase.from('motoristas')
     .select('placa')
     .eq('nome', motoristaSelecionado)
     .then(({ data }) => {
-      document.getElementById('placa').value = data[0]?.placa || '';
+      document.getElementById('placa').value = data?.[0]?.placa || '';
     });
 }
+
 
 function abrirGerenciar() {
   document.getElementById('gerenciarMotoristasBox').classList.remove('hidden');
