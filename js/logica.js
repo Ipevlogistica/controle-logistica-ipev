@@ -25,19 +25,16 @@ async function carregarMotoristas() {
   atualizarListaMotoristas();
 }
 
-// Salvar novo motorista
 async function salvarMotorista(nome, placa) {
   const { error } = await supabase.from('motoristas').insert([{ nome, placa }]);
   if (error) alert("Erro ao salvar motorista: " + error.message);
 }
 
-// Excluir motorista
 async function deletarMotorista(nome) {
   const { error } = await supabase.from('motoristas').delete().eq('nome', nome);
   if (error) alert("Erro ao excluir motorista: " + error.message);
 }
 
-// Incluir motorista
 async function incluirMotorista() {
   const nome = document.getElementById("novoMotorista").value.trim();
   const placa = document.getElementById("novaPlaca").value.trim();
@@ -70,7 +67,6 @@ async function incluirMotorista() {
   }
 }
 
-// Excluir do modal
 function excluirMotorista(nome) {
   if (confirm(`Deseja excluir "${nome}"?`)) {
     deletarMotorista(nome).then(() => {
@@ -80,7 +76,6 @@ function excluirMotorista(nome) {
   }
 }
 
-// Lista no modal
 function atualizarListaMotoristas() {
   const lista = document.getElementById("listaMotoristas");
   lista.innerHTML = "";
@@ -121,12 +116,6 @@ function calcularValorTotal() {
   const preco = parseFloat(document.getElementById("valorGasolina").value) || 0;
   document.getElementById("valorTotalGasto").value = (litros * preco).toFixed(2);
 }
-
-// Botão Salvar com validação de duplicidade e opção de edição
-
-// SALVAR — agora com verificação de duplicidade
-
-// SALVAR — agora com verificação de duplicidade e opção de edição
 
 document.getElementById("btnSalvar").addEventListener("click", async () => {
   const dataSelecionada = document.getElementById("data").value;
@@ -194,7 +183,6 @@ document.getElementById("btnSalvar").addEventListener("click", async () => {
   }
 });
 
-// Exibir registros por data
 async function buscarRegistrosPorData(dataSelecionada) {
   const { data, error } = await supabase
     .from("controle_diario")
