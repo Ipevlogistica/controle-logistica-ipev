@@ -1,4 +1,4 @@
-<script type="module">
+""<script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
   const supabase = createClient(
     'https://ilsbyrvnrkutwynujfhs.supabase.co',
@@ -145,45 +145,18 @@
     const dataSelecionada = document.getElementById("data").value;
     const motorista = document.getElementById("motorista").value;
 
-    const { data: registrosExistentes, error: erroBusca } = await supabase
+    if (!dataSelecionada || !motorista) {
+      alert("Por favor, selecione a data e o motorista.");
+      return;
+    }
+
+    const { data: registrosExistentes, error } = await supabase
       .from("controle_diario")
       .select("*")
       .eq("data", dataSelecionada)
       .eq("motorista", motorista);
 
-    if (erroBusca) {
-      alert("Erro ao verificar duplicidade: " + erroBusca.message);
-      return;
-    }
-
-    if (registrosExistentes.length > 0) {
-      const desejaEditar = confirm(`Este motorista já foi cadastrado no dia ${dataSelecionada}.\n\nDeseja editar o registro existente?`);
-      if (desejaEditar) {
-        const registro = registrosExistentes[0];
-        idEdicao = registro.id;
-        document.getElementById("placa").value = registro.placa;
-        document.getElementById("rota").value = registro.rota;
-        document.getElementById("chegada1").value = registro.chegada1;
-        document.getElementById("chegada2").value = registro.chegada2;
-        document.getElementById("kmRota1").value = registro.km_rota1;
-        document.getElementById("kmRota2").value = registro.km_rota2;
-        document.getElementById("combustivelConsumido").value = registro.combustivel_consumido;
-        document.getElementById("valorGasolina").value = registro.valor_gasolina;
-        document.getElementById("valorTotalGasto").value = registro.valor_total_gasto;
-        document.getElementById("btnSalvar").textContent = "Atualizar";
-      } else {
-        document.getElementById("motorista").value = "";
-        document.getElementById("placa").value = "";
-        document.getElementById("rota").value = "";
-        document.getElementById("chegada1").value = "";
-        document.getElementById("chegada2").value = "";
-        document.getElementById("kmRota1").value = "";
-        document.getElementById("kmRota2").value = "";
-        document.getElementById("combustivelConsumido").value = "";
-        document.getElementById("valorTotalGasto").value = "";
-      }
-      return;
-    }
+    if (error) return alert("Erro ao verificar duplicidade: " + error.message);
 
     const dados = {
       data: dataSelecionada,
@@ -200,32 +173,48 @@
       valor_total_gasto: +document.getElementById("valorTotalGasto").value || 0,
     };
 
-    let resultado;
-    if (idEdicao) {
-      resultado = await supabase.from("controle_diario").update(dados).eq("id", idEdicao);
-      alert("Registro atualizado com sucesso!");
-      idEdicao = null;
-      document.getElementById("btnSalvar").textContent = "Salvar";
-    } else {
-      resultado = await supabase.from("controle_diario").insert([dados]);
-      alert("Dados salvos com sucesso!");
-    }
-
-    if (resultado.error) {
-      alert("Erro ao salvar: " + resultado.error.message);
+    if (registrosExistentes.length > 0 && !idEdicao) {
+      const desejaEditar = confirm(`Este motorista já foi cadastrado no dia ${dataSelecionada}.\n\nDeseja editar o registro existente?`);
+      if (desejaEditar) {
+        const existente = registrosExistentes[0];
+        idEdicao = existente.id;
+        Object.entries(existente).forEach(([chave, valor]) => {
+          const campo = document.getElementById(chave);
+          if (campo) campo.value = valor;
+        });
+        document.getElementById("btnSalvar").textContent = "Atualizar";
+      } else {
+        ["motorista", "placa", "rota", "chegada1", "chegada2", "kmRota1", "kmRota2", "combustivelConsumido", "valorTotalGasto"].forEach(id => {
+          document.getElementById(id).value = "";
+        });
+      }
       return;
     }
 
-    document.getElementById("data").value = "";
-    document.getElementById("motorista").value = "";
-    document.getElementById("placa").value = "";
-    document.getElementById("rota").value = "";
-    document.getElementById("chegada1").value = "";
-    document.getElementById("chegada2").value = "";
-    document.getElementById("kmRota1").value = "";
-    document.getElementById("kmRota2").value = "";
-    document.getElementById("combustivelConsumido").value = "";
-    document.getElementById("valorTotalGasto").value = "";
+    if (idEdicao) {
+      const { error: erroUpdate } = await supabase.from("controle_diario").update(dados).eq("id", idEdicao);
+      if (erroUpdate) {
+        alert("Erro ao atualizar: " + erroUpdate.message);
+      } else {
+        alert("Registro atualizado com sucesso!");
+        idEdicao = null;
+        document.getElementById("btnSalvar").textContent = "Salvar";
+      }
+    } else {
+      const { error: erroInsert } = await supabase.from("controle_diario").insert([dados]);
+      if (erroInsert) {
+        alert("Erro ao salvar: " + erroInsert.message);
+      } else {
+        alert("Dados salvos com sucesso!");
+      }
+    }
+
+    ["data", "motorista", "placa", "rota", "chegada1", "chegada2", "kmRota1", "kmRota2", "combustivelConsumido", "valorTotalGasto"].forEach(id => {
+      if (!['valorGasolina', 'kmAdicional'].includes(id)) {
+        const campo = document.getElementById(id);
+        if (campo) campo.value = "";
+      }
+    });
   });
 
   window.addEventListener("DOMContentLoaded", () => {
@@ -240,4 +229,3 @@
     });
   });
 </script>
-
