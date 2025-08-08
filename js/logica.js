@@ -7,7 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 document.addEventListener('DOMContentLoaded', async () => {
   await carregarMotoristas();
   carregarListaRegistros();
-  document.getElementById('data').value = ''; // para iniciar em branco
+  document.getElementById('data').value = '';
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
 
@@ -53,11 +53,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const chegada1 = document.getElementById('chegada1').value;
     const chegada2 = document.getElementById('chegada2').value;
 
-    const litros = ((km2 - km1 + kmAdicional) / 10).toFixed(2);
+    const kmTotal = (km1 + km2 + kmAdicional).toFixed(2);
+    const litros = (kmTotal / 35).toFixed(2);
     const valorTotal = (litros * valorGasolina).toFixed(2);
 
     const { error: erroInsercao } = await supabase.from('controle_diario').insert([
-      { data, motorista, placa, rota, kmAdicional, valorGasolina, km1, km2, chegada1, chegada2, litros, valorTotal }
+      { data, motorista, placa, rota, kmAdicional, valorGasolina, km1, km2, chegada1, chegada2, litros, valorTotal, kmTotal }
     ]);
 
     if (erroInsercao) {
@@ -196,7 +197,6 @@ async function carregarListaRegistros() {
   container.appendChild(ul);
 }
 
-// Não há mais formatarDataBR nem minhaDiv
 window.abrirGerenciar = abrirGerenciar;
 window.fecharGerenciar = fecharGerenciar;
 window.incluirMotorista = incluirMotorista;
