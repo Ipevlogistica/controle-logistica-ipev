@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
 
+  // ✅ Linha adicionada: atualiza a lista inferior ao mudar a data
+  document.getElementById('data').addEventListener('change', carregarListaRegistros);
+
   document.getElementById('formulario').addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = document.getElementById('data').value;
@@ -148,7 +151,6 @@ async function carregarListaGerenciamento() {
   });
 }
 
-
 async function carregarListaRegistros() {
   const dataSelecionada = document.getElementById('data').value;
   const { data: registros } = await supabase
@@ -172,7 +174,7 @@ async function carregarListaRegistros() {
   });
   container.appendChild(ul);
 }
+
 window.abrirGerenciar = abrirGerenciar;
 window.fecharGerenciar = fecharGerenciar;
 window.incluirMotorista = incluirMotorista;
-
