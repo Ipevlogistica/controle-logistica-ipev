@@ -59,6 +59,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Detecta mudança de motorista para atualizar a placa
   document.getElementById('motorista').addEventListener('change', atualizarPlaca);
+
+  // 🔽 ADICIONADO: Atualização ao mudar data
+  document.getElementById('data').addEventListener('change', () => {
+    const dataISO = document.getElementById('data').value;
+    if (dataISO) {
+      document.getElementById('minhaDiv').textContent = formatarDataBR(dataISO);
+      carregarListaRegistros();
+    } else {
+      document.getElementById('minhaDiv').textContent = '';
+    }
+  });
 });
 
 async function carregarMotoristas() {
@@ -172,18 +183,12 @@ async function carregarListaRegistros() {
   container.appendChild(ul);
 }
 
-window.abrirGerenciar = abrirGerenciar;
-window.fecharGerenciar = fecharGerenciar;
-window.incluirMotorista = incluirMotorista;
-
-// ✅ Função para formatar data no padrão dd/mm/aaaa
+// 🔽 ADICIONADO: Função para formatar data
 function formatarDataBR(dataISO) {
   const [ano, mes, dia] = dataISO.split('-');
   return `${dia}/${mes}/${ano}`;
 }
 
-// ✅ Exemplo de uso: mostra a data formatada em uma div com id="minhaDiv"
-const dataSelecionada = document.getElementById('data').value;
-if (dataSelecionada && document.getElementById('minhaDiv')) {
-  document.getElementById('minhaDiv').textContent = formatarDataBR(dataSelecionada);
-}
+window.abrirGerenciar = abrirGerenciar;
+window.fecharGerenciar = fecharGerenciar;
+window.incluirMotorista = incluirMotorista;
