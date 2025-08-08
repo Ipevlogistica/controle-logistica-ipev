@@ -1,5 +1,3 @@
-// logica.js
-
 import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
 
 const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
@@ -9,9 +7,12 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 document.addEventListener('DOMContentLoaded', async () => {
   await carregarMotoristas();
   carregarListaRegistros();
+
   document.getElementById('data').valueAsDate = new Date();
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
+
+  document.getElementById('motorista').addEventListener('change', atualizarPlaca);
 
   document.getElementById('formulario').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -27,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (registrosExistentes && registrosExistentes.length > 0) {
       const desejaEditar = confirm('Este motorista já foi cadastrado nesta data. Deseja editar o registro?');
       if (desejaEditar) {
-        alert('Função de edição ainda será implementada.');
+        alert('⚠️ A funcionalidade de edição ainda será implementada.');
         return;
       } else {
         document.getElementById('formulario').reset();
@@ -53,10 +54,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       { data, motorista, placa, rota, kmAdicional, valorGasolina, km1, km2, chegada1, chegada2, litros, valorTotal }
     ]);
 
-    alert('Registro salvo com sucesso!');
+    alert('✅ Registro salvo com sucesso!');
     document.getElementById('formulario').reset();
     document.getElementById('kmAdicional').value = 10;
     document.getElementById('valorGasolina').value = 5.99;
+    atualizarPlaca();
     carregarListaRegistros();
   });
 });
@@ -126,7 +128,7 @@ async function carregarListaRegistros() {
   const container = document.getElementById('listaRegistrosPorData');
   container.innerHTML = '';
 
-  if (registros.length === 0) {
+  if (!registros || registros.length === 0) {
     container.textContent = 'Nenhum registro encontrado para esta data.';
     return;
   }
