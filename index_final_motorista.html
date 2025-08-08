@@ -1,117 +1,95 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Controle de Logística IPEV</title>
-  <script type="module" src="js/logica.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="controle.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-blue-100 p-4">
+<body class="bg-gray-100 font-sans p-4">
   <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold text-blue-900">Controle de Logística IPEV</h1>
-    <a href="index.html" class="bg-blue-700 text-white px-4 py-2 rounded">Voltar ao Menu</a>
+    <h1 class="text-2xl font-bold text-blue-800">Controle de Logística IPEV</h1>
+    <a href="index.html" class="text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">Voltar ao Menu</a>
   </div>
 
-  <form id="formulario" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white p-4 rounded shadow max-w-4xl mx-auto">
-    <label class="block">
-      <span class="text-gray-700">Data</span>
-      <input type="date" id="data" class="mt-1 block w-full rounded border-gray-300 text-sm" />
-    </label>
+  <form id="controleForm" class="space-y-4 bg-white p-6 rounded shadow-md max-w-4xl mx-auto">
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div>
+        <label for="data" class="block text-sm font-medium text-gray-700">Data</label>
+        <input type="date" id="data" name="data" class="mt-1 block w-full border border-gray-300 rounded p-2" value="">
+      </div>
 
-    <label class="block">
-      <span class="text-gray-700">Motorista</span>
-      <div class="flex">
-        <select id="motorista" class="mt-1 block w-full rounded border-gray-300 text-sm" onchange="atualizarPlaca()">
+      <div>
+        <label for="motorista" class="block text-sm font-medium text-gray-700">Motorista</label>
+        <select id="motorista" name="motorista" class="mt-1 block w-full border border-gray-300 rounded p-2">
           <option value="">Selecione</option>
         </select>
-      <button type="button" onclick="abrirGerenciar()" class="ml-2 bg-yellow-500 text-white px-4 py-1 rounded text-sm">Gerenciar</button>
       </div>
-    </label>
 
-    <label class="block">
-      <span class="text-gray-700">Placa</span>
-      <input type="text" id="placa" class="mt-1 block w-full rounded border-gray-300 bg-gray-100 text-sm" readonly />
-    </label>
+      <div>
+        <label for="placa" class="block text-sm font-medium text-gray-700">Placa</label>
+        <input type="text" id="placa" name="placa" class="mt-1 block w-full border border-gray-300 rounded p-2" readonly>
+      </div>
 
-    <label class="block">
-      <span class="text-gray-700">Rota</span>
-      <select id="rota" class="mt-1 block w-full rounded border-gray-300 text-sm">
-        <option value="">Selecione</option>
-        <option value="A">A</option>
-        <option value="B">B</option>
-        <option value="C">C</option>
-        <option value="D">D</option>
-        <option value="E">E</option>
-        <option value="F">F</option>
-        <option value="G">G</option>
-        <option value="H">H</option>
-        <option value="A/D">A/D</option>
-        <option value="B/G">B/G</option>
-      </select>
-    </label>
+      <div>
+        <label for="rota" class="block text-sm font-medium text-gray-700">Rota</label>
+        <select id="rota" name="rota" class="mt-1 block w-full border border-gray-300 rounded p-2">
+          <option value="">Selecione</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+          <option value="E">E</option>
+          <option value="F">F</option>
+          <option value="G">G</option>
+          <option value="H">H</option>
+          <option value="A/D">A/D</option>
+          <option value="C/E">C/E</option>
+          <option value="B/F">B/F</option>
+        </select>
+      </div>
 
-    <label class="block">
-      <span class="text-gray-700">Chegada 1</span>
-      <input type="time" id="chegada1" class="mt-1 block w-full rounded border-gray-300 text-sm" />
-    </label>
+      <div>
+        <label for="kmRota1" class="block text-sm font-medium text-gray-700">KM 1</label>
+        <input type="number" step="0.01" id="kmRota1" name="kmRota1" class="mt-1 block w-full border border-gray-300 rounded p-2">
+      </div>
 
-    <label class="block">
-      <span class="text-gray-700">Chegada 2</span>
-      <input type="time" id="chegada2" class="mt-1 block w-full rounded border-gray-300 text-sm" />
-    </label>
+      <div>
+        <label for="kmRota2" class="block text-sm font-medium text-gray-700">KM 2</label>
+        <input type="number" step="0.01" id="kmRota2" name="kmRota2" class="mt-1 block w-full border border-gray-300 rounded p-2">
+      </div>
 
-    <label class="block">
-      <span class="text-gray-700">KM 1</span>
-      <input type="number" step="0.01" id="km1" class="mt-1 block w-full rounded border-gray-300 text-sm" />
-    </label>
+      <div>
+        <label for="chegada1" class="block text-sm font-medium text-gray-700">Chegada 1</label>
+        <input type="time" id="chegada1" name="chegada1" class="mt-1 block w-full border border-gray-300 rounded p-2">
+      </div>
 
-    <label class="block">
-      <span class="text-gray-700">KM 2</span>
-      <input type="number" step="0.01" id="km2" class="mt-1 block w-full rounded border-gray-300 text-sm" />
-    </label>
+      <div>
+        <label for="chegada2" class="block text-sm font-medium text-gray-700">Chegada 2</label>
+        <input type="time" id="chegada2" name="chegada2" class="mt-1 block w-full border border-gray-300 rounded p-2">
+      </div>
 
-    <label class="block">
-      <span class="text-gray-700">KM Adicional</span>
-      <input type="number" step="0.01" id="kmAdicional" class="mt-1 block w-full rounded border-gray-300 text-sm" value="10" />
-    </label>
+      <div>
+        <label for="kmAdicional" class="block text-sm font-medium text-gray-700">KM Adicional</label>
+        <input type="number" id="kmAdicional" name="kmAdicional" value="10" class="mt-1 block w-full border border-gray-300 rounded p-2">
+      </div>
 
-    <label class="block">
-      <span class="text-gray-700">Valor da Gasolina</span>
-      <input type="number" step="0.01" id="valorGasolina" class="mt-1 block w-full rounded border-gray-300 text-sm" value="5.99" />
-    </label>
+      <div>
+        <label for="valorGasolina" class="block text-sm font-medium text-gray-700">Valor Gasolina</label>
+        <input type="number" step="0.01" id="valorGasolina" name="valorGasolina" value="5.99" class="mt-1 block w-full border border-gray-300 rounded p-2">
+      </div>
+    </div>
 
-    <label class="block">
-      <span class="text-gray-700">Litros</span>
-      <input type="number" step="0.01" id="litros" readonly class="mt-1 block w-full rounded border-gray-300 bg-gray-100 text-sm" />
-    </label>
-
-    <label class="block">
-      <span class="text-gray-700">Valor Total</span>
-      <input type="number" step="0.01" id="valorTotal" readonly class="mt-1 block w-full rounded border-gray-300 bg-gray-100 text-sm" />
-    </label>
-
-    <div class="col-span-2 flex justify-center">
-      <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded mt-4">Salvar</button>
+    <div class="flex items-center justify-between mt-4">
+      <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Salvar</button>
+      <a href="motoristas.html" class="text-blue-600 hover:underline">Gerenciar Motoristas</a>
     </div>
   </form>
 
-  <div class="mt-6 bg-white p-4 rounded shadow max-w-4xl mx-auto">
-    <h2 class="text-lg font-bold mb-2">Registros do dia</h2>
-    <div id="listaRegistrosPorData"></div>
-  </div>
-
-  <div id="gerenciarMotoristasBox" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
-    <div class="bg-white p-6 rounded shadow-lg w-full max-w-md">
-      <h3 class="text-lg font-bold mb-4">Gerenciar Motoristas</h3>
-      <div class="mb-2">
-        <input type="text" id="novoMotorista" placeholder="Nome do Motorista" class="w-full mb-2 rounded border-gray-300 text-sm" />
-        <input type="text" id="novaPlaca" placeholder="Placa" class="w-full mb-2 rounded border-gray-300 text-sm" />
-        <button onclick="incluirMotorista()" class="bg-blue-600 text-white px-4 py-2 rounded">Incluir</button>
-      </div>
-      <div id="listaMotoristas" class="mt-4 max-h-40 overflow-y-auto"></div>
-      <button onclick="fecharGerenciar()" class="mt-4 bg-red-600 text-white px-4 py-2 rounded">Fechar</button>
-    </div>
+  <div id="listaRegistrosPorData" class="mt-8 max-w-4xl mx-auto bg-white p-6 rounded shadow-md">
+    <!-- Lista de registros por data será exibida aqui -->
   </div>
 </body>
 </html>
