@@ -134,7 +134,28 @@ document.getElementById("btnSalvar").addEventListener("click", async () => {
   if (registrosExistentes.length > 0) {
     const desejaEditar = confirm(`Este motorista já foi cadastrado no dia ${dataSelecionada}.\n\nDeseja editar o registro existente?`);
     if (desejaEditar) {
-      alert("Função de edição ainda será implementada.");
+      const registroExistente = registrosExistentes[0];
+      const { error: erroAtualizar } = await supabase
+        .from("controle_diario")
+        .update({
+          placa: document.getElementById("placa").value,
+          rota: document.getElementById("rota").value,
+          chegada1: document.getElementById("chegada1").value,
+          chegada2: document.getElementById("chegada2").value,
+          km_rota1: +document.getElementById("kmRota1").value || 0,
+          km_rota2: +document.getElementById("kmRota2").value || 0,
+          km_adicional: +document.getElementById("kmAdicional").value || 0,
+          combustivel_consumido: +document.getElementById("combustivelConsumido").value || 0,
+          valor_gasolina: +document.getElementById("valorGasolina").value || 0,
+          valor_total_gasto: +document.getElementById("valorTotalGasto").value || 0,
+        })
+        .eq("id", registroExistente.id);
+
+      if (erroAtualizar) {
+        alert("Erro ao editar: " + erroAtualizar.message);
+      } else {
+        alert("Registro atualizado com sucesso!");
+      }
     } else {
       document.getElementById("motorista").value = "";
       document.getElementById("placa").value = "";
