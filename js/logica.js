@@ -8,9 +8,11 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener('DOMContentLoaded', async () => {
   await carregarMotoristas();
-  carregarListaRegistros();
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
+
+  document.getElementById('data').addEventListener('change', carregarListaRegistros);
+  document.getElementById('motorista').addEventListener('change', atualizarPlaca);
 
   document.getElementById('formulario').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -18,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const motorista = document.getElementById('motorista').value;
 
     if (!data || !motorista) {
-      alert('Por favor, selecione a data e o motorista.');
+      alert('Selecione a data e o motorista.');
       return;
     }
 
@@ -63,8 +65,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('valorGasolina').value = 5.99;
     carregarListaRegistros();
   });
-
-  document.getElementById('motorista').addEventListener('change', atualizarPlaca);
 });
 
 async function carregarMotoristas() {
@@ -77,12 +77,14 @@ async function carregarMotoristas() {
     option.textContent = nome;
     select.appendChild(option);
   });
-  document.getElementById('placa').value = '';
 }
 
 function atualizarPlaca() {
   const motoristaSelecionado = document.getElementById('motorista').value;
-  if (!motoristaSelecionado) return;
+  if (!motoristaSelecionado) {
+    document.getElementById('placa').value = '';
+    return;
+  }
   supabase.from('motoristas')
     .select('placa')
     .eq('nome', motoristaSelecionado)
@@ -125,6 +127,8 @@ async function carregarListaGerenciamento() {
 
 async function carregarListaRegistros() {
   const dataSelecionada = document.getElementById('data').value;
+  if (!dataSelecionada) return;
+
   const { data: registros } = await supabase
     .from('controle_diario')
     .select('motorista, rota, km1')
