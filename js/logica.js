@@ -8,21 +8,15 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener('DOMContentLoaded', async () => {
   await carregarMotoristas();
+  carregarListaRegistros();
+  document.getElementById('data').valueAsDate = new Date();
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
-
-  document.getElementById('data').addEventListener('change', carregarListaRegistros);
-  document.getElementById('motorista').addEventListener('change', atualizarPlaca);
 
   document.getElementById('formulario').addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = document.getElementById('data').value;
     const motorista = document.getElementById('motorista').value;
-
-    if (!data || !motorista) {
-      alert('Selecione a data e o motorista.');
-      return;
-    }
 
     const { data: registrosExistentes } = await supabase
       .from('controle_diario')
@@ -69,7 +63,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function carregarMotoristas() {
   const select = document.getElementById('motorista');
-  select.innerHTML = '<option value="" disabled selected>Selecione</option>';
+  select.innerHTML = '';
+
+  // Adiciona manualmente a opção "Selecione"
+  const opcaoInicial = document.createElement('option');
+  opcaoInicial.value = '';
+  opcaoInicial.textContent = 'Selecione';
+  select.appendChild(opcaoInicial);
+
   const { data: motoristas } = await supabase.from('motoristas').select('*');
   motoristas.forEach(({ nome }) => {
     const option = document.createElement('option');
@@ -81,7 +82,7 @@ async function carregarMotoristas() {
 
 function atualizarPlaca() {
   const motoristaSelecionado = document.getElementById('motorista').value;
-  if (!motoristaSelecionado) {
+  if (motoristaSelecionado === '') {
     document.getElementById('placa').value = '';
     return;
   }
@@ -127,8 +128,6 @@ async function carregarListaGerenciamento() {
 
 async function carregarListaRegistros() {
   const dataSelecionada = document.getElementById('data').value;
-  if (!dataSelecionada) return;
-
   const { data: registros } = await supabase
     .from('controle_diario')
     .select('motorista, rota, km1')
