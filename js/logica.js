@@ -3,7 +3,11 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   'https://ilsbyrvnrkutwynujfhs.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZya3V0d3ludWpmaHMiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc1NDM0MDA0MSwiZXhwIjoyMDY5OTE2MDQxfQ.o56R-bf1Nt3PiqMZb_ghEPYZzPrnEU-jCdYkKyjJ1TQ'
+  'const supabase = createClient(
+  'https://ilsbyrvnrkutwynujfhs.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
+);
+'
 );
 
 let motoristas = {};
