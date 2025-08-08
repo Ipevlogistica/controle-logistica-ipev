@@ -1,3 +1,5 @@
+// logica.js
+
 import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
 
 const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
@@ -7,17 +9,18 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 document.addEventListener('DOMContentLoaded', async () => {
   await carregarMotoristas();
   carregarListaRegistros();
-
-  document.getElementById('data').valueAsDate = new Date();
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
-
-  document.getElementById('motorista').addEventListener('change', atualizarPlaca);
 
   document.getElementById('formulario').addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = document.getElementById('data').value;
     const motorista = document.getElementById('motorista').value;
+
+    if (!data || !motorista) {
+      alert('Por favor, selecione a data e o motorista.');
+      return;
+    }
 
     const { data: registrosExistentes } = await supabase
       .from('controle_diario')
@@ -28,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (registrosExistentes && registrosExistentes.length > 0) {
       const desejaEditar = confirm('Este motorista já foi cadastrado nesta data. Deseja editar o registro?');
       if (desejaEditar) {
-        alert('⚠️ A funcionalidade de edição ainda será implementada.');
+        alert('Função de edição ainda será implementada.');
         return;
       } else {
         document.getElementById('formulario').reset();
@@ -54,18 +57,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       { data, motorista, placa, rota, kmAdicional, valorGasolina, km1, km2, chegada1, chegada2, litros, valorTotal }
     ]);
 
-    alert('✅ Registro salvo com sucesso!');
+    alert('Registro salvo com sucesso!');
     document.getElementById('formulario').reset();
     document.getElementById('kmAdicional').value = 10;
     document.getElementById('valorGasolina').value = 5.99;
-    atualizarPlaca();
     carregarListaRegistros();
   });
+
+  document.getElementById('motorista').addEventListener('change', atualizarPlaca);
 });
 
 async function carregarMotoristas() {
   const select = document.getElementById('motorista');
-  select.innerHTML = '';
+  select.innerHTML = '<option value="" disabled selected>Selecione</option>';
   const { data: motoristas } = await supabase.from('motoristas').select('*');
   motoristas.forEach(({ nome }) => {
     const option = document.createElement('option');
@@ -73,11 +77,12 @@ async function carregarMotoristas() {
     option.textContent = nome;
     select.appendChild(option);
   });
-  atualizarPlaca();
+  document.getElementById('placa').value = '';
 }
 
 function atualizarPlaca() {
   const motoristaSelecionado = document.getElementById('motorista').value;
+  if (!motoristaSelecionado) return;
   supabase.from('motoristas')
     .select('placa')
     .eq('nome', motoristaSelecionado)
