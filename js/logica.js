@@ -75,9 +75,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.getElementById('motorista').addEventListener('change', atualizarPlaca);
-
   document.getElementById('data').addEventListener('change', () => {
     carregarListaRegistros();
+  });
+
+  // ⬇️ Novo: recalcular sempre que os campos relevantes forem alterados
+  ['km1', 'km2', 'kmAdicional', 'valorGasolina'].forEach(id => {
+    document.getElementById(id).addEventListener('input', atualizarCalculos);
   });
 });
 
@@ -197,6 +201,23 @@ async function carregarListaRegistros() {
   container.appendChild(ul);
 }
 
+// ⬇️ NOVO: função que atualiza os campos calculados automaticamente
+function atualizarCalculos() {
+  const km1 = parseFloat(document.getElementById('km1').value) || 0;
+  const km2 = parseFloat(document.getElementById('km2').value) || 0;
+  const kmAdicional = parseFloat(document.getElementById('kmAdicional').value) || 0;
+  const valorGasolina = parseFloat(document.getElementById('valorGasolina').value) || 0;
+
+  const kmTotal = (km1 + km2 + kmAdicional).toFixed(2);
+  const litros = (kmTotal / 35).toFixed(2);
+  const valorTotal = (litros * valorGasolina).toFixed(2);
+
+  document.getElementById('kmTotal').value = kmTotal;
+  document.getElementById('litros').value = litros;
+  document.getElementById('valorTotal').value = valorTotal;
+}
+
+// exportações globais para o HTML
 window.abrirGerenciar = abrirGerenciar;
 window.fecharGerenciar = fecharGerenciar;
 window.incluirMotorista = incluirMotorista;
