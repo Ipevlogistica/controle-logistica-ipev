@@ -129,44 +129,6 @@
     function fecharGerenciar() {
       document.getElementById("gerenciarMotoristasBox").classList.add("hidden");
     }
-
-    // Adição: carregar lista com KM Total incluso
-    async function carregarListaRegistros() {
-      const dataSelecionada = document.getElementById('data').value;
-      const { data: registros, error } = await supabase
-        .from('controle_diario')
-        .select('motorista, rota, kmTotal')
-        .eq('data', dataSelecionada);
-
-      const container = document.getElementById('listaRegistrosPorData');
-      container.innerHTML = '';
-
-      if (error) {
-        container.textContent = 'Erro ao buscar registros.';
-        console.error(error);
-        return;
-      }
-
-      if (!registros || registros.length === 0) {
-        container.textContent = 'Nenhum registro encontrado para esta data.';
-        return;
-      }
-
-      const ul = document.createElement('ul');
-      registros.forEach(r => {
-        const li = document.createElement('li');
-        li.textContent = `Motorista: ${r.motorista}, Rota: ${r.rota}, KM Total: ${r.kmTotal}`;
-        ul.appendChild(li);
-      });
-      container.appendChild(ul);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const dataInput = document.getElementById('data');
-      if (dataInput) {
-        dataInput.addEventListener('change', carregarListaRegistros);
-      }
-    });
   </script>
 </body>
 </html>
