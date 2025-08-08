@@ -13,9 +13,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
 
-  // ✅ Linha adicionada: atualiza a lista inferior ao mudar a data
-  document.getElementById('data').addEventListener('change', carregarListaRegistros);
-
   document.getElementById('formulario').addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = document.getElementById('data').value;
@@ -178,3 +175,15 @@ async function carregarListaRegistros() {
 window.abrirGerenciar = abrirGerenciar;
 window.fecharGerenciar = fecharGerenciar;
 window.incluirMotorista = incluirMotorista;
+
+// ✅ Função para formatar data no padrão dd/mm/aaaa
+function formatarDataBR(dataISO) {
+  const [ano, mes, dia] = dataISO.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
+// ✅ Exemplo de uso: mostra a data formatada em uma div com id="minhaDiv"
+const dataSelecionada = document.getElementById('data').value;
+if (dataSelecionada && document.getElementById('minhaDiv')) {
+  document.getElementById('minhaDiv').textContent = formatarDataBR(dataSelecionada);
+}
