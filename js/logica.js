@@ -9,7 +9,6 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 document.addEventListener('DOMContentLoaded', async () => {
   await carregarMotoristas();
   carregarListaRegistros();
-
   document.getElementById('data').value = '';
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
@@ -27,10 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (registrosExistentes && registrosExistentes.length > 0) {
       const desejaEditar = confirm('Este motorista já foi cadastrado nesta data. Deseja editar o registro?');
-      if (desejaEditar) {
-        alert('Função de edição ainda será implementada.');
-        return;
-      } else {
+      if (!desejaEditar) {
         document.getElementById('formulario').reset();
         document.getElementById('kmAdicional').value = 10;
         document.getElementById('valorGasolina').value = 5.99;
@@ -61,12 +57,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     carregarListaRegistros();
   });
 
+  // Detecta mudança de motorista para atualizar a placa
   document.getElementById('motorista').addEventListener('change', atualizarPlaca);
 });
 
 async function carregarMotoristas() {
   const select = document.getElementById('motorista');
-  select.innerHTML = '<option value="">Selecione</option>';
+  select.innerHTML = '';
+
+  const optionInicial = document.createElement('option');
+  optionInicial.value = '';
+  optionInicial.textContent = 'Selecione';
+  select.appendChild(optionInicial);
+
   const { data: motoristas } = await supabase.from('motoristas').select('*');
   motoristas.forEach(({ nome }) => {
     const option = document.createElement('option');
@@ -82,6 +85,7 @@ function atualizarPlaca() {
     document.getElementById('placa').value = '';
     return;
   }
+
   supabase.from('motoristas')
     .select('placa')
     .eq('nome', motoristaSelecionado)
@@ -90,9 +94,10 @@ function atualizarPlaca() {
     });
 }
 
+// ✅ Botão GERENCIAR
 function abrirGerenciar() {
   document.getElementById('gerenciarMotoristasBox').classList.remove('hidden');
-  carregarListaGerenciamento(); // <- carrega os motoristas já cadastrados
+  carregarListaGerenciamento();
 }
 
 function fecharGerenciar() {
@@ -103,6 +108,7 @@ async function incluirMotorista() {
   const nome = document.getElementById('novoMotorista').value;
   const placa = document.getElementById('novaPlaca').value;
   if (!nome || !placa) return alert('Preencha ambos os campos.');
+
   await supabase.from('motoristas').insert([{ nome, placa }]);
   alert('Motorista incluído.');
   document.getElementById('novoMotorista').value = '';
@@ -132,7 +138,7 @@ async function carregarListaRegistros() {
   const container = document.getElementById('listaRegistrosPorData');
   container.innerHTML = '';
 
-  if (registros.length === 0) {
+  if (!registros || registros.length === 0) {
     container.textContent = 'Nenhum registro encontrado para esta data.';
     return;
   }
