@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
 
+  ['km1', 'km2', 'kmAdicional', 'valorGasolina'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calcularValores);
+  });
+
   document.getElementById('formulario').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -40,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('formulario').reset();
         document.getElementById('kmAdicional').value = 10;
         document.getElementById('valorGasolina').value = 5.99;
+        calcularValores();
         return;
       } else {
         await supabase
@@ -78,17 +83,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('kmAdicional').value = 10;
     document.getElementById('valorGasolina').value = 5.99;
     document.getElementById('litros').value = '';
-    document.getElementById('valorTotal').value = '';
     document.getElementById('kmTotal').value = '';
+    document.getElementById('valorTotal').value = '';
     carregarListaRegistros();
   });
 
   document.getElementById('motorista').addEventListener('change', atualizarPlaca);
-
-  document.getElementById('data').addEventListener('change', () => {
-    carregarListaRegistros();
-  });
+  document.getElementById('data').addEventListener('change', carregarListaRegistros);
 });
+
+function calcularValores() {
+  const km1 = parseFloat(document.getElementById('km1').value) || 0;
+  const km2 = parseFloat(document.getElementById('km2').value) || 0;
+  const kmAdicional = parseFloat(document.getElementById('kmAdicional').value) || 0;
+  const valorGasolina = parseFloat(document.getElementById('valorGasolina').value) || 0;
+
+  const kmTotal = km1 + km2 + kmAdicional;
+  const litros = kmTotal / 35;
+  const valorTotal = litros * valorGasolina;
+
+  document.getElementById('kmTotal').value = kmTotal.toFixed(2);
+  document.getElementById('litros').value = litros.toFixed(2);
+  document.getElementById('valorTotal').value = valorTotal.toFixed(2);
+}
 
 async function carregarMotoristas() {
   const select = document.getElementById('motorista');
