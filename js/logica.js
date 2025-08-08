@@ -121,12 +121,33 @@ async function carregarListaGerenciamento() {
   const { data: motoristas } = await supabase.from('motoristas').select('*');
   const lista = document.getElementById('listaMotoristas');
   lista.innerHTML = '';
-  motoristas.forEach(({ nome, placa }) => {
+
+  motoristas.forEach(({ id, nome, placa }) => {
     const div = document.createElement('div');
-    div.textContent = `${nome} - ${placa}`;
+    div.classList.add('flex', 'justify-between', 'items-center', 'mb-1');
+
+    const span = document.createElement('span');
+    span.textContent = `${nome} - ${placa}`;
+
+    const btn = document.createElement('button');
+    btn.innerHTML = '🗑️';
+    btn.classList.add('text-red-600', 'hover:text-red-800', 'ml-2', 'text-sm');
+    btn.title = 'Excluir motorista';
+    btn.onclick = async () => {
+      const confirmar = confirm(`Deseja excluir o motorista "${nome}"?`);
+      if (confirmar) {
+        await supabase.from('motoristas').delete().eq('id', id);
+        carregarMotoristas();
+        carregarListaGerenciamento();
+      }
+    };
+
+    div.appendChild(span);
+    div.appendChild(btn);
     lista.appendChild(div);
   });
 }
+
 
 async function carregarListaRegistros() {
   const dataSelecionada = document.getElementById('data').value;
