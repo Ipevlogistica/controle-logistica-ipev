@@ -22,7 +22,9 @@
     <label class="block">
       <span class="text-gray-700">Motorista</span>
       <div class="flex">
-        <select id="motorista" class="mt-1 block w-full rounded border-gray-300 text-sm" onchange="atualizarPlaca()"></select>
+        <select id="motorista" class="mt-1 block w-full rounded border-gray-300 text-sm" onchange="atualizarPlaca()">
+          <option value="" selected>Selecione</option>
+        </select>
         <button type="button" onclick="abrirGerenciar()" class="ml-2 bg-yellow-500 text-white px-4 py-1 rounded text-sm">Gerenciar</button>
       </div>
     </label>
@@ -35,7 +37,7 @@
     <label class="block">
       <span class="text-gray-700">Rota</span>
       <select id="rota" class="mt-1 block w-full rounded border-gray-300 text-sm">
-        <option value="" disabled selected>Selecione</option>
+        <option value="" selected>Selecione</option>
         <option value="A">A</option>
         <option value="B">B</option>
         <option value="C">C</option>
@@ -49,7 +51,7 @@
       </select>
     </label>
     
-  <label class="block">
+    <label class="block">
       <span class="text-gray-700">Chegada 1</span>
       <input type="time" id="chegada1" class="mt-1 block w-full rounded border-gray-300 text-sm" />
     </label>
@@ -68,8 +70,6 @@
       <span class="text-gray-700">KM 2</span>
       <input type="number" step="0.01" id="km2" class="mt-1 block w-full rounded border-gray-300 text-sm" />
     </label>
-
-  
 
     <label class="block">
       <span class="text-gray-700">KM Adicional</span>
