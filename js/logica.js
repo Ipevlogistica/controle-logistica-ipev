@@ -47,8 +47,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           .delete()
           .eq('data', data)
           .eq('motorista', motorista);
+
         if (erroExclusao) {
-          alert('Erro ao excluir registro anterior.');
+          alert('Erro ao atualizar registro existente.');
           console.error(erroExclusao);
           return;
         }
