@@ -27,72 +27,95 @@
 
   <main class="p-6">
     <form id="logForm" class="bg-white p-6 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-      <!-- Campos do formulário (mantidos como no original) -->
-      <!-- ... -->
+      <!-- Campos do formulário -->
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Data</label>
+        <input type="date" id="data" class="border p-2 rounded w-full mt-1" required>
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Motorista</label>
+        <div class="flex gap-2 items-center mt-1">
+          <select id="motorista" class="border p-2 rounded w-full" onchange="atualizarPlaca()"></select>
+          <button type="button" onclick="abrirGerenciar()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow">Gerenciar</button>
+        </div>
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Placa do veículo</label>
+        <input type="text" id="placa" class="border p-2 rounded w-full mt-1" readonly>
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Rota</label>
+        <input list="rotas" id="rota" class="border p-2 rounded w-full mt-1" required>
+        <datalist id="rotas">
+          <option value="A"><option value="B"><option value="C"><option value="D">
+          <option value="E"><option value="F"><option value="G"><option value="H">
+          <option value="A/D"><option value="B/F"><option value="C/E">
+        </datalist>
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Chegada da 1ª rota</label>
+        <input type="time" id="chegada1" class="border p-2 rounded w-full mt-1">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Chegada da 2ª rota</label>
+        <input type="time" id="chegada2" class="border p-2 rounded w-full mt-1">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">1ª rota (km)</label>
+        <input type="number" id="kmRota1" class="border p-2 rounded w-full mt-1" step="1">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">2ª rota (km)</label>
+        <input type="number" id="kmRota2" class="border p-2 rounded w-full mt-1" step="1">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Adicional (km)</label>
+        <input type="number" id="kmAdicional" class="border p-2 rounded w-full mt-1" step="1" value="10">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Combustível consumido (L)</label>
+        <input type="number" id="combustivelConsumido" class="border p-2 rounded w-full mt-1 bg-gray-100" readonly>
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Valor da gasolina (R$)</label>
+        <input type="number" id="valorGasolina" class="border p-2 rounded w-full mt-1" value="5.99" step="0.01">
+      </div>
+
+      <div>
+        <label class="text-sm font-semibold text-blue-700">Valor total gasto (R$)</label>
+        <input type="number" id="valorTotalGasto" class="border p-2 rounded w-full mt-1 bg-gray-100" readonly>
+      </div>
     </form>
 
     <div class="text-center mt-6">
       <button id="btnSalvar" class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg text-lg">💾 Salvar</button>
     </div>
 
-    <div id="listaRegistrosPorData" class="mt-12 max-w-5xl mx-auto hidden">
-      <h2 class="text-xl font-semibold text-blue-800 mb-4">Registros da Data Selecionada</h2>
-      <div id="registrosTabela" class="overflow-auto rounded border border-gray-300 bg-white shadow">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-100">
-            <tr>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-700">Motorista</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-700">Placa</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-700">Rota</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-700">Combustível (L)</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-700">Valor Total (R$)</th>
-            </tr>
-          </thead>
-          <tbody id="registrosBody" class="divide-y divide-gray-200">
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <!-- 🔽 Lista de registros por data -->
+    <div id="listaRegistrosPorData" class="max-w-5xl mx-auto mt-8"></div>
   </main>
 
   <!-- Modal de gerenciamento de motoristas -->
-  <!-- ... (mantido igual) -->
+  <div id="gerenciarMotoristasBox" class="hidden fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-white p-4 border rounded shadow-lg z-50 w-full max-w-md">
+    <h2 class="text-lg font-bold mb-2">Gerenciar Motoristas</h2>
+    <input type="text" id="novoMotorista" placeholder="Nome do motorista" class="border p-2 rounded w-full mb-2">
+    <input type="text" id="novaPlaca" placeholder="Placa do veículo" class="border p-2 rounded w-full mb-2">
+    <button onclick="incluirMotorista()" class="bg-green-600 text-white px-4 py-1 rounded mr-2">Incluir</button>
+    <button onclick="fecharGerenciar()" class="bg-gray-400 text-white px-4 py-1 rounded">Fechar</button>
+    <div id="listaMotoristas" class="max-h-40 overflow-y-auto border-t mt-2 pt-2"></div>
+  </div>
 
-  <script type="module">
-    // Código JavaScript mantido e atualizado
-    // Inclui chamada para mostrar os registros ao selecionar uma data:
-
-    document.getElementById("data").addEventListener("change", async () => {
-      const dataSelecionada = document.getElementById("data").value;
-      if (!dataSelecionada) return;
-      const { data, error } = await supabase
-        .from("controle_diario")
-        .select("*")
-        .eq("data", dataSelecionada);
-
-      const listaDiv = document.getElementById("listaRegistrosPorData");
-      const tbody = document.getElementById("registrosBody");
-      tbody.innerHTML = "";
-
-      if (error || !data || data.length === 0) {
-        listaDiv.classList.add("hidden");
-        return;
-      }
-
-      data.forEach(registro => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td class="px-4 py-2 text-sm text-gray-800">${registro.motorista}</td>
-          <td class="px-4 py-2 text-sm text-gray-800">${registro.placa}</td>
-          <td class="px-4 py-2 text-sm text-gray-800">${registro.rota}</td>
-          <td class="px-4 py-2 text-sm text-gray-800">${registro.combustivel_consumido.toFixed(2)}</td>
-          <td class="px-4 py-2 text-sm text-gray-800">${registro.valor_total_gasto.toFixed(2)}</td>
-        `;
-        tbody.appendChild(row);
-      });
-
-      listaDiv.classList.remove("hidden");
-    });
-  </script>
+  <!-- Carrega a lógica JS separada -->
+  <script type="module" src="js/logica.js"></script>
 </body>
 </html>
