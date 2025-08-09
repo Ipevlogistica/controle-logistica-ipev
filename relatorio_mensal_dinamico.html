@@ -17,7 +17,7 @@
       table {
         width: 100%; /* Garante que a tabela ocupe toda a largura da página */
         border-collapse: collapse; /* Junta as bordas da tabela */
-        page-break-inside: auto; /* Evita que a tabela quebre */
+        page-break-inside: avoid; /* Evita que a tabela quebre */
       }
 
       /* Bordas e grades na tabela */
@@ -32,16 +32,14 @@
         font-weight: bold;
       }
 
-      /* Evitar quebra de tabela dentro da página */
+      /* Evitar que a tabela seja quebrada em várias páginas */
       tr {
         page-break-inside: avoid;
       }
 
-      /* Evitar que a tabela ultrapasse uma página */
+      /* Melhor ajuste para a tabela */
       tbody {
-        display: block;
-        height: 100%;
-        overflow: auto;
+        display: table-row-group;
       }
     }
   </style>
