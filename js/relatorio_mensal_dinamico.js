@@ -179,13 +179,16 @@ function montarLinhasComDados(ano, mes1a12, motoristas, mapaKmDia, valorGasolina
   });
   linhas.push(`<tr>${valorMes.join("")}</tr>`);
 
+  // Resquício Mês com destaque: negativo (vermelho), positivo > 100 (verde), caso contrário padrão
   const resquicioMes = [`<th class="px-4 py-2 text-left font-semibold bg-blue-100">Resquício Mês</th>`];
   motoristas.forEach((m, idx) => {
     const keyRec = `${m.nome}__${m.placa || ""}`;
     const reg = recargasMap.get(keyRec);
     if (reg && valoresTotaisMes[idx] !== null) {
       const resq = (num(reg.recarga) + num(reg.adicional)) - Number(valoresTotaisMes[idx]);
-      const classeCor = resq < 0 ? "bg-red-200 text-red-700" : "bg-blue-50";
+      let classeCor = "bg-blue-50";
+      if (resq < 0) classeCor = "bg-red-200 text-red-700";
+      else if (resq > 100) classeCor = "bg-green-200 text-green-800";
       resquicioMes.push(`<td class="px-4 py-2 text-center font-semibold ${classeCor}">${fmt2(resq)}</td>`);
     } else {
       resquicioMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
