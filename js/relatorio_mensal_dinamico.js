@@ -52,7 +52,17 @@ function formatarDataBR(iso) {
   return `${d}/${m}/${y}`;
 }
 
-// ================== TABELA DINÂMICA ==================
+function num(v) {
+  if (v === null || v === undefined) return 0;
+  const n = typeof v === "number" ? v : parseFloat(String(v).replace(",", "."));
+  return isNaN(n) ? 0 : n;
+}
+
+function fmt2(n) {
+  return Number(n).toFixed(2);
+}
+
+// ================== BUSCA DE DADOS ==================
 async function carregarMotoristas() {
   if (!supabaseClient) {
     statusEl.textContent = "Modo offline: Supabase não carregou.";
@@ -73,6 +83,44 @@ async function carregarMotoristas() {
   return data || [];
 }
 
+/**
+ * Lê do Supabase os registros do mês e retorna um mapa:
+ * key: `${dataISO}__${motorista_nome}` => total_km_do_dia
+ */
+async function carregarKmPorDiaMes(ano, mes1a12) {
+  const inicioISO = formatarDataISO(ano, mes1a12, 1);
+  const fimISO = formatarDataISO(ano, mes1a12, diasNoMes(ano, mes1a12));
+
+  if (!supabaseClient) return new Map();
+
+  statusEl.textContent = "Carregando km do mês...";
+  const { data, error } = await supabaseClient
+    .from("controle_diario")
+    .select("data, motorista, km_rota1, km_rota2, km_adicional")
+    .gte("data", inicioISO)
+    .lte("data", fimISO)
+    .order("data", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    statusEl.textContent = "Erro ao carregar KM do mês.";
+    return new Map();
+  }
+  statusEl.textContent = "";
+
+  const mapa = new Map();
+  (data || []).forEach(row => {
+    const dataISO = row.data; // já vem YYYY-MM-DD
+    const mot = row.motorista || "";
+    const kmTotal = num(row.km_rota1) + num(row.km_rota2) + num(row.km_adicional);
+    const key = `${dataISO}__${mot}`;
+    mapa.set(key, (mapa.get(key) || 0) + kmTotal);
+  });
+
+  return mapa;
+}
+
+// ================== TABELA DINÂMICA ==================
 function montarCabecalho(motoristas) {
   // primeira coluna é "Data"
   const cols = ['<th class="px-4 py-3 text-left font-semibold">Data</th>'];
@@ -82,7 +130,7 @@ function montarCabecalho(motoristas) {
   thead.innerHTML = `<tr>${cols.join("")}</tr>`;
 }
 
-function montarLinhasVazias(ano, mes1a12, motoristas) {
+function montarLinhasComDados(ano, mes1a12, motoristas, mapaKmDia) {
   const totalDias = diasNoMes(ano, mes1a12);
   const linhas = [];
 
@@ -91,36 +139,40 @@ function montarLinhasVazias(ano, mes1a12, motoristas) {
     const dataISO = formatarDataISO(ano, mes1a12, dia);
     const tds = [`<td class="px-4 py-2 whitespace-nowrap text-gray-800">${formatarDataBR(dataISO)}</td>`];
 
-    // Placeholder "--" por motorista
-    motoristas.forEach(() => {
-      tds.push(`<td class="px-4 py-2 text-center text-gray-500">--</td>`);
+    motoristas.forEach(m => {
+      const key = `${dataISO}__${m.nome}`;
+      const km = mapaKmDia.get(key);
+      if (km !== undefined) {
+        tds.push(`<td class="px-4 py-2 text-center">${fmt2(km)}</td>`);
+      } else {
+        tds.push(`<td class="px-4 py-2 text-center text-gray-500">--</td>`);
+      }
     });
 
     linhas.push(`<tr class="hover:bg-gray-50">${tds.join("")}</tr>`);
   }
 
-  // ===== Linhas finais (novas) =====
-  // Linha TOTAL KM
+  // ===== Linhas finais já existentes =====
+  // Linha TOTAL KM (mantida com placeholders por enquanto)
   const totalKm = [`<th class="px-4 py-2 text-left font-semibold bg-blue-100">Total KM</th>`];
   motoristas.forEach(() => {
     totalKm.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
   });
   linhas.push(`<tr>${totalKm.join("")}</tr>`);
 
-  // Linha VALOR TOTAL MÊS
+  // Linha VALOR TOTAL MÊS (placeholder)
   const valorMes = [`<th class="px-4 py-2 text-left font-semibold bg-blue-100">Valor Total Mês</th>`];
   motoristas.forEach(() => {
     valorMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
   });
   linhas.push(`<tr>${valorMes.join("")}</tr>`);
 
-  // Linha RESQUÍCIO MÊS
+  // Linha RESQUÍCIO MÊS (placeholder)
   const resquicioMes = [`<th class="px-4 py-2 text-left font-semibold bg-blue-100">Resquício Mês</th>`];
   motoristas.forEach(() => {
     resquicioMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
   });
   linhas.push(`<tr>${resquicioMes.join("")}</tr>`);
-  // ===== fim das novas linhas =====
 
   tbody.innerHTML = linhas.join("");
 }
@@ -139,9 +191,10 @@ async function atualizarTabela() {
   }
 
   montarCabecalho(motoristas);
-  montarLinhasVazias(ano, mes, motoristas);
 
-  // (Futuro): preencher células com dados do controle_diario
+  // Carrega KM por dia no mês e monta linhas com dados
+  const mapaKmDia = await carregarKmPorDiaMes(ano, mes);
+  montarLinhasComDados(ano, mes, motoristas, mapaKmDia);
 }
 
 // Eventos
