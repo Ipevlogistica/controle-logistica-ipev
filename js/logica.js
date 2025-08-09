@@ -1,8 +1,13 @@
+// logica.js (ajustado para o schema atual do Supabase)
+
 import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
 
 const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// helpers
+const toNum = (v) => Number(String(v ?? '').replace(',', '.')) || 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
   await carregarMotoristas();
@@ -12,13 +17,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('valorGasolina').value = 5.99;
 
   ['km1', 'km2', 'kmAdicional', 'valorGasolina'].forEach(id => {
-    document.getElementById(id).addEventListener('input', calcularValores);
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', calcularValores);
   });
 
   document.getElementById('formulario').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const data = document.getElementById('data').value;
+    const data = document.getElementById('data').value;          // yyyy-mm-dd
     const motorista = document.getElementById('motorista').value;
 
     if (!data || !motorista) {
@@ -26,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    // checa duplicidade por (data, motorista)
     const { data: registrosExistentes, error: erroConsulta } = await supabase
       .from('controle_diario')
       .select('*')
@@ -33,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       .eq('motorista', motorista);
 
     if (erroConsulta) {
-      alert('Erro ao verificar duplicidade.');
+      alert('Erro ao verificar duplicidade: ' + erroConsulta.message);
       console.error(erroConsulta);
       return;
     }
@@ -57,23 +64,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const placa = document.getElementById('placa').value;
     const rota = document.getElementById('rota').value;
-    const kmAdicional = parseFloat(document.getElementById('kmAdicional').value);
-    const valorGasolina = parseFloat(document.getElementById('valorGasolina').value);
-    const km1 = parseFloat(document.getElementById('km1').value);
-    const km2 = parseFloat(document.getElementById('km2').value);
+    const kmAdicional = document.getElementById('kmAdicional').value;
+    const valorGasolina = document.getElementById('valorGasolina').value;
+    const km1 = document.getElementById('km1').value;
+    const km2 = document.getElementById('km2').value;
     const chegada1 = document.getElementById('chegada1').value;
     const chegada2 = document.getElementById('chegada2').value;
 
-    const kmTotal = (km1 + km2 + kmAdicional).toFixed(2);
-    const litros = (kmTotal / 35).toFixed(2);
-    const valorTotal = (litros * valorGasolina).toFixed(2);
+    // calcular para preencher campos readonly
+    const kmTotal = (toNum(km1) + toNum(km2) + toNum(kmAdicional)).toFixed(2);
+    const litros = (toNum(kmTotal) / 35).toFixed(2);
+    const valorTotal = (toNum(litros) * toNum(valorGasolina)).toFixed(2);
 
-    const { error: erroInsercao } = await supabase.from('controle_diario').insert([
-      { data, motorista, placa, rota, kmAdicional, valorGasolina, km1, km2, chegada1, chegada2, litros, valorTotal, kmTotal }
-    ]);
+    // payload com nomes de coluna do schema ATUAL
+    const payload = {
+      data,                          // date
+      motorista,                     // text
+      placa,                         // text
+      rota,                          // text
+      chegada1: chegada1 || null,    // time
+      chegada2: chegada2 || null,    // time
+
+      km_rota1: toNum(km1),                  // numeric(6,2)
+      km_rota2: toNum(km2),                  // numeric(6,2)
+      km_adicional: toNum(kmAdicional),      // numeric(6,2)
+      combustivel_consumido: toNum(litros),  // numeric(6,2)
+      valor_gasolina: toNum(valorGasolina),  // numeric(5,2)
+      valor_total_gasto: toNum(valorTotal)   // numeric(8,2)
+    };
+
+    const { error: erroInsercao } = await supabase
+      .from('controle_diario')
+      .insert([payload]);
 
     if (erroInsercao) {
-      alert('Erro ao salvar registro.');
+      alert('Erro ao salvar: ' + erroInsercao.message);
       console.error(erroInsercao);
       return;
     }
@@ -85,6 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('litros').value = '';
     document.getElementById('kmTotal').value = '';
     document.getElementById('valorTotal').value = '';
+    calcularValores();
     carregarListaRegistros();
   });
 
@@ -93,10 +119,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function calcularValores() {
-  const km1 = parseFloat(document.getElementById('km1').value) || 0;
-  const km2 = parseFloat(document.getElementById('km2').value) || 0;
-  const kmAdicional = parseFloat(document.getElementById('kmAdicional').value) || 0;
-  const valorGasolina = parseFloat(document.getElementById('valorGasolina').value) || 0;
+  const km1 = toNum(document.getElementById('km1').value);
+  const km2 = toNum(document.getElementById('km2').value);
+  const kmAdicional = toNum(document.getElementById('kmAdicional').value);
+  const valorGasolina = toNum(document.getElementById('valorGasolina').value);
 
   const kmTotal = km1 + km2 + kmAdicional;
   const litros = kmTotal / 35;
@@ -116,8 +142,12 @@ async function carregarMotoristas() {
   optionInicial.textContent = 'Selecione';
   select.appendChild(optionInicial);
 
-  const { data: motoristas } = await supabase.from('motoristas').select('*');
-  motoristas.forEach(({ nome }) => {
+  const { data: motoristas, error } = await supabase.from('motoristas').select('nome,placa');
+  if (error) {
+    console.error(error);
+    return;
+  }
+  (motoristas || []).forEach(({ nome }) => {
     const option = document.createElement('option');
     option.value = nome;
     option.textContent = nome;
@@ -132,11 +162,16 @@ function atualizarPlaca() {
     return;
   }
 
-  supabase.from('motoristas')
+  supabase
+    .from('motoristas')
     .select('placa')
     .eq('nome', motoristaSelecionado)
-    .then(({ data }) => {
-      document.getElementById('placa').value = data[0]?.placa || '';
+    .then(({ data, error }) => {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      document.getElementById('placa').value = data?.[0]?.placa || '';
     });
 }
 
@@ -150,11 +185,16 @@ function fecharGerenciar() {
 }
 
 async function incluirMotorista() {
-  const nome = document.getElementById('novoMotorista').value;
-  const placa = document.getElementById('novaPlaca').value;
+  const nome = document.getElementById('novoMotorista').value.trim();
+  const placa = document.getElementById('novaPlaca').value.trim();
   if (!nome || !placa) return alert('Preencha ambos os campos.');
 
-  await supabase.from('motoristas').insert([{ nome, placa }]);
+  const { error } = await supabase.from('motoristas').insert([{ nome, placa }]);
+  if (error) {
+    alert('Erro ao incluir: ' + error.message);
+    console.error(error);
+    return;
+  }
   alert('Motorista incluído.');
   document.getElementById('novoMotorista').value = '';
   document.getElementById('novaPlaca').value = '';
@@ -163,11 +203,15 @@ async function incluirMotorista() {
 }
 
 async function carregarListaGerenciamento() {
-  const { data: motoristas } = await supabase.from('motoristas').select('*');
+  const { data: motoristas, error } = await supabase.from('motoristas').select('id,nome,placa').order('nome');
+  if (error) {
+    console.error(error);
+    return;
+  }
   const lista = document.getElementById('listaMotoristas');
   lista.innerHTML = '';
 
-  motoristas.forEach(({ id, nome, placa }) => {
+  (motoristas || []).forEach(({ id, nome, placa }) => {
     const div = document.createElement('div');
     div.classList.add('flex', 'justify-between', 'items-center', 'mb-1');
 
@@ -181,7 +225,11 @@ async function carregarListaGerenciamento() {
     btn.onclick = async () => {
       const confirmar = confirm(`Deseja excluir o motorista "${nome}"?`);
       if (confirmar) {
-        await supabase.from('motoristas').delete().eq('id', id);
+        const { error: err } = await supabase.from('motoristas').delete().eq('id', id);
+        if (err) {
+          alert('Erro ao excluir: ' + err.message);
+          console.error(err);
+        }
         carregarMotoristas();
         carregarListaGerenciamento();
       }
@@ -197,7 +245,7 @@ async function carregarListaRegistros() {
   const dataSelecionada = document.getElementById('data').value;
   const { data: registros, error } = await supabase
     .from('controle_diario')
-    .select('motorista, rota, kmTotal')
+    .select('motorista, rota, km_rota1, km_rota2, km_adicional')
     .eq('data', dataSelecionada);
 
   const container = document.getElementById('listaRegistrosPorData');
@@ -216,13 +264,16 @@ async function carregarListaRegistros() {
 
   const ul = document.createElement('ul');
   registros.forEach(r => {
+    const kmTotalCalc = toNum(r.km_rota1) + toNum(r.km_rota2) + toNum(r.km_adicional);
     const li = document.createElement('li');
-    li.textContent = `Motorista: ${r.motorista}, Rota: ${r.rota}, KM Total: ${r.kmTotal}`;
+    li.textContent = `Motorista: ${r.motorista}, Rota: ${r.rota}, KM Total: ${kmTotalCalc.toFixed(2)}`;
     ul.appendChild(li);
   });
   container.appendChild(ul);
 }
 
+// disponibiliza para HTML inline
 window.abrirGerenciar = abrirGerenciar;
 window.fecharGerenciar = fecharGerenciar;
 window.incluirMotorista = incluirMotorista;
+window.atualizarPlaca = atualizarPlaca;
