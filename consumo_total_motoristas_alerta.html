@@ -66,7 +66,17 @@
   const DATA_FIELDS = ['data', 'Data', 'created_at'];
   const MOTORISTA_FIELDS = ['motorista', 'Motorista', 'nome_motorista'];
   const PLACA_FIELDS = ['placa', 'Placa'];
-  const VALOR_DIA_FIELDS = ['valor_total']; // exclusivo
+  const VALOR_DIA_FIELDS = ['valor_total', 'valorTotal']; // aceita snake e camel
+
+  // tenta normalizar datas que venham como 'AAAA/MM/DD' ou 'AAAA-MM-DD'
+  function normalizeDateToISO(d){
+    if (!d) return '';
+    try {
+      const s = String(d).replace(/\//g,'-');
+      const iso = new Date(s).toISOString().slice(0,10);
+      return iso;
+    } catch { return ''; }
+  }
 
   const el = (id) => document.getElementById(id);
 
@@ -105,7 +115,45 @@
 
   // ------- Buscar registros do mês/ano e indexar por motorista + dia
   async function getRegistrosMesAno(ano, mes){
-    const primeiroDia = `${ano}-${String(mes).padStart(2,'0')}-01`;
+    // Estratégia robusta: busca tudo e filtra em JS por mês/ano, pois alguns ambientes
+    // usam colunas separadas (ano/mes/dia) ou data em formatos diferentes
+    const result = await supa.from('controle_diario').select('*');
+    if (result.error){ console.error(result.error); return new Map(); }
+    const rows = result.data || [];
+
+    const mapa = new Map(); // key: nomeMotorista -> { dia: valor_total }
+
+    for (let i=0; i<rows.length; i++){
+      const r = rows[i];
+      const nome = String(pickFirst(r, MOTORISTA_FIELDS) || '—');
+      let isoStr = normalizeDateToISO(pickFirst(r, DATA_FIELDS));
+
+      // Se não tiver 'data', tentar compor a partir de ano/mes/dia
+      if (!isoStr){
+        const yy = Number(pickFirst(r, ['ano','Ano']));
+        const mm = Number(pickFirst(r, ['mes','Mes']));
+        const dd = Number(pickFirst(r, ['dia','Dia']));
+        if (yy && mm && dd){
+          isoStr = `${yy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+        }
+      }
+
+      // Ignorar linhas sem data válida
+      if (!isoStr) continue;
+
+      const y = Number(isoStr.slice(0,4));
+      const m = Number(isoStr.slice(5,7));
+      const d = Number(isoStr.slice(8,10));
+
+      if (y !== Number(ano) || m !== Number(mes)) continue; // filtra por mês/ano escolhidos
+
+      const valor = sumKnownFields(r, VALOR_DIA_FIELDS);
+      if (!mapa.has(nome)) mapa.set(nome, {});
+      const obj = mapa.get(nome);
+      obj[d] = (obj[d] || 0) + valor;
+    }
+    return mapa;
+  }-${String(mes).padStart(2,'0')}-01`;
     const ultimoDia = `${ano}-${String(mes).padStart(2,'0')}-${String(daysInMonth(ano, mes)).padStart(2,'0')}`;
 
     const result = await supa
