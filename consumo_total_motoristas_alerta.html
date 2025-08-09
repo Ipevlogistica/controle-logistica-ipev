@@ -1,95 +1,178 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Consumo Total dos Motoristas</title>
+  <title>Consumo Total por Motorista • IPEV</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/dist/umd/supabase.js"></script>
 </head>
 <body class="bg-gray-100 text-sm">
   <div class="p-4">
-    <h1 class="text-xl font-bold mb-4">Consumo Total por Motorista</h1>
-    <table class="min-w-full bg-white border border-gray-300">
-      <thead class="bg-blue-100">
-        <tr>
-          <th class="border px-2 py-1">Motorista</th>
-          <th class="border px-2 py-1">Valor Recarregado (R$)</th>
-          <th class="border px-2 py-1">Recarga Adicional (R$)</th>
-          <th class="border px-2 py-1">Total Recarregado (R$)</th>
-          <th class="border px-2 py-1">Dia 1</th>
-          <th class="border px-2 py-1">Dia 2</th>
-          <th class="border px-2 py-1">Dia 3</th>
-          <th class="border px-2 py-1">Dia 4</th>
-          <th class="border px-2 py-1">Saldo Final (R$)</th>
-          <th class="border px-2 py-1">Excluir</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="border px-2 py-1">João</td>
-          <td><input type="number" class="w-24 text-center border rounded recarga-inicial" value="200"></td>
-          <td><input type="number" class="w-24 text-center border rounded recarga-adicional" value="50"></td>
-          <td class="border px-2 py-1 text-blue-700 font-bold total-recarregado">0.00</td>
-          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="30"></td>
-          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="20"></td>
-          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="40"></td>
-          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="15"></td>
-          <td class="border px-2 py-1 font-bold text-green-700 saldo-final">0.00</td>
-          <td class="border px-2 py-1 text-center"><button onclick="this.closest('tr').remove()" class="text-red-600 font-bold text-lg hover:text-red-800">🗑️</button></td>
-        </tr>
-        <tr>
-          <td class="border px-2 py-1">Maria</td>
-          <td><input type="number" class="w-24 text-center border rounded recarga-inicial" value="180"></td>
-          <td><input type="number" class="w-24 text-center border rounded recarga-adicional" value="20"></td>
-          <td class="border px-2 py-1 text-blue-700 font-bold total-recarregado">0.00</td>
-          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="25"></td>
-          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="10"></td>
-          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="30"></td>
-          <td><input type="number" class="w-16 text-center border rounded gasto-dia" value="15"></td>
-          <td class="border px-2 py-1 font-bold text-green-700 saldo-final">0.00</td>
-          <td class="border px-2 py-1 text-center"><button onclick="this.closest('tr').remove()" class="text-red-600 font-bold text-lg hover:text-red-800">🗑️</button></td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-bold">Consumo Total por Motorista</h1>
+      <a href="index.html">
+        <button class="bg-blue-800 text-white px-4 py-2 rounded-md font-semibold">⬅ Voltar</button>
+      </a>
+    </div>
+
+    <!-- Filtros de período (Mês/Ano) -->
+    <div class="bg-white border border-gray-300 rounded-md p-3 mb-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div>
+        <label class="block text-xs text-gray-600 mb-1">Mês</label>
+        <select id="selMes" class="w-full border rounded px-2 py-1">
+          <option value="1">Janeiro</option>
+          <option value="2">Fevereiro</option>
+          <option value="3">Março</option>
+          <option value="4">Abril</option>
+          <option value="5">Maio</option>
+          <option value="6">Junho</option>
+          <option value="7">Julho</option>
+          <option value="8">Agosto</option>
+          <option value="9">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 mb-1">Ano</label>
+        <select id="selAno" class="w-full border rounded px-2 py-1"></select>
+      </div>
+      <div class="md:col-span-2 flex items-end gap-2">
+        <button id="btnAtualizar" class="bg-blue-700 text-white px-4 py-2 rounded-md font-semibold">Atualizar</button>
+        <span class="text-xs text-gray-600">As colunas (Dia 1..N) são geradas conforme há registros no Supabase para o mês/ano selecionados.</span>
+      </div>
+    </div>
+
+    <!-- Tabela dinâmica: Motorista/Placa + Dias do mês -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white border border-gray-300" id="tabela">
+        <thead id="thead" class="bg-blue-100"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
   </div>
 
 <script>
-  function atualizarTotais(row) {
-    const recargaInicial = parseFloat(row.querySelector('.recarga-inicial')?.value) || 0;
-    const recargaAdicional = parseFloat(row.querySelector('.recarga-adicional')?.value) || 0;
-    const totalRecarregado = recargaInicial + recargaAdicional;
+  // ============================
+  // CONFIGURAÇÃO SUPABASE
+  // ============================
+  const SUPABASE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-    const totalRecarregadoCell = row.querySelector('.total-recarregado');
-    totalRecarregadoCell.textContent = totalRecarregado.toFixed(2);
+  // Campos prováveis no controle_diario (ajustaremos quando você confirmar os nomes)
+  const DATA_FIELDS = ['data','Data','created_at'];
+  const MOTORISTA_FIELDS = ['motorista','Motorista','nome_motorista'];
+  const PLACA_FIELDS = ['placa','Placa'];
+  // Valores diários possíveis (se houver). Se não houver, deixamos em branco por enquanto
+  const VALOR_DIA_FIELDS = ['gasto','valor','custo','valor_total','valorGasolina'];
 
-    let totalGasto = 0;
-    row.querySelectorAll('.gasto-dia').forEach(input => {
-      totalGasto += parseFloat(input.value) || 0;
-    });
+  const el = (id) => document.getElementById(id);
 
-    const saldo = totalRecarregado - totalGasto;
-    const saldoFinal = row.querySelector('.saldo-final');
-    saldoFinal.textContent = saldo.toFixed(2);
-
-    if (saldo <= 100) {
-      row.classList.add('bg-red-100');
-    } else {
-      row.classList.remove('bg-red-100');
-    }
+  function daysInMonth(year, month1to12){
+    return new Date(year, month1to12, 0).getDate();
+  }
+  function iso(d){
+    try{ return new Date(d).toISOString().slice(0,10);}catch{ return '';}
+  }
+  function pickFirst(row, fields){
+    for (const f of fields) if (row && row[f] != null) return row[f];
+    return undefined;
+  }
+  const toNum = (v) => Number.isFinite(Number(v)) ? Number(v) : 0;
+  function sumKnownFields(row, fields){
+    return fields.reduce((acc,f)=> acc + toNum(row[f]), 0);
   }
 
-  document.querySelectorAll('tbody tr').forEach(row => {
-    row.querySelectorAll('input').forEach(input => {
-      input.addEventListener('input', () => atualizarTotais(row));
+  // ------- Carregar motoristas (lista base de linhas)
+  async function getMotoristas(){
+    const { data, error } = await supa.from('motoristas').select('*').order('nome', { ascending: true }).returns();
+    if (error) { console.error(error); return []; }
+    return (data||[]).map(m => ({
+      nome: m.nome || m.Motorista || m.motorista || m.nome_motorista || '—',
+      placa: m.placa || m.Placa || ''
+    }));
+  }
+
+  // ------- Buscar registros do mês/ano e indexar por motorista + dia
+  async function getRegistrosMesAno(ano, mes){
+    const primeiroDia = `${ano}-${String(mes).padStart(2,'0')}-01`;
+    const ultimoDia = `${ano}-${String(mes).padStart(2,'0')}-${String(daysInMonth(ano, mes)).padStart(2,'0')}`;
+
+    let q = supa.from('controle_diario').select('*').gte('data', primeiroDia).lte('data', ultimoDia);
+    const { data, error } = await q.returns();
+    if (error) { console.error(error); return new Map(); }
+
+    const mapa = new Map(); // key: nomeMotorista -> { dia: valor }
+    for (const r of (data||[])){
+      const nome = String(pickFirst(r, MOTORISTA_FIELDS) || '—');
+      const dataIso = iso(pickFirst(r, DATA_FIELDS));
+      const dia = dataIso ? Number(dataIso.slice(8,10)) : null;
+      if (!dia) continue;
+      const valor = sumKnownFields(r, VALOR_DIA_FIELDS); // placeholder: ajustaremos depois
+      if (!mapa.has(nome)) mapa.set(nome, {});
+      mapa.get(nome)[dia] = (mapa.get(nome)[dia] || 0) + valor;
+    }
+    return mapa;
+  }
+
+  function desenharCabecalho(qtdDias){
+    const ths = [
+      '<th class="border px-2 py-1">Motorista</th>',
+      '<th class="border px-2 py-1">Placa</th>'
+    ];
+    for (let d=1; d<=qtdDias; d++) ths.push(`<th class=\"border px-2 py-1\">Dia ${d}</th>`);
+    el('thead').innerHTML = `<tr>${ths.join('')}</tr>`;
+  }
+
+  function desenharLinhas(motoristas, mapaValores, qtdDias){
+    const linhas = motoristas.map(m => {
+      const valores = mapaValores.get(m.nome) || {};
+      const tds = [
+        `<td class=\"border px-2 py-1\">${m.nome}</td>`,
+        `<td class=\"border px-2 py-1\">${m.placa || '—'}</td>`
+      ];
+      for (let d=1; d<=qtdDias; d++){
+        const v = valores[d];
+        tds.push(`<td class=\"border px-2 py-1 text-right\">${(v!=null && v!==0) ? Number(v).toFixed(2) : ''}</td>`);
+      }
+      return `<tr>${tds.join('')}</tr>`;
     });
-    atualizarTotais(row); // inicializa
+    el('tbody').innerHTML = linhas.join('');
+  }
+
+  async function atualizarTabela(){
+    const mes = Number(el('selMes').value);
+    const ano = Number(el('selAno').value);
+    const qtdDias = daysInMonth(ano, mes);
+
+    desenharCabecalho(qtdDias);
+    const [motoristas, mapa] = await Promise.all([
+      getMotoristas(),
+      getRegistrosMesAno(ano, mes)
+    ]);
+    desenharLinhas(motoristas, mapa, qtdDias);
+  }
+
+  // ---------- Init
+  document.addEventListener('DOMContentLoaded', () => {
+    // Preencher ANOS (atual e +/- 3)
+    const anoAtual = new Date().getFullYear();
+    const anos = [];
+    for (let a = anoAtual - 3; a <= anoAtual + 1; a++) anos.push(a);
+    el('selAno').innerHTML = anos.map(a => `<option value=\"${a}\">${a}</option>`).join('');
+
+    // Selecionar mês/ano atuais por padrão
+    el('selMes').value = String(new Date().getMonth()+1);
+    el('selAno').value = String(anoAtual);
+
+    el('btnAtualizar').addEventListener('click', atualizarTabela);
+
+    // Primeira carga
+    atualizarTabela();
   });
 </script>
-<body>
-  <a href="index.html" style="position: absolute; top: 20px; right: 20px;">
-    <button style="background-color: #1e40af; color: white; padding: 10px 16px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
-      ⬅ Voltar
-    </button>
-  </a>
-
+</body>
 </html>
+
