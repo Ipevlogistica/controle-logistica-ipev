@@ -84,19 +84,20 @@ async function carregarMotoristas() {
 }
 
 /**
- * Lê do Supabase os registros do mês e retorna um mapa:
- * key: `${dataISO}__${motorista_nome}` => total_km_do_dia
+ * Lê do Supabase os registros do mês e retorna:
+ * - mapaKmDia: Map<`${dataISO}__${motorista}`, km_total_no_dia>
+ * - valorGasolinaMedio: média dos valor_gasolina no mês (global)
  */
 async function carregarKmPorDiaMes(ano, mes1a12) {
   const inicioISO = formatarDataISO(ano, mes1a12, 1);
   const fimISO = formatarDataISO(ano, mes1a12, diasNoMes(ano, mes1a12));
 
-  if (!supabaseClient) return new Map();
+  if (!supabaseClient) return { mapaKmDia: new Map(), valorGasolinaMedio: null };
 
   statusEl.textContent = "Carregando km do mês...";
   const { data, error } = await supabaseClient
     .from("controle_diario")
-    .select("data, motorista, km_rota1, km_rota2, km_adicional")
+    .select("data, motorista, km_rota1, km_rota2, km_adicional, valor_gasolina")
     .gte("data", inicioISO)
     .lte("data", fimISO)
     .order("data", { ascending: true });
@@ -104,20 +105,26 @@ async function carregarKmPorDiaMes(ano, mes1a12) {
   if (error) {
     console.error(error);
     statusEl.textContent = "Erro ao carregar KM do mês.";
-    return new Map();
+    return { mapaKmDia: new Map(), valorGasolinaMedio: null };
   }
   statusEl.textContent = "";
 
-  const mapa = new Map();
+  const mapaKmDia = new Map();
+  let somaGas = 0, qtdGas = 0;
+
   (data || []).forEach(row => {
-    const dataISO = row.data; // já vem YYYY-MM-DD
+    const dataISO = row.data; // YYYY-MM-DD
     const mot = row.motorista || "";
     const kmTotal = num(row.km_rota1) + num(row.km_rota2) + num(row.km_adicional);
     const key = `${dataISO}__${mot}`;
-    mapa.set(key, (mapa.get(key) || 0) + kmTotal);
+    mapaKmDia.set(key, (mapaKmDia.get(key) || 0) + kmTotal);
+
+    const g = num(row.valor_gasolina);
+    if (g > 0) { somaGas += g; qtdGas++; }
   });
 
-  return mapa;
+  const valorGasolinaMedio = qtdGas > 0 ? somaGas / qtdGas : null;
+  return { mapaKmDia, valorGasolinaMedio };
 }
 
 // ================== TABELA DINÂMICA ==================
@@ -130,7 +137,7 @@ function montarCabecalho(motoristas) {
   thead.innerHTML = `<tr>${cols.join("")}</tr>`;
 }
 
-function montarLinhasComDados(ano, mes1a12, motoristas, mapaKmDia) {
+function montarLinhasComDados(ano, mes1a12, motoristas, mapaKmDia, valorGasolinaMedio) {
   const totalDias = diasNoMes(ano, mes1a12);
   const linhas = [];
 
@@ -157,17 +164,22 @@ function montarLinhasComDados(ano, mes1a12, motoristas, mapaKmDia) {
   }
 
   // ===== Linhas finais =====
-  // Linha TOTAL KM (agora somada por coluna)
+  // Linha TOTAL KM (somada por coluna)
   const totalKm = [`<th class="px-4 py-2 text-left font-semibold bg-blue-100">Total KM</th>`];
   motoristas.forEach((_, idx) => {
     totalKm.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">${fmt2(totaisPorMotorista[idx])}</td>`);
   });
   linhas.push(`<tr>${totalKm.join("")}</tr>`);
 
-  // Linha VALOR TOTAL MÊS (placeholder)
+  // Linha VALOR TOTAL MÊS ((Total KM / 35) * valor_gasolina_médio)
   const valorMes = [`<th class="px-4 py-2 text-left font-semibold bg-blue-100">Valor Total Mês</th>`];
-  motoristas.forEach(() => {
-    valorMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
+  motoristas.forEach((_, idx) => {
+    if (valorGasolinaMedio && valorGasolinaMedio > 0) {
+      const valor = (totaisPorMotorista[idx] / 35) * valorGasolinaMedio;
+      valorMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">${fmt2(valor)}</td>`);
+    } else {
+      valorMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
+    }
   });
   linhas.push(`<tr>${valorMes.join("")}</tr>`);
 
@@ -196,9 +208,9 @@ async function atualizarTabela() {
 
   montarCabecalho(motoristas);
 
-  // Carrega KM por dia no mês e monta linhas com dados
-  const mapaKmDia = await carregarKmPorDiaMes(ano, mes);
-  montarLinhasComDados(ano, mes, motoristas, mapaKmDia);
+  // Carrega KM/dia do mês e valor médio da gasolina do mês
+  const { mapaKmDia, valorGasolinaMedio } = await carregarKmPorDiaMes(ano, mes);
+  montarLinhasComDados(ano, mes, motoristas, mapaKmDia, valorGasolinaMedio);
 }
 
 // Eventos
