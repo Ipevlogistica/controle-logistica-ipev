@@ -1,7 +1,14 @@
 // ================== CONFIG SUPABASE ==================
 const SUPABASE_URL = "https://ilsbyrvnrkutwynujfhs.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Proteção para caso a UMD não carregue
+let supabaseClient = null;
+if (window.supabase && typeof window.supabase.createClient === "function") {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else {
+  console.warn("Supabase UMD não carregou. Cabeçalho será gerado sem motoristas.");
+}
 
 // ================== ELEMENTOS ==================
 const selMes = document.getElementById("selMes");
@@ -20,7 +27,7 @@ const meses = [
 function preencherCombosMesAno() {
   // Mês
   selMes.innerHTML = meses.map((m, i) => `<option value="${i+1}">${m}</option>`).join("");
-  // Ano (atual -1, atual, +1)
+  // Ano (atual -1, atual, +1, +2)
   const anoAtual = new Date().getFullYear();
   const anos = [anoAtual - 1, anoAtual, anoAtual + 1, anoAtual + 2];
   selAno.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join("");
@@ -31,7 +38,7 @@ function preencherCombosMesAno() {
 }
 
 function diasNoMes(ano, mes1a12) {
-  return new Date(ano, mes1a12, 0).getDate(); // último dia do mês
+  return new Date(ano, mes1a12, 0).getDate();
 }
 
 function formatarDataISO(ano, mes1a12, dia) {
@@ -47,6 +54,10 @@ function formatarDataBR(iso) {
 
 // ================== TABELA DINÂMICA ==================
 async function carregarMotoristas() {
+  if (!supabaseClient) {
+    statusEl.textContent = "Modo offline: Supabase não carregou.";
+    return [];
+  }
   statusEl.textContent = "Carregando motoristas...";
   const { data, error } = await supabaseClient
     .from("motoristas")
@@ -79,7 +90,7 @@ function montarLinhasVazias(ano, mes1a12, motoristas) {
     const dataISO = formatarDataISO(ano, mes1a12, dia);
     const tds = [`<td class="px-4 py-2 whitespace-nowrap text-gray-800">${formatarDataBR(dataISO)}</td>`];
 
-    // Por enquanto, apenas placeholder "--" por motorista
+    // Placeholder "--" por motorista
     motoristas.forEach(() => {
       tds.push(`<td class="px-4 py-2 text-center text-gray-500">--</td>`);
     });
@@ -105,8 +116,7 @@ async function atualizarTabela() {
   montarCabecalho(motoristas);
   montarLinhasVazias(ano, mes, motoristas);
 
-  // (Futuro) Aqui entraremos com busca no controle_diario para preencher células
-  // por data + motorista com o que você quiser exibir.
+  // (Futuro): preencher células com dados do controle_diario
 }
 
 // Eventos
