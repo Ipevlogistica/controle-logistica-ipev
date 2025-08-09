@@ -86,6 +86,7 @@ function montarLinhasVazias(ano, mes1a12, motoristas) {
   const totalDias = diasNoMes(ano, mes1a12);
   const linhas = [];
 
+  // Linhas dos dias
   for (let dia = 1; dia <= totalDias; dia++) {
     const dataISO = formatarDataISO(ano, mes1a12, dia);
     const tds = [`<td class="px-4 py-2 whitespace-nowrap text-gray-800">${formatarDataBR(dataISO)}</td>`];
@@ -97,6 +98,30 @@ function montarLinhasVazias(ano, mes1a12, motoristas) {
 
     linhas.push(`<tr class="hover:bg-gray-50">${tds.join("")}</tr>`);
   }
+
+  // ===== Linhas finais (novas) =====
+  // Linha TOTAL KM
+  const totalKm = [`<th class="px-4 py-2 text-left font-semibold bg-blue-100">Total KM</th>`];
+  motoristas.forEach(() => {
+    totalKm.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
+  });
+  linhas.push(`<tr>${totalKm.join("")}</tr>`);
+
+  // Linha VALOR TOTAL MÊS
+  const valorMes = [`<th class="px-4 py-2 text-left font-semibold bg-blue-100">Valor Total Mês</th>`];
+  motoristas.forEach(() => {
+    valorMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
+  });
+  linhas.push(`<tr>${valorMes.join("")}</tr>`);
+
+  // Linha RESQUÍCIO MÊS
+  const resquicioMes = [`<th class="px-4 py-2 text-left font-semibold bg-blue-100">Resquício Mês</th>`];
+  motoristas.forEach(() => {
+    resquicioMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
+  });
+  linhas.push(`<tr>${resquicioMes.join("")}</tr>`);
+  // ===== fim das novas linhas =====
+
   tbody.innerHTML = linhas.join("");
 }
 
