@@ -1,9 +1,7 @@
-/* Consumo Total por Motorista – JS específico (persistência de Recarga/Adicional)
-   Alterações incluídas:
-   - carregar recarga/adicional de recargas_motoristas (por mês/ano)
-   - preencher inputs com valores salvos
-   - salvar automaticamente (upsert) ao editar, com debounce
-   Restante do comportamento preservado (Consumo Geral, Resquício, linha vermelha ≤ 100)
+/* Consumo Total por Motorista – JS específico (persistência de Recarga/Adicional + consumo_geral/resquicio)
+   Alterações mínimas:
+   - salvar também consumo_geral e resquicio na tabela recargas_motoristas
+   Demais comportamentos preservados.
 */
 
 // === CONFIG SUPABASE ===
@@ -117,7 +115,7 @@ async function getRegistrosMesAno(ano, mes) {
 async function carregarRecargas(ano, mes) {
   const { data, error } = await supa
     .from('recargas_motoristas')
-    .select('motorista_nome,placa,recarga,adicional')
+    .select('motorista_nome,placa,recarga,adicional')   // leitura mantida
     .eq('ano', ano)
     .eq('mes', mes);
   if (error) {
@@ -132,12 +130,21 @@ async function carregarRecargas(ano, mes) {
   return mapa;
 }
 
-// Salva (upsert) um registro de recarga/adicional
-async function salvarRecargaAdicional({ nome, placa, ano, mes, recarga, adicional }) {
+// Salva (upsert) um registro de recarga/adicional (+ consumo_geral/resquicio)
+async function salvarRecargaAdicional({ nome, placa, ano, mes, recarga, adicional, consumo_geral, resquicio }) {
   const { error } = await supa
     .from('recargas_motoristas')
     .upsert(
-      [{ motorista_nome: nome, placa: placa || null, ano, mes, recarga, adicional }],
+      [{
+        motorista_nome: nome,
+        placa: placa || null,
+        ano,
+        mes,
+        recarga,
+        adicional,
+        consumo_geral,   // << NOVO
+        resquicio        // << NOVO
+      }],
       { onConflict: 'motorista_nome,placa,ano,mes' }
     );
   if (error) console.error('Erro salvarRecargaAdicional:', error);
@@ -222,8 +229,8 @@ function bindResquicioRecalcAndSave() {
     function recalcAndSave() {
       const recarga = toNum(inpRecarga && inpRecarga.value);
       const adicional = toNum(inpAdicional && inpAdicional.value);
-      const consumo = toNum(tdConsumo && tdConsumo.textContent);
-      const resq = recarga + adicional - consumo;
+      const consumo_geral = toNum(tdConsumo && tdConsumo.textContent);
+      const resq = recarga + adicional - consumo_geral;
 
       if (tdResq) tdResq.textContent = resq.toFixed(2);
       if (resq <= 100) tr.classList.add('bg-red-100');
@@ -232,7 +239,17 @@ function bindResquicioRecalcAndSave() {
       // persistir (ano/mes atuais da UI)
       const ano = Number($('selAno').value) || new Date().getFullYear();
       const mes = Number($('selMes').value) || new Date().getMonth() + 1;
-      salvarDebounced({ nome, placa, ano, mes, recarga, adicional });
+
+      salvarDebounced({
+        nome,
+        placa,
+        ano,
+        mes,
+        recarga,
+        adicional,
+        consumo_geral,       // << NOVO
+        resquicio: resq      // << NOVO
+      });
     }
 
     if (inpRecarga) {
