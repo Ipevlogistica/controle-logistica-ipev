@@ -134,15 +134,19 @@ function montarLinhasComDados(ano, mes1a12, motoristas, mapaKmDia) {
   const totalDias = diasNoMes(ano, mes1a12);
   const linhas = [];
 
+  // Vetor para somar o total por motorista (coluna)
+  const totaisPorMotorista = new Array(motoristas.length).fill(0);
+
   // Linhas dos dias
   for (let dia = 1; dia <= totalDias; dia++) {
     const dataISO = formatarDataISO(ano, mes1a12, dia);
     const tds = [`<td class="px-4 py-2 whitespace-nowrap text-gray-800">${formatarDataBR(dataISO)}</td>`];
 
-    motoristas.forEach(m => {
+    motoristas.forEach((m, idx) => {
       const key = `${dataISO}__${m.nome}`;
       const km = mapaKmDia.get(key);
       if (km !== undefined) {
+        totaisPorMotorista[idx] += Number(km);
         tds.push(`<td class="px-4 py-2 text-center">${fmt2(km)}</td>`);
       } else {
         tds.push(`<td class="px-4 py-2 text-center text-gray-500">--</td>`);
@@ -152,11 +156,11 @@ function montarLinhasComDados(ano, mes1a12, motoristas, mapaKmDia) {
     linhas.push(`<tr class="hover:bg-gray-50">${tds.join("")}</tr>`);
   }
 
-  // ===== Linhas finais já existentes =====
-  // Linha TOTAL KM (mantida com placeholders por enquanto)
+  // ===== Linhas finais =====
+  // Linha TOTAL KM (agora somada por coluna)
   const totalKm = [`<th class="px-4 py-2 text-left font-semibold bg-blue-100">Total KM</th>`];
-  motoristas.forEach(() => {
-    totalKm.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
+  motoristas.forEach((_, idx) => {
+    totalKm.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">${fmt2(totaisPorMotorista[idx])}</td>`);
   });
   linhas.push(`<tr>${totalKm.join("")}</tr>`);
 
