@@ -111,8 +111,6 @@ async function carregarKmPorDiaMesEValorGas(ano, mes1a12) {
   }
 
   const mapaKmDia = new Map();
-  let valorGasolinaAtual = null;
-
   (dadosMes || []).forEach(row => {
     const dataISO = row.data; // YYYY-MM-DD
     const mot = row.motorista || "";
@@ -122,7 +120,6 @@ async function carregarKmPorDiaMesEValorGas(ano, mes1a12) {
   });
 
   // 2) Buscar o valor_gasolina MAIS RECENTE dentro do mês
-  // (valor_gasolina não nulo e > 0), ordenado por data desc, 1 registro
   const { data: gasMes, error: errGasMes } = await supabaseClient
     .from("controle_diario")
     .select("valor_gasolina, data")
@@ -133,10 +130,11 @@ async function carregarKmPorDiaMesEValorGas(ano, mes1a12) {
     .order("data", { ascending: false })
     .limit(1);
 
+  let valorGasolinaAtual = null;
   if (!errGasMes && gasMes && gasMes.length > 0) {
     valorGasolinaAtual = num(gasMes[0].valor_gasolina);
   } else {
-    // 3) Fallback: buscar o MAIS RECENTE global (fora do mês)
+    // 3) Fallback: buscar o MAIS RECENTE global
     const { data: gasGlobal, error: errGasGlobal } = await supabaseClient
       .from("controle_diario")
       .select("valor_gasolina, data")
@@ -144,7 +142,6 @@ async function carregarKmPorDiaMesEValorGas(ano, mes1a12) {
       .gt("valor_gasolina", 0)
       .order("data", { ascending: false })
       .limit(1);
-
     if (!errGasGlobal && gasGlobal && gasGlobal.length > 0) {
       valorGasolinaAtual = num(gasGlobal[0].valor_gasolina);
     }
@@ -152,6 +149,31 @@ async function carregarKmPorDiaMesEValorGas(ano, mes1a12) {
 
   statusEl.textContent = "";
   return { mapaKmDia, valorGasolinaAtual };
+}
+
+/**
+ * Carrega recarga e adicional para cada motorista no mês/ano.
+ * Retorna Map<`${nome}__${placa}`, { recarga: number, adicional: number }>
+ */
+async function carregarRecargasMes(ano, mes1a12) {
+  if (!supabaseClient) return new Map();
+  const { data, error } = await supabaseClient
+    .from("recargas_motoristas")
+    .select("motorista_nome, placa, ano, mes, recarga, adicional")
+    .eq("ano", ano)
+    .eq("mes", mes1a12);
+
+  if (error) {
+    console.error(error);
+    return new Map();
+  }
+
+  const mapa = new Map();
+  (data || []).forEach(r => {
+    const key = `${r.motorista_nome || ""}__${r.placa || ""}`;
+    mapa.set(key, { recarga: num(r.recarga), adicional: num(r.adicional) });
+  });
+  return mapa;
 }
 
 // ================== TABELA DINÂMICA ==================
@@ -164,7 +186,7 @@ function montarCabecalho(motoristas) {
   thead.innerHTML = `<tr>${cols.join("")}</tr>`;
 }
 
-function montarLinhasComDados(ano, mes1a12, motoristas, mapaKmDia, valorGasolinaAtual) {
+function montarLinhasComDados(ano, mes1a12, motoristas, mapaKmDia, valorGasolinaAtual, recargasMap) {
   const totalDias = diasNoMes(ano, mes1a12);
   const linhas = [];
 
@@ -200,9 +222,11 @@ function montarLinhasComDados(ano, mes1a12, motoristas, mapaKmDia, valorGasolina
 
   // Linha VALOR TOTAL MÊS ((Total KM / 35) * valor_gasolina_atual)
   const valorMes = [`<th class="px-4 py-2 text-left font-semibold bg-blue-100">Valor Total Mês</th>`];
+  const valoresTotaisMes = new Array(motoristas.length).fill(null);
   motoristas.forEach((_, idx) => {
     if (valorGasolinaAtual && valorGasolinaAtual > 0) {
       const valor = (totaisPorMotorista[idx] / 35) * valorGasolinaAtual;
+      valoresTotaisMes[idx] = valor;
       valorMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">${fmt2(valor)}</td>`);
     } else {
       valorMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
@@ -210,10 +234,21 @@ function montarLinhasComDados(ano, mes1a12, motoristas, mapaKmDia, valorGasolina
   });
   linhas.push(`<tr>${valorMes.join("")}</tr>`);
 
-  // Linha RESQUÍCIO MÊS (placeholder)
+  // Linha RESQUÍCIO MÊS = (Recarga + Adicional) - Valor Total Mês
   const resquicioMes = [`<th class="px-4 py-2 text-left font-semibold bg-blue-100">Resquício Mês</th>`];
-  motoristas.forEach(() => {
-    resquicioMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
+  motoristas.forEach((m, idx) => {
+    const keyRec = `${m.nome}__${m.placa || ""}`;
+    const reg = recargasMap.get(keyRec);
+    if (reg && valoresTotaisMes[idx] !== null) {
+      const resq = (num(reg.recarga) + num(reg.adicional)) - Number(valoresTotaisMes[idx]);
+      resquicioMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">${fmt2(resq)}</td>`);
+    } else if (reg && valoresTotaisMes[idx] === null) {
+      // Temos recarga/adicional, mas não temos valor total mês calculado (sem gasolina)
+      resquicioMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
+    } else {
+      // Sem registro de recarga/adicional para o mês
+      resquicioMes.push(`<td class="px-4 py-2 text-center font-semibold bg-blue-50">--</td>`);
+    }
   });
   linhas.push(`<tr>${resquicioMes.join("")}</tr>`);
 
@@ -235,9 +270,12 @@ async function atualizarTabela() {
 
   montarCabecalho(motoristas);
 
-  // Carrega KM/dia do mês e valor da gasolina MAIS ATUAL
+  // Carrega KM/dia e gasolina atual
   const { mapaKmDia, valorGasolinaAtual } = await carregarKmPorDiaMesEValorGas(ano, mes);
-  montarLinhasComDados(ano, mes, motoristas, mapaKmDia, valorGasolinaAtual);
+  // Carrega recargas/adicionais do mês
+  const recargasMap = await carregarRecargasMes(ano, mes);
+
+  montarLinhasComDados(ano, mes, motoristas, mapaKmDia, valorGasolinaAtual, recargasMap);
 }
 
 // Eventos
