@@ -44,7 +44,7 @@
       </div>
     </div>
 
-    <!-- Tabela dinâmica: Motorista/Placa + Dias do mês -->
+    <!-- Tabela dinâmica: Motorista (Placa) + Recargas + Dias do mês -->
     <div class="overflow-x-auto">
       <table class="min-w-full bg-white border border-gray-300" id="tabela">
         <thead id="thead" class="bg-blue-100"></thead>
@@ -61,12 +61,12 @@
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  // Campos prováveis no controle_diario (ajustaremos quando você confirmar os nomes)
+  // Campos no banco
   const DATA_FIELDS = ['data','Data','created_at'];
   const MOTORISTA_FIELDS = ['motorista','Motorista','nome_motorista'];
   const PLACA_FIELDS = ['placa','Placa'];
-  // Valores diários possíveis (se houver). Se não houver, deixamos em branco por enquanto
-  const VALOR_DIA_FIELDS = ['gasto','valor','custo','valor_total','valorGasolina'];
+  // Valor diário a exibir: usar EXCLUSIVAMENTE 'valor_total' como você pediu
+  const VALOR_DIA_FIELDS = ['valor_total'];
 
   const el = (id) => document.getElementById(id);
 
@@ -74,7 +74,7 @@
     return new Date(year, month1to12, 0).getDate();
   }
   function iso(d){
-    try{ return new Date(d).toISOString().slice(0,10);}catch{ return '';}
+    try{ return new Date(d).toISOString().slice(0,10);}catch{ return '';} 
   }
   function pickFirst(row, fields){
     for (const f of fields) if (row && row[f] != null) return row[f];
@@ -104,13 +104,13 @@
     const { data, error } = await q.returns();
     if (error) { console.error(error); return new Map(); }
 
-    const mapa = new Map(); // key: nomeMotorista -> { dia: valor }
+    const mapa = new Map(); // key: nomeMotorista -> { dia: valor_total }
     for (const r of (data||[])){
       const nome = String(pickFirst(r, MOTORISTA_FIELDS) || '—');
       const dataIso = iso(pickFirst(r, DATA_FIELDS));
       const dia = dataIso ? Number(dataIso.slice(8,10)) : null;
       if (!dia) continue;
-      const valor = sumKnownFields(r, VALOR_DIA_FIELDS); // placeholder: ajustaremos depois
+      const valor = sumKnownFields(r, VALOR_DIA_FIELDS);
       if (!mapa.has(nome)) mapa.set(nome, {});
       mapa.get(nome)[dia] = (mapa.get(nome)[dia] || 0) + valor;
     }
@@ -119,8 +119,9 @@
 
   function desenharCabecalho(qtdDias){
     const ths = [
-      '<th class="border px-2 py-1">Motorista</th>',
-      '<th class="border px-2 py-1">Placa</th>'
+      '<th class="border px-2 py-1">Motorista (Placa)</th>',
+      '<th class="border px-2 py-1">Recarga (R$)</th>',
+      '<th class="border px-2 py-1">Adicional (R$)</th>'
     ];
     for (let d=1; d<=qtdDias; d++) ths.push(`<th class=\"border px-2 py-1\">Dia ${d}</th>`);
     el('thead').innerHTML = `<tr>${ths.join('')}</tr>`;
@@ -128,10 +129,12 @@
 
   function desenharLinhas(motoristas, mapaValores, qtdDias){
     const linhas = motoristas.map(m => {
+      const nomePlaca = `${m.nome}${m.placa ? ' ('+m.placa+')' : ''}`;
       const valores = mapaValores.get(m.nome) || {};
       const tds = [
-        `<td class=\"border px-2 py-1\">${m.nome}</td>`,
-        `<td class=\"border px-2 py-1\">${m.placa || '—'}</td>`
+        `<td class=\"border px-2 py-1\">${nomePlaca}</td>`,
+        `<td class=\"border px-2 py-1\"><input type=\"number\" step=\"0.01\" class=\"w-24 text-right border rounded recarga\" data-motorista=\"${m.nome}\" placeholder=\"0.00\"></td>`,
+        `<td class=\"border px-2 py-1\"><input type=\"number\" step=\"0.01\" class=\"w-24 text-right border rounded adicional\" data-motorista=\"${m.nome}\" placeholder=\"0.00\"></td>`
       ];
       for (let d=1; d<=qtdDias; d++){
         const v = valores[d];
@@ -175,4 +178,3 @@
 </script>
 </body>
 </html>
-
