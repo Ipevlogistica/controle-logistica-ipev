@@ -54,9 +54,6 @@
   </div>
 
 <script>
-  // ============================
-  // CONFIGURAÇÃO SUPABASE
-  // ============================
   const SUPABASE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -84,7 +81,7 @@
   }
 
   async function getMotoristas(){
-    const { data, error } = await supa.from('motoristas').select('*').order('nome', { ascending: true }).returns();
+    const { data, error } = await supa.from('motoristas').select('*').order('nome', { ascending: true });
     if (error) { console.error(error); return []; }
     return (data||[]).map(m => ({
       nome: m.nome || m.Motorista || m.motorista || m.nome_motorista || '—',
@@ -95,8 +92,32 @@
   async function getRegistrosMesAno(ano, mes){
     const primeiroDia = `${ano}-${String(mes).padStart(2,'0')}-01`;
     const ultimoDia = `${ano}-${String(mes).padStart(2,'0')}-${String(daysInMonth(ano, mes)).padStart(2,'0')}`;
-    let q = supa.from('controle_diario').select('*').gte('data', primeiroDia).lte('data', ultimoDia);
-    const { data, error } = await q.returns();
+
+    // Buscar apenas as colunas necessárias para performance
+    const { data, error } = await supa
+      .from('controle_diario')
+      .select('motorista,data,valor_total')
+      .gte('data', primeiroDia)
+      .lte('data', ultimoDia)
+      .returns();
+
+    if (error) { console.error(error); return new Map(); }
+
+    const mapa = new Map(); // key: nomeMotorista -> { dia: valor_total }
+    for (const r of (data||[])){
+      const nome = String(pickFirst(r, MOTORISTA_FIELDS) || '—');
+      const dataIso = iso(pickFirst(r, DATA_FIELDS));
+      const dia = dataIso ? Number(dataIso.slice(8,10)) : null;
+      if (!dia) continue;
+      const valor = sumKnownFields(r, VALOR_DIA_FIELDS);
+      if (!mapa.has(nome)) mapa.set(nome, {});
+      mapa.get(nome)[dia] = (mapa.get(nome)[dia] || 0) + valor;
+    }
+    return mapa;
+  }-${String(mes).padStart(2,'0')}-01`;
+    const ultimoDia = `${ano}-${String(mes).padStart(2,'0')}-${String(daysInMonth(ano, mes)).padStart(2,'0')}`;
+    let q = supa.from('controle_diario').select('motorista, data, valor_total').gte('data', primeiroDia).lte('data', ultimoDia);
+    const { data, error } = await q;
     if (error) { console.error(error); return new Map(); }
 
     const mapa = new Map();
@@ -133,7 +154,21 @@
       ];
       for (let d=1; d<=qtdDias; d++){
         const v = valores[d];
-        tds.push(`<td class=\"border px-2 py-1 text-right\">${(v!=null && v!==0) ? Number(v).toFixed(2) : ''}</td>`);
+        tds.push(`<td class=\"border px-2 py-1 text-right\">${(v!=null && v!==0) ? Number(v).toFixed(2) : '—'}</td>`);
+      }
+      return `<tr>${tds.join('')}</tr>`;
+    });
+    el('tbody').innerHTML = linhas.join('');
+  }${m.placa ? ' ('+m.placa+')' : ''}`;
+      const valores = mapaValores.get(m.nome) || {};
+      const tds = [
+        `<td class=\"border px-2 py-1\">${nomePlaca}</td>`,
+        `<td class=\"border px-2 py-1\"><input type=\"number\" step=\"0.01\" class=\"w-24 text-right border rounded recarga\" value=\"250.00\" data-motorista=\"${m.nome}\"></td>`,
+        `<td class=\"border px-2 py-1\"><input type=\"number\" step=\"0.01\" class=\"w-24 text-right border rounded adicional\" data-motorista=\"${m.nome}\" placeholder=\"0.00\"></td>`
+      ];
+      for (let d=1; d<=qtdDias; d++){
+        const v = valores[d];
+        tds.push(`<td class=\"border px-2 py-1 text-right\">${(v!=null) ? Number(v).toFixed(2) : '—'}</td>`);
       }
       return `<tr>${tds.join('')}</tr>`;
     });
