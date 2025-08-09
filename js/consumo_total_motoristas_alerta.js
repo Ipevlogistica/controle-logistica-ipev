@@ -1,12 +1,11 @@
-/* Consumo Total por Motorista – JS específico
-   - Lê motoristas (nome, placa) e monta 1 linha por motorista
-   - Mostra colunas Dia 1..N conforme o mês/ano selecionados
-   - Para cada dia, soma apenas o campo de gasto diário (valor_total OU valorTotal)
-   - Colunas "Recarga (R$)" (padrão 250.00, editável) e "Adicional (R$)" (editável)
-   - Sem persistência ainda (apenas visual). Depois podemos salvar em tabela própria.
+/* Consumo Total por Motorista – JS específico (com Consumo Geral e Resquício + destaque de linha)
+   Diferenças desta versão:
+   - Coluna "Consumo Geral (R$)" = soma dos valores dos Dias 1..N (valor_total/valorTotal) no mês por motorista
+   - Coluna "Resquício (R$)" = recarga + adicional – consumoGeral
+   - NOVO: Linha inteira (tr) recebe bg-red-100 quando Resquício <= 100 (sem alterar cores de texto)
 */
 
-// === CONFIG SUPABASE (usa a lib UMD já incluída no HTML) ===
+// === CONFIG SUPABASE ===
 const SUPABASE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
 const SUPABASE_ANON =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
@@ -14,10 +13,10 @@ const SUPABASE_ANON =
 const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // === CAMPOS E UTILITÁRIOS ===
-const DATA_FIELDS = ['data', 'Data', 'created_at']; // tentaremos esses antes de compor com ano/mes/dia
+const DATA_FIELDS = ['data', 'Data', 'created_at'];
 const MOTORISTA_FIELDS = ['motorista', 'Motorista', 'nome_motorista', 'nomeMotorista'];
 const PLACA_FIELDS = ['placa', 'Placa'];
-const VALOR_DIA_FIELDS = ['valor_total', 'valorTotal']; // aceita snake e camel
+const VALOR_DIA_FIELDS = ['valor_total', 'valorTotal'];
 
 const $ = (id) => document.getElementById(id);
 
@@ -57,7 +56,6 @@ function normalizeDateToISO(d) {
 
 // === BUSCAS ===
 async function getMotoristas() {
-  // pega só colunas necessárias
   const result = await supa.from('motoristas').select('nome,placa').order('nome', { ascending: true });
   if (result.error) {
     console.error('Erro motoristas:', result.error);
@@ -71,7 +69,7 @@ async function getMotoristas() {
 }
 
 async function getRegistrosMesAno(ano, mes) {
-  // Busca tudo e filtra em JS, para suportar diferentes formatos de data
+  // Busca tudo e filtra em JS para suportar diferentes formatos de data
   const result = await supa.from('controle_diario').select('*');
   if (result.error) {
     console.error('Erro controle_diario:', result.error);
@@ -83,10 +81,8 @@ async function getRegistrosMesAno(ano, mes) {
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
 
-    // motorista
     const nome = String(pickFirst(r, MOTORISTA_FIELDS) || '—');
 
-    // data (preferir campo único; senão, compor por ano/mes/dia)
     let iso = normalizeDateToISO(pickFirst(r, DATA_FIELDS));
     if (!iso) {
       const yy = Number(pickFirst(r, ['ano', 'Ano']));
@@ -117,6 +113,9 @@ function drawHeader(qtdDias) {
   ths.push('<th class="border px-2 py-1">Recarga (R$)</th>');
   ths.push('<th class="border px-2 py-1">Adicional (R$)</th>');
   for (let d = 1; d <= qtdDias; d++) ths.push(`<th class="border px-2 py-1">Dia ${d}</th>`);
+  // Colunas finais
+  ths.push('<th class="border px-2 py-1 bg-blue-100">Consumo Geral (R$)</th>');
+  ths.push('<th class="border px-2 py-1 bg-blue-100">Resquício (R$)</th>');
   $('thead').innerHTML = `<tr>${ths.join('')}</tr>`;
 }
 
@@ -126,8 +125,9 @@ function drawRows(motoristas, mapaValores, qtdDias) {
     const m = motoristas[i];
     const nomePlaca = `${m.nome}${m.placa ? ' (' + m.placa + ')' : ''}`;
     const valores = mapaValores.get(m.nome) || {};
-    const tds = [];
 
+    // monta células
+    const tds = [];
     tds.push(`<td class="border px-2 py-1">${nomePlaca}</td>`);
     tds.push(
       `<td class="border px-2 py-1"><input type="number" step="0.01" class="w-24 text-right border rounded recarga" value="250.00" data-motorista="${m.nome}"></td>`
@@ -136,14 +136,60 @@ function drawRows(motoristas, mapaValores, qtdDias) {
       `<td class="border px-2 py-1"><input type="number" step="0.01" class="w-24 text-right border rounded adicional" data-motorista="${m.nome}" placeholder="0.00"></td>`
     );
 
+    let consumoGeral = 0;
     for (let d = 1; d <= qtdDias; d++) {
       const v = valores[d];
+      consumoGeral += toNum(v);
       tds.push(`<td class="border px-2 py-1 text-right">${v != null && v !== 0 ? Number(v).toFixed(2) : '—'}</td>`);
     }
 
-    linhas.push(`<tr>${tds.join('')}</tr>`);
+    // Consumo Geral e Resquício
+    tds.push(`<td class="border px-2 py-1 text-right font-bold text-blue-700 consumo-geral">${consumoGeral.toFixed(2)}</td>`);
+    const recargaPadrao = 250.0;
+    const adicionalInicial = 0.0;
+    const resquicioInicial = recargaPadrao + adicionalInicial - consumoGeral;
+
+    // define classe do <tr> conforme resquício inicial (<= 100 => bg-red-100)
+    const trClass = resquicioInicial <= 100 ? ' class="bg-red-100"' : '';
+    tds.push(`<td class="border px-2 py-1 text-right font-bold resquicio">${resquicioInicial.toFixed(2)}</td>`);
+
+    linhas.push(`<tr${trClass}>${tds.join('')}</tr>`);
   }
   $('tbody').innerHTML = linhas.join('');
+
+  // Ligar recálculo de Resquício ao mudar recarga/adicional
+  bindResquicioRecalc();
+}
+
+function bindResquicioRecalc() {
+  const rows = $('tbody').querySelectorAll('tr');
+  rows.forEach((tr) => {
+    const inpRecarga = tr.querySelector('.recarga');
+    const inpAdicional = tr.querySelector('.adicional');
+    const tdConsumo = tr.querySelector('.consumo-geral');
+    const tdResq = tr.querySelector('.resquicio');
+
+    function recalc() {
+      const recarga = toNum(inpRecarga && inpRecarga.value);
+      const adicional = toNum(inpAdicional && inpAdicional.value);
+      const consumo = toNum(tdConsumo && tdConsumo.textContent);
+      const resq = recarga + adicional - consumo;
+
+      if (tdResq) {
+        tdResq.textContent = resq.toFixed(2);
+      }
+
+      // NOVO: marca/ desmarca a linha inteira em vermelho se resquício <= 100
+      if (resq <= 100) {
+        tr.classList.add('bg-red-100');
+      } else {
+        tr.classList.remove('bg-red-100');
+      }
+    }
+
+    if (inpRecarga) inpRecarga.addEventListener('input', recalc);
+    if (inpAdicional) inpAdicional.addEventListener('input', recalc);
+  });
 }
 
 // === CONTROLE ===
@@ -152,7 +198,6 @@ async function updateTable() {
   const ano = Number($('selAno').value) || new Date().getFullYear();
   const qtdDias = daysInMonth(ano, mes);
 
-  // cabeçalho sempre
   drawHeader(qtdDias);
 
   const status = $('statusMsg');
