@@ -148,21 +148,20 @@ function montarLinhasComDados(ano, mes1a12, motoristas, mapaKmDia, valorGasolina
 
   for (let dia = 1; dia <= totalDias; dia++) {
     const dataISO = formatarDataISO(ano, mes1a12, dia);
-    const diaDoMes = dia; // usado para destacar dia 10 e dia 20
-    let corDestaque = "";
-    if (diaDoMes === 10 || diaDoMes === 20) {
-      corDestaque = "bg-yellow-200";
-    }
+    const diaDoMes = dia;
+    
+    // Apenas a célula da DATA terá fundo amarelo se for dia 10 ou 20
+    const corData = (diaDoMes === 10 || diaDoMes === 20) ? "bg-yellow-200" : "";
 
-    const tds = [`<td class="px-4 py-2 whitespace-nowrap text-gray-800 ${corDestaque}">${formatarDataBR(dataISO)}</td>`];
+    const tds = [`<td class="px-4 py-2 whitespace-nowrap text-gray-800 ${corData}">${formatarDataBR(dataISO)}</td>`];
     motoristas.forEach((m, idx) => {
       const key = `${dataISO}__${m.nome}`;
       const km = mapaKmDia.get(key);
       if (km !== undefined) {
         totaisPorMotorista[idx] += Number(km);
-        tds.push(`<td class="px-4 py-2 text-center ${corDestaque}">${fmt2(km)}</td>`);
+        tds.push(`<td class="px-4 py-2 text-center">${fmt2(km)}</td>`);
       } else {
-        tds.push(`<td class="px-4 py-2 text-center text-gray-500 ${corDestaque}">--</td>`);
+        tds.push(`<td class="px-4 py-2 text-center text-gray-500">--</td>`);
       }
     });
     linhas.push(`<tr class="hover:bg-gray-50">${tds.join("")}</tr>`);
