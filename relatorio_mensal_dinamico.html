@@ -6,10 +6,43 @@
   <title>Relatório Mensal - IPEV</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
+    /* Configurações de impressão */
     @media print {
       #barra-acoes, #filtros { display: none; }
-      table { page-break-inside: auto; }
-      tr { page-break-inside: avoid; page-break-after: auto; }
+
+      /* Orientação da página em paisagem */
+      @page { size: landscape; margin: 20mm; }
+
+      /* Ajustes de tabelas para impressão */
+      table {
+        width: 100%; /* Garante que a tabela ocupe toda a largura da página */
+        border-collapse: collapse; /* Junta as bordas da tabela */
+        page-break-inside: auto; /* Evita que a tabela quebre */
+      }
+
+      /* Bordas e grades na tabela */
+      th, td {
+        border: 1px solid black; /* Bordas nas células */
+        padding: 8px; /* Espaçamento nas células */
+        text-align: left; /* Alinhamento à esquerda */
+      }
+
+      /* Nomes em negrito no cabeçalho */
+      th {
+        font-weight: bold;
+      }
+
+      /* Evitar quebra de tabela dentro da página */
+      tr {
+        page-break-inside: avoid;
+      }
+
+      /* Evitar que a tabela ultrapasse uma página */
+      tbody {
+        display: block;
+        height: 100%;
+        overflow: auto;
+      }
     }
   </style>
 </head>
