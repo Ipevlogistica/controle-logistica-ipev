@@ -1,8 +1,9 @@
-/* Consumo Total por Motorista – JS específico (com Consumo Geral e Resquício + destaque de linha)
-   Diferenças desta versão:
-   - Coluna "Consumo Geral (R$)" = soma dos valores dos Dias 1..N (valor_total/valorTotal) no mês por motorista
-   - Coluna "Resquício (R$)" = recarga + adicional – consumoGeral
-   - NOVO: Linha inteira (tr) recebe bg-red-100 quando Resquício <= 100 (sem alterar cores de texto)
+/* Consumo Total por Motorista – JS específico (persistência de Recarga/Adicional)
+   Alterações incluídas:
+   - carregar recarga/adicional de recargas_motoristas (por mês/ano)
+   - preencher inputs com valores salvos
+   - salvar automaticamente (upsert) ao editar, com debounce
+   Restante do comportamento preservado (Consumo Geral, Resquício, linha vermelha ≤ 100)
 */
 
 // === CONFIG SUPABASE ===
@@ -16,14 +17,14 @@ const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 const DATA_FIELDS = ['data', 'Data', 'created_at'];
 const MOTORISTA_FIELDS = ['motorista', 'Motorista', 'nome_motorista', 'nomeMotorista'];
 const PLACA_FIELDS = ['placa', 'Placa'];
-const VALOR_DIA_FIELDS = ['valor_total', 'valorTotal'];
+// inclui seu nome de coluna diário
+const VALOR_DIA_FIELDS = ['valor_total_gasto', 'valor_total', 'valorTotal'];
 
 const $ = (id) => document.getElementById(id);
 
 function daysInMonth(year, month1to12) {
   return new Date(year, month1to12, 0).getDate();
 }
-
 function pickFirst(row, fields) {
   for (let i = 0; i < fields.length; i++) {
     const f = fields[i];
@@ -31,18 +32,15 @@ function pickFirst(row, fields) {
   }
   return undefined;
 }
-
 function toNum(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 }
-
 function sumKnownFields(row, fields) {
   let acc = 0;
   for (let i = 0; i < fields.length; i++) acc += toNum(row[fields[i]]);
   return acc;
 }
-
 // Normaliza 'AAAA/MM/DD' ou Date-like para 'AAAA-MM-DD'
 function normalizeDateToISO(d) {
   if (!d) return '';
@@ -53,8 +51,16 @@ function normalizeDateToISO(d) {
     return '';
   }
 }
+// Debounce simples
+function debounce(fn, wait = 600) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), wait);
+  };
+}
 
-// === BUSCAS ===
+// === BUSCAS BASE ===
 async function getMotoristas() {
   const result = await supa.from('motoristas').select('nome,placa').order('nome', { ascending: true });
   if (result.error) {
@@ -106,6 +112,38 @@ async function getRegistrosMesAno(ano, mes) {
   return mapa;
 }
 
+// === PERSISTÊNCIA: RECARGAS/ADICIONAIS ===
+// Lê mapa: key "NOME|PLACA" -> { recarga, adicional }
+async function carregarRecargas(ano, mes) {
+  const { data, error } = await supa
+    .from('recargas_motoristas')
+    .select('motorista_nome,placa,recarga,adicional')
+    .eq('ano', ano)
+    .eq('mes', mes);
+  if (error) {
+    console.error('Erro carregarRecargas:', error);
+    return new Map();
+  }
+  const mapa = new Map();
+  (data || []).forEach((r) => {
+    const key = `${r.motorista_nome}|${r.placa || ''}`;
+    mapa.set(key, { recarga: toNum(r.recarga) || 250, adicional: toNum(r.adicional) || 0 });
+  });
+  return mapa;
+}
+
+// Salva (upsert) um registro de recarga/adicional
+async function salvarRecargaAdicional({ nome, placa, ano, mes, recarga, adicional }) {
+  const { error } = await supa
+    .from('recargas_motoristas')
+    .upsert(
+      [{ motorista_nome: nome, placa: placa || null, ano, mes, recarga, adicional }],
+      { onConflict: 'motorista_nome,placa,ano,mes' }
+    );
+  if (error) console.error('Erro salvarRecargaAdicional:', error);
+  return !error;
+}
+
 // === RENDER ===
 function drawHeader(qtdDias) {
   const ths = [];
@@ -113,27 +151,35 @@ function drawHeader(qtdDias) {
   ths.push('<th class="border px-2 py-1">Recarga (R$)</th>');
   ths.push('<th class="border px-2 py-1">Adicional (R$)</th>');
   for (let d = 1; d <= qtdDias; d++) ths.push(`<th class="border px-2 py-1">Dia ${d}</th>`);
-  // Colunas finais
+  // Colunas finais (já existentes)
   ths.push('<th class="border px-2 py-1 bg-blue-100">Consumo Geral (R$)</th>');
   ths.push('<th class="border px-2 py-1 bg-blue-100">Resquício (R$)</th>');
   $('thead').innerHTML = `<tr>${ths.join('')}</tr>`;
 }
 
-function drawRows(motoristas, mapaValores, qtdDias) {
+function drawRows(motoristas, mapaValores, qtdDias, mapaRecargas) {
   const linhas = [];
   for (let i = 0; i < motoristas.length; i++) {
     const m = motoristas[i];
     const nomePlaca = `${m.nome}${m.placa ? ' (' + m.placa + ')' : ''}`;
     const valores = mapaValores.get(m.nome) || {};
 
+    // valores salvos (ou defaults)
+    const key = `${m.nome}|${m.placa || ''}`;
+    const salvo = (mapaRecargas && mapaRecargas.get(key)) || { recarga: 250.0, adicional: 0.0 };
+
     // monta células
     const tds = [];
     tds.push(`<td class="border px-2 py-1">${nomePlaca}</td>`);
     tds.push(
-      `<td class="border px-2 py-1"><input type="number" step="0.01" class="w-24 text-right border rounded recarga" value="250.00" data-motorista="${m.nome}"></td>`
+      `<td class="border px-2 py-1"><input type="number" step="0.01" class="w-24 text-right border rounded recarga" value="${salvo.recarga.toFixed(
+        2
+      )}" data-motorista="${m.nome}" data-placa="${m.placa || ''}"></td>`
     );
     tds.push(
-      `<td class="border px-2 py-1"><input type="number" step="0.01" class="w-24 text-right border rounded adicional" data-motorista="${m.nome}" placeholder="0.00"></td>`
+      `<td class="border px-2 py-1"><input type="number" step="0.01" class="w-24 text-right border rounded adicional" value="${salvo.adicional.toFixed(
+        2
+      )}" data-motorista="${m.nome}" data-placa="${m.placa || ''}"></td>`
     );
 
     let consumoGeral = 0;
@@ -144,51 +190,59 @@ function drawRows(motoristas, mapaValores, qtdDias) {
     }
 
     // Consumo Geral e Resquício
-    tds.push(`<td class="border px-2 py-1 text-right font-bold text-blue-700 consumo-geral">${consumoGeral.toFixed(2)}</td>`);
-    const recargaPadrao = 250.0;
-    const adicionalInicial = 0.0;
-    const resquicioInicial = recargaPadrao + adicionalInicial - consumoGeral;
-
-    // define classe do <tr> conforme resquício inicial (<= 100 => bg-red-100)
+    const resquicioInicial = salvo.recarga + salvo.adicional - consumoGeral;
     const trClass = resquicioInicial <= 100 ? ' class="bg-red-100"' : '';
+    tds.push(`<td class="border px-2 py-1 text-right font-bold text-blue-700 consumo-geral">${consumoGeral.toFixed(2)}</td>`);
     tds.push(`<td class="border px-2 py-1 text-right font-bold resquicio">${resquicioInicial.toFixed(2)}</td>`);
 
     linhas.push(`<tr${trClass}>${tds.join('')}</tr>`);
   }
   $('tbody').innerHTML = linhas.join('');
 
-  // Ligar recálculo de Resquício ao mudar recarga/adicional
-  bindResquicioRecalc();
+  // Ligar recálculo + persistência
+  bindResquicioRecalcAndSave();
 }
 
-function bindResquicioRecalc() {
+function bindResquicioRecalcAndSave() {
   const rows = $('tbody').querySelectorAll('tr');
+
+  const salvarDebounced = debounce(async (payload) => {
+    await salvarRecargaAdicional(payload);
+  }, 600);
+
   rows.forEach((tr) => {
     const inpRecarga = tr.querySelector('.recarga');
     const inpAdicional = tr.querySelector('.adicional');
     const tdConsumo = tr.querySelector('.consumo-geral');
     const tdResq = tr.querySelector('.resquicio');
 
-    function recalc() {
+    const nome = inpRecarga?.dataset.motorista || '';
+    const placa = inpRecarga?.dataset.placa || '';
+
+    function recalcAndSave() {
       const recarga = toNum(inpRecarga && inpRecarga.value);
       const adicional = toNum(inpAdicional && inpAdicional.value);
       const consumo = toNum(tdConsumo && tdConsumo.textContent);
       const resq = recarga + adicional - consumo;
 
-      if (tdResq) {
-        tdResq.textContent = resq.toFixed(2);
-      }
+      if (tdResq) tdResq.textContent = resq.toFixed(2);
+      if (resq <= 100) tr.classList.add('bg-red-100');
+      else tr.classList.remove('bg-red-100');
 
-      // NOVO: marca/ desmarca a linha inteira em vermelho se resquício <= 100
-      if (resq <= 100) {
-        tr.classList.add('bg-red-100');
-      } else {
-        tr.classList.remove('bg-red-100');
-      }
+      // persistir (ano/mes atuais da UI)
+      const ano = Number($('selAno').value) || new Date().getFullYear();
+      const mes = Number($('selMes').value) || new Date().getMonth() + 1;
+      salvarDebounced({ nome, placa, ano, mes, recarga, adicional });
     }
 
-    if (inpRecarga) inpRecarga.addEventListener('input', recalc);
-    if (inpAdicional) inpAdicional.addEventListener('input', recalc);
+    if (inpRecarga) {
+      inpRecarga.addEventListener('input', recalcAndSave);
+      inpRecarga.addEventListener('blur', recalcAndSave);
+    }
+    if (inpAdicional) {
+      inpAdicional.addEventListener('input', recalcAndSave);
+      inpAdicional.addEventListener('blur', recalcAndSave);
+    }
   });
 }
 
@@ -204,8 +258,12 @@ async function updateTable() {
   if (status) status.textContent = '';
 
   try {
-    const [motoristas, mapa] = await Promise.all([getMotoristas(), getRegistrosMesAno(ano, mes)]);
-    drawRows(motoristas, mapa, qtdDias);
+    const [motoristas, mapa, mapaRec] = await Promise.all([
+      getMotoristas(),
+      getRegistrosMesAno(ano, mes),
+      carregarRecargas(ano, mes),
+    ]);
+    drawRows(motoristas, mapa, qtdDias, mapaRec);
     if (status) {
       status.textContent = `Carregado ${motoristas.length} motorista(s)`;
       status.className = 'text-xs ml-2 text-gray-600';
@@ -216,7 +274,7 @@ async function updateTable() {
       status.textContent = 'Falha ao carregar dados';
       status.className = 'text-xs ml-2 text-red-600';
     }
-    drawRows([], new Map(), qtdDias);
+    drawRows([], new Map(), qtdDias, new Map());
   }
 }
 
@@ -228,7 +286,6 @@ function initYearOptions() {
   $('selMes').value = String(new Date().getMonth() + 1);
   $('selAno').value = String(anoAtual);
 }
-
 function wireEvents() {
   $('btnAtualizar').addEventListener('click', updateTable);
 }
