@@ -1,62 +1,59 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Consumo Total por Motorista</title>
+  <meta charset="UTF-8">
+  <title>Consumo Total por Motorista • IPEV</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/dist/umd/supabase.js"></script>
-  <script src="js/consumo_total_motoristas_alerta.js"></script>
 </head>
-<body class="bg-gray-100">
-  <div class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold mb-4">Consumo Total por Motorista</h1>
+<body class="bg-gray-100 text-sm">
+  <div class="p-4">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-bold">Consumo Total por Motorista</h1>
+      <a href="index.html">
+        <button class="bg-blue-800 text-white px-4 py-2 rounded-md font-semibold">⬅ Voltar</button>
+      </a>
+    </div>
 
-    <div class="bg-white p-4 rounded shadow mb-4">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-        <div>
-          <label for="mes" class="block text-sm font-medium">Mês</label>
-          <select id="mes" class="mt-1 block w-full border-gray-300 rounded">
-            <option value="1">Janeiro</option>
-            <option value="2">Fevereiro</option>
-            <option value="3">Março</option>
-            <option value="4">Abril</option>
-            <option value="5">Maio</option>
-            <option value="6">Junho</option>
-            <option value="7">Julho</option>
-            <option value="8" selected>Agosto</option>
-            <option value="9">Setembro</option>
-            <option value="10">Outubro</option>
-            <option value="11">Novembro</option>
-            <option value="12">Dezembro</option>
-          </select>
-        </div>
-        <div>
-          <label for="ano" class="block text-sm font-medium">Ano</label>
-          <select id="ano" class="mt-1 block w-full border-gray-300 rounded">
-            <option value="2025" selected>2025</option>
-            <option value="2024">2024</option>
-          </select>
-        </div>
-        <div class="flex items-end">
-          <button id="atualizar" class="bg-blue-600 text-white px-4 py-2 rounded">Atualizar</button>
-        </div>
-        <div class="flex items-end justify-end">
-          <a href="index.html" class="bg-blue-600 text-white px-4 py-2 rounded flex items-center space-x-2">
-            <span>⬅</span>
-            <span>Voltar</span>
-          </a>
-        </div>
+    <!-- Filtros de período (Mês/Ano) -->
+    <div class="bg-white border border-gray-300 rounded-md p-3 mb-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div>
+        <label class="block text-xs text-gray-600 mb-1">Mês</label>
+        <select id="selMes" class="w-full border rounded px-2 py-1">
+          <option value="1">Janeiro</option>
+          <option value="2">Fevereiro</option>
+          <option value="3">Março</option>
+          <option value="4">Abril</option>
+          <option value="5">Maio</option>
+          <option value="6">Junho</option>
+          <option value="7">Julho</option>
+          <option value="8">Agosto</option>
+          <option value="9">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-600 mb-1">Ano</label>
+        <select id="selAno" class="w-full border rounded px-2 py-1"></select>
+      </div>
+      <div class="md:col-span-2 flex items-end gap-2">
+        <button id="btnAtualizar" class="bg-blue-700 text-white px-4 py-2 rounded-md font-semibold">Atualizar</button>
+        <span id="statusMsg" class="text-xs ml-2"></span>
       </div>
     </div>
 
-    <div class="bg-white p-4 rounded shadow overflow-x-auto">
-      <table id="tabelaConsumo" class="min-w-full border-collapse border border-gray-300">
-        <thead id="tabelaHead" class="bg-blue-100"></thead>
-        <tbody id="tabelaBody"></tbody>
+    <!-- Tabela dinâmica: Motorista (Placa) + Recargas + Dias do mês -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white border border-gray-300" id="tabela">
+        <thead id="thead" class="bg-blue-100"></thead>
+        <tbody id="tbody"></tbody>
       </table>
-      <p id="statusCarregamento" class="mt-2 text-sm text-gray-500"></p>
     </div>
   </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/dist/umd/supabase.js"></script>
+  <script src="js/consumo_total_motoristas_alerta.js"></script>
 </body>
 </html>
