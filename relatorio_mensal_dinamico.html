@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Relatório Mensal - IPEV</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @media print {
       #barra-acoes, #filtros { display: none; }
@@ -53,6 +52,9 @@
     </div>
   </div>
 
+  <!-- SUPABASE UMD (alterado aqui) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <!-- JS da página -->
   <script src="js/relatorio_mensal_dinamico.js"></script>
 </body>
 </html>
