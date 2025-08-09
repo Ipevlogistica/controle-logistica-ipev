@@ -1,165 +1,58 @@
-
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Relatório Mensal - IPEV</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
-    }
-    h1 {
-      color: #1e40af;
-      text-align: center;
-    }
-    .filters {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    select {
-      padding: 6px;
-      font-size: 16px;
-      margin-right: 10px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: center;
-    }
-    th {
-      background-color: #1e3a8a;
-      color: white;
-    }
-    th:first-child {
-      width: 100px;
-    }
-    .btn-top-right {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-    }
-    .btn-top-right button {
-      background-color: #1e40af;
-      color: white;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .readonly {
-      background-color: #f9f9f9;
-      font-weight: bold;
-    }
     @media print {
-      @page {
-        size: landscape;
-        margin: 1cm;
-      }
-      .btn-top-right {
-        display: none;
-      }
+      #barra-acoes, #filtros { display: none; }
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
     }
   </style>
-  <script>
-    function gerarTabela() {
-      const mes = document.getElementById("mes").value;
-      const ano = document.getElementById("ano").value;
-      const diasNoMes = new Date(ano, mes, 0).getDate();
-      let html = "";
-      for (let dia = 1; dia <= diasNoMes; dia++) {
-        const data = ("0" + dia).slice(-2) + "/" + ("0" + mes).slice(-2) + "/" + ano;
-        html += "<tr><td>" + data + "</td>";
-        for (let i = 0; i < 8; i++) {
-          html += "<td class='readonly'>--</td>";
-        }
-        html += "</tr>";
-      }
-      document.getElementById("tabela-dias").innerHTML = html;
-    }
-
-    window.onload = gerarTabela;
-  </script>
 </head>
-<body>
+<body class="bg-blue-100 p-6">
+  <div class="max-w-7xl mx-auto">
+    <!-- topo -->
+    <div class="flex justify-between items-start mb-6" id="barra-acoes">
+      <h1 class="text-3xl font-extrabold text-blue-800">Relatório Mensal - IPEV</h1>
+      <div class="space-x-2">
+        <a href="index.html" class="inline-flex items-center bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded shadow">← Início</a>
+        <button id="btnImprimir" class="inline-flex items-center bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded shadow">🖨️ Imprimir Relatório</button>
+      </div>
+    </div>
 
-  <div class="btn-top-right">
-    <a href="index.html">
-      <button>⬅ Início</button>
-    </a>
-    <button onclick="window.print()">🖨 Imprimir Relatório</button>
+    <!-- filtros -->
+    <div id="filtros" class="flex items-center space-x-3 mb-4">
+      <label class="text-blue-900 font-semibold">Mês:</label>
+      <select id="selMes" class="bg-white border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring">
+        <!-- preenchido via JS -->
+      </select>
+
+      <label class="text-blue-900 font-semibold">Ano:</label>
+      <select id="selAno" class="bg-white border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring">
+        <!-- preenchido via JS -->
+      </select>
+
+      <span id="status" class="ml-3 text-sm text-blue-700"></span>
+    </div>
+
+    <!-- tabela -->
+    <div class="bg-white rounded-lg shadow overflow-x-auto">
+      <table class="min-w-full">
+        <thead id="thead" class="bg-blue-800 text-white">
+          <!-- gerado via JS: th: Data + [motoristas] -->
+        </thead>
+        <tbody id="tbody" class="divide-y divide-gray-200">
+          <!-- linhas por dia do mês, preenchidas via JS -->
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <h1>Relatório Mensal - IPEV</h1>
-
-  <div class="filters">
-    <label for="mes">Mês:</label>
-    <select id="mes" name="mes" onchange="gerarTabela()">
-      <option value='1'>Janeiro</option>
-<option value='2'>Fevereiro</option>
-<option value='3'>Março</option>
-<option value='4'>Abril</option>
-<option value='5'>Maio</option>
-<option value='6'>Junho</option>
-<option value='7'>Julho</option>
-<option value='8'>Agosto</option>
-<option value='9'>Setembro</option>
-<option value='10'>Outubro</option>
-<option value='11'>Novembro</option>
-<option value='12'>Dezembro</option>
-    </select>
-
-    <label for="ano">Ano:</label>
-    <select id="ano" name="ano" onchange="gerarTabela()">
-      <option value='2025'>2025</option>
-<option value='2026'>2026</option>
-<option value='2027'>2027</option>
-<option value='2028'>2028</option>
-<option value='2029'>2029</option>
-<option value='2030'>2030</option>
-    </select>
-  </div>
-
-  <table>
-    <tr>
-      <th>Data</th>
-      <th>João</th>
-<th>Maria</th>
-<th>Carlos</th>
-<th>Bruno</th>
-<th>Fernanda</th>
-<th>Lúcia</th>
-<th>Rafael</th>
-<th>Paula</th>
-    </tr>
-    <tbody id="tabela-dias">
-      <!-- Preenchido por JS -->
-    </tbody>
-    <tr>
-      <th>Total em KM</th>
-      <td class='readonly'>--</td><td class='readonly'>--</td><td class='readonly'>--</td>
-      <td class='readonly'>--</td><td class='readonly'>--</td><td class='readonly'>--</td>
-      <td class='readonly'>--</td><td class='readonly'>--</td>
-    </tr>
-    <tr>
-      <th>Valor Usado (R$)</th>
-      <td class='readonly'>--</td><td class='readonly'>--</td><td class='readonly'>--</td>
-      <td class='readonly'>--</td><td class='readonly'>--</td><td class='readonly'>--</td>
-      <td class='readonly'>--</td><td class='readonly'>--</td>
-    </tr>
-    <tr>
-      <th>Resquício (R$)</th>
-      <td class='readonly'>--</td><td class='readonly'>--</td><td class='readonly'>--</td>
-      <td class='readonly'>--</td><td class='readonly'>--</td><td class='readonly'>--</td>
-      <td class='readonly'>--</td><td class='readonly'>--</td>
-    </tr>
-  </table>
-
+  <script src="js/relatorio_mensal_dinamico.js"></script>
 </body>
 </html>
