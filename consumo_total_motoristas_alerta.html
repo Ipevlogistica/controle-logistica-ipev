@@ -38,9 +38,10 @@
         <label class="block text-xs text-gray-600 mb-1">Ano</label>
         <select id="selAno" class="w-full border rounded px-2 py-1"></select>
       </div>
-      <div class="md:col-span-2 flex items-end gap-2">
-        <button id="btnAtualizar" class="bg-blue-700 text-white px-4 py-2 rounded-md font-semibold">Atualizar</button>
-        <span class="text-xs text-gray-600">As colunas (Dia 1..N) são geradas conforme há registros no Supabase para o mês/ano selecionados.</span>
+      <div class=\"md:col-span-2 flex items-end gap-2\">
+        <button id=\"btnAtualizar\" class=\"bg-blue-700 text-white px-4 py-2 rounded-md font-semibold\">Atualizar</button>
+        <span class=\"text-xs text-gray-600\">As colunas (Dia 1..N) são geradas conforme há registros no Supabase para o mês/ano selecionados.</span>
+        <span id=\"statusMsg\" class=\"text-xs ml-2\"></span>
       </div>
     </div>
 
@@ -99,7 +100,7 @@
       .select('motorista,data,valor_total')
       .gte('data', primeiroDia)
       .lte('data', ultimoDia)
-      .returns();
+      ;
 
     if (error) { console.error(error); return new Map(); }
 
@@ -176,16 +177,30 @@
   }
 
   async function atualizarTabela(){
-    const mes = Number(el('selMes').value);
-    const ano = Number(el('selAno').value);
+    const mes = Number(el('selMes').value) || (new Date().getMonth()+1);
+    const ano = Number(el('selAno').value) || (new Date().getFullYear());
     const qtdDias = daysInMonth(ano, mes);
 
+    // Cabeçalho sempre desenhado mesmo se houver erro nos dados
     desenharCabecalho(qtdDias);
-    const [motoristas, mapa] = await Promise.all([
-      getMotoristas(),
-      getRegistrosMesAno(ano, mes)
-    ]);
-    desenharLinhas(motoristas, mapa, qtdDias);
+
+    // Status
+    const status = el('statusMsg');
+    if (status) status.textContent = '';
+
+    try {
+      const [motoristas, mapa] = await Promise.all([
+        getMotoristas(),
+        getRegistrosMesAno(ano, mes)
+      ]);
+      desenharLinhas(motoristas, mapa, qtdDias);
+      if (status) { status.textContent = `Carregado ${motoristas.length} motorista(s)`; status.className = 'text-xs ml-2 text-gray-600'; }
+    } catch (e) {
+      console.error('Erro ao atualizar tabela:', e);
+      if (status) { status.textContent = 'Falha ao carregar dados'; status.className = 'text-xs ml-2 text-red-600'; }
+      // Mostra linha vazia de fallback
+      desenharLinhas([], new Map(), qtdDias);
+    }
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -197,6 +212,7 @@
     el('selAno').value = String(anoAtual);
     el('btnAtualizar').addEventListener('click', atualizarTabela);
     atualizarTabela();
+  });
   });
 </script>
 </body>
