@@ -38,10 +38,10 @@
         <label class="block text-xs text-gray-600 mb-1">Ano</label>
         <select id="selAno" class="w-full border rounded px-2 py-1"></select>
       </div>
-      <div class=\"md:col-span-2 flex items-end gap-2\">
-        <button id=\"btnAtualizar\" class=\"bg-blue-700 text-white px-4 py-2 rounded-md font-semibold\">Atualizar</button>
-        <span class=\"text-xs text-gray-600\">As colunas (Dia 1..N) são geradas conforme há registros no Supabase para o mês/ano selecionados.</span>
-        <span id=\"statusMsg\" class=\"text-xs ml-2\"></span>
+      <div class="md:col-span-2 flex items-end gap-2">
+        <button id="btnAtualizar" class="bg-blue-700 text-white px-4 py-2 rounded-md font-semibold">Atualizar</button>
+        <span class="text-xs text-gray-600">As colunas (Dia 1..N) são geradas conforme há registros no Supabase para o mês/ano selecionados.</span>
+        <span id="statusMsg" class="text-xs ml-2"></span>
       </div>
     </div>
 
@@ -140,7 +140,7 @@
       '<th class="border px-2 py-1">Recarga (R$)</th>',
       '<th class="border px-2 py-1">Adicional (R$)</th>'
     ];
-    for (let d=1; d<=qtdDias; d++) ths.push(`<th class=\"border px-2 py-1\">Dia ${d}</th>`);
+    for (let d=1; d<=qtdDias; d++) ths.push(`<th class="border px-2 py-1">Dia ${d}</th>`);
     el('thead').innerHTML = `<tr>${ths.join('')}</tr>`;
   }
 
@@ -149,13 +149,13 @@
       const nomePlaca = `${m.nome}${m.placa ? ' ('+m.placa+')' : ''}`;
       const valores = mapaValores.get(m.nome) || {};
       const tds = [
-        `<td class=\"border px-2 py-1\">${nomePlaca}</td>`,
-        `<td class=\"border px-2 py-1\"><input type=\"number\" step=\"0.01\" class=\"w-24 text-right border rounded recarga\" value=\"250.00\" data-motorista=\"${m.nome}\"></td>`,
-        `<td class=\"border px-2 py-1\"><input type=\"number\" step=\"0.01\" class=\"w-24 text-right border rounded adicional\" data-motorista=\"${m.nome}\" placeholder=\"0.00\"></td>`
+        `<td class="border px-2 py-1">${nomePlaca}</td>`,
+        `<td class="border px-2 py-1"><input type="number" step="0.01" class="w-24 text-right border rounded recarga" value="250.00" data-motorista="${m.nome}"></td>`,
+        `<td class="border px-2 py-1"><input type="number" step="0.01" class="w-24 text-right border rounded adicional" data-motorista="${m.nome}" placeholder="0.00"></td>`
       ];
       for (let d=1; d<=qtdDias; d++){
         const v = valores[d];
-        tds.push(`<td class=\"border px-2 py-1 text-right\">${(v!=null && v!==0) ? Number(v).toFixed(2) : '—'}</td>`);
+        tds.push(`<td class="border px-2 py-1 text-right">${(v!=null && v!==0) ? Number(v).toFixed(2) : '—'}</td>`);
       }
       return `<tr>${tds.join('')}</tr>`;
     });
@@ -163,13 +163,13 @@
   }${m.placa ? ' ('+m.placa+')' : ''}`;
       const valores = mapaValores.get(m.nome) || {};
       const tds = [
-        `<td class=\"border px-2 py-1\">${nomePlaca}</td>`,
-        `<td class=\"border px-2 py-1\"><input type=\"number\" step=\"0.01\" class=\"w-24 text-right border rounded recarga\" value=\"250.00\" data-motorista=\"${m.nome}\"></td>`,
-        `<td class=\"border px-2 py-1\"><input type=\"number\" step=\"0.01\" class=\"w-24 text-right border rounded adicional\" data-motorista=\"${m.nome}\" placeholder=\"0.00\"></td>`
+        `<td class="border px-2 py-1">${nomePlaca}</td>`,
+        `<td class="border px-2 py-1"><input type="number" step="0.01" class="w-24 text-right border rounded recarga" value="250.00" data-motorista="${m.nome}"></td>`,
+        `<td class="border px-2 py-1"><input type="number" step="0.01" class="w-24 text-right border rounded adicional" data-motorista="${m.nome}" placeholder="0.00"></td>`
       ];
       for (let d=1; d<=qtdDias; d++){
         const v = valores[d];
-        tds.push(`<td class=\"border px-2 py-1 text-right\">${(v!=null) ? Number(v).toFixed(2) : '—'}</td>`);
+        tds.push(`<td class="border px-2 py-1 text-right">${(v!=null) ? Number(v).toFixed(2) : '—'}</td>`);
       }
       return `<tr>${tds.join('')}</tr>`;
     });
@@ -207,7 +207,7 @@
     const anoAtual = new Date().getFullYear();
     const anos = [];
     for (let a = anoAtual - 3; a <= anoAtual + 1; a++) anos.push(a);
-    el('selAno').innerHTML = anos.map(a => `<option value=\"${a}\">${a}</option>`).join('');
+    el('selAno').innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join('');
     el('selMes').value = String(new Date().getMonth()+1);
     el('selAno').value = String(anoAtual);
     el('btnAtualizar').addEventListener('click', atualizarTabela);
