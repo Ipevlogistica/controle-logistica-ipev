@@ -19,8 +19,8 @@ const btnImprimir = document.getElementById("btnImprimir");
 
 // ================== HELPERS ==================
 const meses = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
 ];
 
 function preencherCombosMesAno() {
@@ -30,16 +30,6 @@ function preencherCombosMesAno() {
   selAno.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join("");
   selMes.value = (new Date().getMonth() + 1).toString();
   selAno.value = anoAtual.toString();
-  atualizarMesAno();  // Atualiza mês e ano no cabeçalho de impressão
-}
-
-function atualizarMesAno() {
-  const mesSelecionado = selMes.value;
-  const anoSelecionado = selAno.value;
-
-  // Exibição do mês e ano SOMENTE na impressão
-  const mesAnoTexto = `${meses[mesSelecionado - 1]} ${anoSelecionado}`;
-  document.getElementById("mesAnoReferencia").textContent = mesAnoTexto;
 }
 
 function diasNoMes(ano, mes1a12) {
@@ -71,6 +61,7 @@ async function carregarMotoristas() {
     statusEl.textContent = "Modo offline: Supabase não carregou.";
     return [];
   }
+  // >>> Alteração: filtrar apenas ativos
   const { data, error } = await supabaseClient
     .from("motoristas")
     .select("id, nome, placa")
@@ -237,3 +228,22 @@ document.addEventListener("DOMContentLoaded", () => {
   preencherCombosMesAno();
   atualizarTabela();
 });
+
+// ================== OPCIONAL: Exclusão lógica (não altera UI) ==================
+/**
+ * Marca o motorista como inativo, sem apagar do banco.
+ * Uso (no console ou em handlers seus): excluirMotorista(123)
+ */
+async function excluirMotorista(id) {
+  if (!supabaseClient) return;
+  const { error } = await supabaseClient
+    .from("motoristas")
+    .update({ ativo: false, excluido_em: new Date().toISOString() })
+    .eq("id", id);
+  if (!error) {
+    // Atualiza a tabela visível (o motorista sumirá do cabeçalho)
+    atualizarTabela();
+  } else {
+    console.error("Erro ao excluir logicamente motorista:", error);
+  }
+}
