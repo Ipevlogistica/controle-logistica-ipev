@@ -37,7 +37,7 @@ function atualizarMesAno() {
   const mesSelecionado = selMes.value;
   const anoSelecionado = selAno.value;
 
-  // Exibição do mês e ano no cabeçalho
+  // Exibição do mês e ano somente na impressão
   const mesAnoTexto = `${meses[mesSelecionado - 1]} ${anoSelecionado}`;
   document.getElementById("mesAnoReferencia").textContent = mesAnoTexto;
 }
