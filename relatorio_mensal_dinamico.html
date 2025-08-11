@@ -15,23 +15,21 @@
 
       /* Ajustes de tabelas para impressão */
       table {
-        width: 100%;
-        border-collapse: collapse;
-        page-break-inside: avoid;
+        width: 100%; /* Garante que a tabela ocupe toda a largura da página */
+        border-collapse: collapse; /* Junta as bordas da tabela */
+        page-break-inside: avoid; /* Evita que a tabela quebre */
       }
 
       /* Bordas e grades na tabela */
       th, td {
-        border: 1px solid black;
-        padding: 8px;
-        text-align: left;
+        border: 1px solid black; /* Bordas nas células */
+        padding: 8px; /* Espaçamento nas células */
+        text-align: left; /* Alinhamento à esquerda */
       }
 
       /* Nomes em negrito no cabeçalho */
       th {
         font-weight: bold;
-        background-color: #333333;
-        color: white;
       }
 
       /* Evitar que a tabela seja quebrada em várias páginas */
@@ -39,16 +37,9 @@
         page-break-inside: avoid;
       }
 
-      /* Exibir o mês e ano SOMENTE na impressão */
-      #mesAnoReferencia {
-        font-size: 16px;
-        font-weight: bold;
-        color: black;
-      }
-
-      /* Esconde o mês e ano na tela */
-      #mesAnoReferencia {
-        display: none;
+      /* Melhor ajuste para a tabela */
+      tbody {
+        display: table-row-group;
       }
     }
   </style>
@@ -58,12 +49,6 @@
     <!-- topo -->
     <div class="flex justify-between items-start mb-6" id="barra-acoes">
       <h1 class="text-3xl font-extrabold text-blue-800">Relatório Mensal - IPEV</h1>
-
-      <!-- Exibição do Mês e Ano - Somente na impressão -->
-      <div class="text-blue-800 font-semibold" id="mesAnoReferencia">
-        <!-- O mês e ano serão atualizados via JS somente na impressão -->
-      </div>
-
       <div class="space-x-2">
         <a href="index.html" class="inline-flex items-center bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded shadow">← Início</a>
         <button id="btnImprimir" class="inline-flex items-center bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded shadow">🖨️ Imprimir Relatório</button>
