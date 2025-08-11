@@ -71,7 +71,6 @@ async function carregarMotoristas() {
     statusEl.textContent = "Modo offline: Supabase não carregou.";
     return [];
   }
-  // >>> Alteração: filtrar apenas ativos
   const { data, error } = await supabaseClient
     .from("motoristas")
     .select("id, nome, placa")
@@ -238,22 +237,3 @@ document.addEventListener("DOMContentLoaded", () => {
   preencherCombosMesAno();
   atualizarTabela();
 });
-
-// ================== OPCIONAL: Exclusão lógica (não altera UI) ==================
-/**
- * Marca o motorista como inativo, sem apagar do banco.
- * Uso (no console ou em handlers seus): excluirMotorista(123)
- */
-async function excluirMotorista(id) {
-  if (!supabaseClient) return;
-  const { error } = await supabaseClient
-    .from("motoristas")
-    .update({ ativo: false, excluido_em: new Date().toISOString() })
-    .eq("id", id);
-  if (!error) {
-    // Atualiza a tabela visível (o motorista sumirá do cabeçalho)
-    atualizarTabela();
-  } else {
-    console.error("Erro ao excluir logicamente motorista:", error);
-  }
-}
