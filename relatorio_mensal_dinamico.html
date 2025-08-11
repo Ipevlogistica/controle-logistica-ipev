@@ -15,23 +15,23 @@
 
       /* Ajustes de tabelas para impressão */
       table {
-        width: 100%; /* Garante que a tabela ocupe toda a largura da página */
-        border-collapse: collapse; /* Junta as bordas da tabela */
-        page-break-inside: avoid; /* Evita que a tabela quebre */
+        width: 100%;
+        border-collapse: collapse;
+        page-break-inside: avoid;
       }
 
       /* Bordas e grades na tabela */
       th, td {
-        border: 1px solid black; /* Bordas nas células */
-        padding: 8px; /* Espaçamento nas células */
-        text-align: left; /* Alinhamento à esquerda */
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
       }
 
       /* Nomes em negrito no cabeçalho */
       th {
         font-weight: bold;
-        background-color: #333333; /* Fundo cinza escuro para o cabeçalho */
-        color: white; /* Texto branco */
+        background-color: #333333;
+        color: white;
       }
 
       /* Evitar que a tabela seja quebrada em várias páginas */
@@ -39,23 +39,17 @@
         page-break-inside: avoid;
       }
 
-      /* Melhor ajuste para a tabela */
-      tbody {
-        display: table-row-group;
-      }
-
       /* Exibir o mês e ano SOMENTE na impressão */
       #mesAnoReferencia {
         font-size: 16px;
         font-weight: bold;
         color: black;
-        display: block; /* Exibe o mês e ano SOMENTE na impressão */
       }
-    }
 
-    /* Esconde o mês e ano na tela */
-    #mesAnoReferencia {
-      display: none;
+      /* Esconde o mês e ano na tela */
+      #mesAnoReferencia {
+        display: none;
+      }
     }
   </style>
 </head>
