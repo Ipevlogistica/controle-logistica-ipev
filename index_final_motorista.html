@@ -108,7 +108,6 @@
     <div id="listaRegistrosPorData"></div>
   </div>
 
-  <!-- Gerenciar Motoristas -->
   <div id="gerenciarMotoristasBox" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
     <div class="bg-white p-6 rounded shadow-lg w-full max-w-md">
       <h3 class="text-lg font-bold mb-4">Gerenciar Motoristas</h3>
@@ -117,78 +116,19 @@
         <input type="text" id="novaPlaca" placeholder="Placa" class="w-full mb-2 rounded border-gray-300 text-sm" />
         <button onclick="incluirMotorista()" class="bg-blue-600 text-white px-4 py-2 rounded">Incluir</button>
       </div>
-      <div id="listaMotoristas" class="mt-4 max-h-40 overflow-y-auto">
-        <!-- Aqui serão listados os motoristas com a opção de editar -->
-      </div>
+      <div id="listaMotoristas" class="mt-4 max-h-40 overflow-y-auto"></div>
       <button onclick="fecharGerenciar()" class="mt-4 bg-red-600 text-white px-4 py-2 rounded">Fechar</button>
     </div>
   </div>
 
   <script>
-    // Abrir o popup de Gerenciar Motoristas
     function abrirGerenciar() {
       document.getElementById("gerenciarMotoristasBox").classList.remove("hidden");
     }
 
-    // Fechar o popup de Gerenciar Motoristas
     function fecharGerenciar() {
       document.getElementById("gerenciarMotoristasBox").classList.add("hidden");
     }
-
-    // Função para carregar os motoristas no Gerenciar
-    function carregarMotoristas() {
-      // Exemplo de motoristas (substitua com lógica de fetch do banco)
-      const motoristas = [
-        { id: 1, nome: 'João Silva', placa: 'ABC-1234' },
-        { id: 2, nome: 'Maria Oliveira', placa: 'XYZ-5678' }
-      ];
-
-      const listaMotoristas = document.getElementById("listaMotoristas");
-      listaMotoristas.innerHTML = "";  // Limpar antes de adicionar
-      motoristas.forEach(motorista => {
-        listaMotoristas.innerHTML += `
-          <div class="flex justify-between items-center mb-2">
-            <span>${motorista.nome} (${motorista.placa})</span>
-            <button onclick="editarMotorista(${motorista.id})" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Editar</button>
-          </div>
-        `;
-      });
-    }
-
-    // Função para editar o motorista
-    function editarMotorista(id) {
-      // Carregar dados do motorista (substitua com lógica de fetch)
-      const motorista = { id: 1, nome: 'João Silva', placa: 'ABC-1234' }; // Exemplo
-
-      // Preencher os campos do formulário com os dados do motorista
-      document.getElementById("novoMotorista").value = motorista.nome;
-      document.getElementById("novaPlaca").value = motorista.placa;
-
-      // Alterar o botão "Incluir" para "Salvar"
-      const botaoIncluir = document.querySelector("button[onclick='incluirMotorista()']");
-      botaoIncluir.innerHTML = "Salvar";
-      botaoIncluir.setAttribute("onclick", `salvarMotorista(${motorista.id})`);
-    }
-
-    // Função para salvar (ou editar) o motorista
-    function salvarMotorista(id) {
-      const nome = document.getElementById("novoMotorista").value;
-      const placa = document.getElementById("novaPlaca").value;
-
-      // Lógica para salvar no banco (atualizar dados se id já existir)
-      console.log(`Salvando motorista: ${nome}, ${placa}`);
-
-      // Fechar o popup após salvar
-      fecharGerenciar();
-
-      // Recarregar a lista de motoristas
-      carregarMotoristas();
-    }
-
-    // Carregar motoristas ao inicializar
-    document.addEventListener("DOMContentLoaded", function() {
-      carregarMotoristas();
-    });
   </script>
 </body>
 </html>
