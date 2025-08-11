@@ -19,8 +19,8 @@ const btnImprimir = document.getElementById("btnImprimir");
 
 // ================== HELPERS ==================
 const meses = [
-  "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
 
 function preencherCombosMesAno() {
@@ -30,6 +30,16 @@ function preencherCombosMesAno() {
   selAno.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join("");
   selMes.value = (new Date().getMonth() + 1).toString();
   selAno.value = anoAtual.toString();
+  atualizarMesAno();  // Atualiza mês e ano no cabeçalho
+}
+
+function atualizarMesAno() {
+  const mesSelecionado = selMes.value;
+  const anoSelecionado = selAno.value;
+
+  // Exibição do mês e ano no cabeçalho
+  const mesAnoTexto = `${meses[mesSelecionado - 1]} ${anoSelecionado}`;
+  document.getElementById("mesAnoReferencia").textContent = mesAnoTexto;
 }
 
 function diasNoMes(ano, mes1a12) {
