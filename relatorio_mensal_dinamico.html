@@ -30,6 +30,8 @@
       /* Nomes em negrito no cabeçalho */
       th {
         font-weight: bold;
+        background-color: #333333; /* Fundo cinza escuro para o cabeçalho */
+        color: white; /* Texto branco */
       }
 
       /* Evitar que a tabela seja quebrada em várias páginas */
@@ -49,6 +51,12 @@
     <!-- topo -->
     <div class="flex justify-between items-start mb-6" id="barra-acoes">
       <h1 class="text-3xl font-extrabold text-blue-800">Relatório Mensal - IPEV</h1>
+
+      <!-- Exibição do Mês e Ano -->
+      <div class="text-blue-800 font-semibold">
+        <span id="mesAnoReferencia"></span> <!-- Exibe mês e ano de referência -->
+      </div>
+
       <div class="space-x-2">
         <a href="index.html" class="inline-flex items-center bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded shadow">← Início</a>
         <button id="btnImprimir" class="inline-flex items-center bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded shadow">🖨️ Imprimir Relatório</button>
