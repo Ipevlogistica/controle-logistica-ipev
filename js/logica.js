@@ -276,4 +276,4 @@ async function carregarListaRegistros() {
 window.abrirGerenciar = abrirGerenciar;
 window.fecharGerenciar = fecharGerenciar;
 window.incluirMotorista = incluirMotorista;
-window.atualizarPlaca = atualizarPlaca;
+window.atualizarPlaca = atualizarPlac
