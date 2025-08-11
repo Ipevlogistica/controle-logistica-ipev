@@ -30,14 +30,14 @@ function preencherCombosMesAno() {
   selAno.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join("");
   selMes.value = (new Date().getMonth() + 1).toString();
   selAno.value = anoAtual.toString();
-  atualizarMesAno();  // Atualiza mês e ano no cabeçalho
+  atualizarMesAno();  // Atualiza mês e ano no cabeçalho de impressão
 }
 
 function atualizarMesAno() {
   const mesSelecionado = selMes.value;
   const anoSelecionado = selAno.value;
 
-  // Exibição do mês e ano somente na impressão
+  // Exibição do mês e ano SOMENTE na impressão
   const mesAnoTexto = `${meses[mesSelecionado - 1]} ${anoSelecionado}`;
   document.getElementById("mesAnoReferencia").textContent = mesAnoTexto;
 }
