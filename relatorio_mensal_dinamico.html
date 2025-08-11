@@ -43,6 +43,18 @@
       tbody {
         display: table-row-group;
       }
+
+      /* Exibir o mês e ano SOMENTE na impressão */
+      #mesAnoReferencia {
+        font-size: 16px;
+        font-weight: bold;
+        color: black;
+      }
+
+      /* Esconde o mês e ano na tela */
+      #mesAnoReferencia {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -52,9 +64,9 @@
     <div class="flex justify-between items-start mb-6" id="barra-acoes">
       <h1 class="text-3xl font-extrabold text-blue-800">Relatório Mensal - IPEV</h1>
 
-      <!-- Exibição do Mês e Ano -->
-      <div class="text-blue-800 font-semibold">
-        <span id="mesAnoReferencia"></span> <!-- Exibe mês e ano de referência -->
+      <!-- Exibição do Mês e Ano - Somente na impressão -->
+      <div class="text-blue-800 font-semibold" id="mesAnoReferencia">
+        <!-- O mês e ano serão atualizados via JS -->
       </div>
 
       <div class="space-x-2">
