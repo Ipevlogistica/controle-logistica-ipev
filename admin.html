@@ -7,42 +7,28 @@
   <style>
     :root{ --azul:#0ea5b7; --branco:#fff; --texto:#0b2340; }
     html,body{ margin:0; padding:0; font-family:Arial, Helvetica, sans-serif; background:#f3f7f8; color:var(--texto); }
-
-    /* HERO */
-    .hero{
-      position:relative; min-height:280px; display:flex; align-items:flex-end;
+    .hero{ position:relative; min-height:280px; display:flex; align-items:flex-end;
       background-image: linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('frota-bg.jpg');
-      background-size:cover; background-position:center; box-shadow:inset 0 -30px 30px rgba(0,0,0,.18);
-    }
+      background-size:cover; background-position:center; box-shadow:inset 0 -30px 30px rgba(0,0,0,.18); }
     .hero .wrap{ width:100%; max-width:1100px; margin:0 auto; padding:32px 20px 36px;
       display:flex; justify-content:space-between; align-items:flex-end; gap:16px; }
     .titulo{ color:var(--branco); margin:0 0 6px 0; font-size:34px; letter-spacing:.5px; line-height:1.15; text-shadow:0 2px 6px rgba(0,0,0,.35); }
     .sub{ color:#eaf7fb; margin:0; font-size:15px; line-height:1.3; }
-
-    /* CHIP USER */
     .chip-user{ background:rgba(255,255,255,.95); color:#123; padding:10px 14px; border-radius:999px; font-size:13px; box-shadow:0 2px 10px rgba(0,0,0,.2); white-space:nowrap; }
-
-    /* TOPBAR */
     .topbar{ position:fixed; top:10px; right:10px; z-index:20; display:flex; gap:8px; align-items:center; }
     .btn-top{ background:#6b7280; color:#fff; border:0; border-radius:6px; padding:8px 14px; cursor:pointer; }
     .btn-top:hover{ background:#4b5563; }
-
-    /* MAIN */
     .main{ max-width:1100px; margin:26px auto 34px; padding:0 20px; }
     .card{ background:#fff; border-radius:14px; box-shadow:0 10px 24px rgba(16,24,40,.08); padding:22px; }
     .card h2{ margin:0 0 16px 2px; color:#124a63; font-size:22px; letter-spacing:.2px; }
     .grid-actions{ display:grid; grid-template-columns:1fr; gap:14px; }
-    .btn{
-      appearance:none; border:0; cursor:pointer; padding:16px 18px; border-radius:12px;
+    .btn{ appearance:none; border:0; cursor:pointer; padding:16px 18px; border-radius:12px;
       font-size:16px; font-weight:bold; color:#fff; background:linear-gradient(135deg, var(--azul), #1d9bb7);
       box-shadow:0 8px 18px rgba(13,135,160,.25); transition:transform .05s ease, box-shadow .2s ease, opacity .2s ease;
-      text-align:center; width:100%; max-width:760px; margin-inline:auto;
-    }
+      text-align:center; width:100%; max-width:760px; margin-inline:auto; }
     .btn:hover{ box-shadow:0 10px 22px rgba(13,135,160,.32); }
     .btn:active{ transform:translateY(1px); }
     .muted{ color:#516271; font-size:13px; margin-top:10px; margin-left:2px; }
-
-    /* MODAL */
     .modal-back{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:50; }
     .modal{ background:#fff; width:100%; max-width:560px; border-radius:14px; box-shadow:0 20px 40px rgba(0,0,0,.25); }
     .modal header{ padding:14px 18px; border-bottom:1px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center; }
@@ -56,19 +42,14 @@
     .btn-primary{ background:#0ea5b7; color:#fff; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; }
     .error{ color:#b91c1c; font-size:13px; margin-top:-4px; }
     .ok{ color:#166534; font-size:13px; }
-
-    @media (max-width:640px){ .titulo{ font-size:28px; } .chip-user{ font-size:12px; padding:8px 12px; } }
   </style>
 </head>
 <body>
-
-  <!-- TOPO: menu e logout -->
   <div class="topbar">
     <button id="btnMenu" class="btn-top">Menu</button>
     <button id="btnLogout" class="btn-top">Logout</button>
   </div>
 
-  <!-- HERO -->
   <section class="hero">
     <div class="wrap">
       <div>
@@ -79,12 +60,12 @@
     </div>
   </section>
 
-  <!-- CONTEÚDO -->
   <main class="main">
     <div class="card">
       <h2>Ações rápidas</h2>
       <div class="grid-actions">
         <button id="btnCadastrar" class="btn">+ Cadastrar usuário</button>
+        <button id="btnReset" class="btn" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">↺ Redefinir senha</button>
       </div>
       <div class="muted">O usuário já sai confirmado e pode logar imediatamente.</div>
       <div id="feedback" class="muted"></div>
@@ -113,93 +94,119 @@
     </div>
   </div>
 
-  <!-- Lógica -->
+  <!-- MODAL RESET SENHA -->
+  <div id="modalResetBack" class="modal-back" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+      <header>
+        <h3 id="resetTitle">Redefinir senha</h3>
+        <button class="close" id="btnResetClose">Fechar</button>
+      </header>
+      <div class="body">
+        <div class="field"><label for="resetEmail">E-mail do usuário</label><input id="resetEmail" type="email" placeholder="email@ipev.com.br"></div>
+        <div class="field"><label for="resetPass">Nova senha</label><input id="resetPass" type="password" placeholder="Mínimo 8 caracteres"></div>
+        <div id="resetMsg" class="error" style="display:none"></div>
+        <div id="resetOk" class="ok" style="display:none"></div>
+      </div>
+      <div class="actions">
+        <button class="btn-secondary" id="btnResetCancelar">Cancelar</button>
+        <button class="btn-primary" id="btnResetSalvar">Salvar</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
 
-    // Supabase (seu projeto)
     const supabase = createClient(
       'https://ilsbyrvnrkutwynujfhs.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
     )
+    const ADMIN_EMAIL = 'contato.ipev@gmail.com'
+    const CREATE_URL = 'https://ilsbyrvnrkutwynujfhs.functions.supabase.co/create-user'
+    const RESET_URL  = 'https://ilsbyrvnrkutwynujfhs.functions.supabase.co/reset-password' // << TROQUE pela sua Invoke URL
 
-    // >>>> TROQUE se sua URL da função for diferente (Invoke URL após o Deploy)
-    const FUNCTION_URL = 'https://ilsbyrvnrkutwynujfhs.functions.supabase.co/create-user'
-    const ADMIN_EMAIL  = 'contato.ipev@gmail.com'
-
-    // Exigir sessão
+    // proteger rota
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) window.location.replace('index.html')
-
-    // Permitir só o admin
     const { data: { user } } = await supabase.auth.getUser()
-    if ((user?.email || '').toLowerCase() !== ADMIN_EMAIL) {
-      window.location.replace('menu.html')
-    }
+    if ((user?.email || '').toLowerCase() !== ADMIN_EMAIL) window.location.replace('menu.html')
 
-    // Mostrar nome do logado (display_name -> username -> parte antes do @)
+    // exibir nome
     let nomeExibicao = (user?.email || '').split('@')[0]
-    const { data: perfil } = await supabase
-      .from('usuarios_app')
-      .select('display_name, username')
-      .eq('id', user.id)
-      .maybeSingle()
+    const { data: perfil } = await supabase.from('usuarios_app').select('display_name, username').eq('id', user.id).maybeSingle()
     if (perfil) nomeExibicao = perfil.display_name || perfil.username || nomeExibicao
     document.getElementById('chipUser').textContent = `Logado: ${nomeExibicao}`
 
-    // Navegação topo
+    // topo
     document.getElementById('btnMenu').onclick   = () => window.location.href = 'menu.html'
     document.getElementById('btnLogout').onclick = async () => { await supabase.auth.signOut(); window.location.replace('index.html') }
     supabase.auth.onAuthStateChange((e)=>{ if(e==='SIGNED_OUT') window.location.replace('index.html') })
 
-    // Modal helpers
-    const modal = document.getElementById('modalBack')
-    const open  = () => modal.style.display='flex'
-    const close = () => { modal.style.display='none'; ['nome','username','email','senha'].forEach(id=>document.getElementById(id).value=''); hideMsg() }
-    const hideMsg = () => { document.getElementById('formMsg').style.display='none'; document.getElementById('formOk').style.display='none' }
-    document.getElementById('btnCadastrar').onclick = open
-    document.getElementById('btnClose').onclick    = close
-    document.getElementById('btnCancelar').onclick = close
+    // ----- MODAL CADASTRO -----
+    const cad = { back: document.getElementById('modalBack') }
+    const cadOpen  = () => cad.back.style.display='flex'
+    const cadClose = () => { cad.back.style.display='none'; ['nome','username','email','senha'].forEach(id=>document.getElementById(id).value=''); cadHide() }
+    const cadHide  = () => { document.getElementById('formMsg').style.display='none'; document.getElementById('formOk').style.display='none' }
+    document.getElementById('btnCadastrar').onclick = cadOpen
+    document.getElementById('btnClose').onclick    = cadClose
+    document.getElementById('btnCancelar').onclick = cadClose
 
-    // Cadastrar via Edge Function (cria confirmado e grava em usuarios_app)
     document.getElementById('btnSalvar').onclick = async () => {
-      hideMsg()
-      const msg = document.getElementById('formMsg')
-      const ok  = document.getElementById('formOk')
-
+      cadHide()
+      const msg = document.getElementById('formMsg'); const ok  = document.getElementById('formOk')
       const nome = document.getElementById('nome').value.trim()
       const username = document.getElementById('username').value.trim()
       const email = document.getElementById('email').value.trim().toLowerCase()
       const senha = document.getElementById('senha').value
-
       if (!nome || !username || !email || !senha) { msg.textContent='Preencha todos os campos.'; msg.style.display='block'; return }
       if (!email.includes('@')) { msg.textContent='Informe um e-mail válido.'; msg.style.display='block'; return }
       if (senha.length < 8) { msg.textContent='A senha deve ter pelo menos 8 caracteres.'; msg.style.display='block'; return }
 
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) { msg.textContent='Sessão expirada. Faça login novamente.'; msg.style.display='block'; return }
-
       try {
-        const res = await fetch(FUNCTION_URL, {
+        const res = await fetch(CREATE_URL, {
           method:'POST',
           headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${session.access_token}` },
           body: JSON.stringify({ name: nome, username, email, password: senha })
         })
         const j = await res.json()
-        if (!res.ok) {
-          msg.textContent = 'Erro: ' + (j?.error || 'Falha desconhecida') + (j?.details ? ` — ${j.details}` : '')
-          msg.style.display='block'
-          return
-        }
+        if (!res.ok) { msg.textContent='Erro: '+(j?.error||'Falha desconhecida')+(j?.details?` — ${j.details}`:''); msg.style.display='block'; return }
+        ok.textContent='Usuário cadastrado com sucesso!'; ok.style.display='block'
+        document.getElementById('feedback').textContent=`Último cadastro: ${nome} <${email}>`
+        setTimeout(cadClose, 900)
+      } catch(e) { msg.textContent='Erro de rede: '+e; msg.style.display='block' }
+    }
 
-        ok.textContent = 'Usuário cadastrado com sucesso!'
-        ok.style.display = 'block'
-        document.getElementById('feedback').textContent = `Último cadastro: ${nome} <${email}>`
-        setTimeout(() => close(), 900)
-      } catch (e) {
-        msg.textContent = 'Erro de rede ao chamar a função: ' + e
-        msg.style.display = 'block'
-      }
+    // ----- MODAL RESET -----
+    const rst = { back: document.getElementById('modalResetBack') }
+    const rstOpen  = () => rst.back.style.display='flex'
+    const rstClose = () => { rst.back.style.display='none'; ['resetEmail','resetPass'].forEach(id=>document.getElementById(id).value=''); rstHide() }
+    const rstHide  = () => { document.getElementById('resetMsg').style.display='none'; document.getElementById('resetOk').style.display='none' }
+    document.getElementById('btnReset').onclick        = rstOpen
+    document.getElementById('btnResetClose').onclick   = rstClose
+    document.getElementById('btnResetCancelar').onclick= rstClose
+
+    document.getElementById('btnResetSalvar').onclick = async () => {
+      rstHide()
+      const msg = document.getElementById('resetMsg'); const ok = document.getElementById('resetOk')
+      const email = document.getElementById('resetEmail').value.trim().toLowerCase()
+      const newPassword = document.getElementById('resetPass').value
+      if (!email || !newPassword) { msg.textContent='Informe e-mail e nova senha.'; msg.style.display='block'; return }
+      if (!email.includes('@')) { msg.textContent='E-mail inválido.'; msg.style.display='block'; return }
+      if (newPassword.length < 8) { msg.textContent='A senha deve ter pelo menos 8 caracteres.'; msg.style.display='block'; return }
+
+      const { data: { session } } = await supabase.auth.getSession()
+      try {
+        const res = await fetch(RESET_URL, {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ email, newPassword })
+        })
+        const j = await res.json()
+        if (!res.ok) { msg.textContent='Erro: '+(j?.error||'Falha desconhecida')+(j?.details?` — ${j.details}`:''); msg.style.display='block'; return }
+        ok.textContent='Senha redefinida com sucesso!'; ok.style.display='block'
+        setTimeout(rstClose, 900)
+      } catch(e) { msg.textContent='Erro de rede: '+e; msg.style.display='block' }
     }
   </script>
 </body>
