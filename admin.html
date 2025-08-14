@@ -6,117 +6,67 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
-    :root{
-      --azul: #0ea5b7;
-      --branco:#fff;
-      --texto:#0b2340;
-    }
-    html,body{
-      margin:0; padding:0; font-family: Arial, Helvetica, sans-serif;
-      background:#f3f7f8; color:var(--texto);
-    }
+    :root{ --azul:#0ea5b7; --branco:#fff; --texto:#0b2340; }
+    html,body{ margin:0; padding:0; font-family:Arial, Helvetica, sans-serif; background:#f3f7f8; color:var(--texto); }
 
-    /* HERO com a sua imagem (mesma pasta) */
+    /* HERO */
     .hero{
-      position: relative;
-      min-height: 280px;                  /* mais alto pra respirar */
-      display:flex; align-items:flex-end; /* título sempre “apoiado” na base */
-      background-image:
-        linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
-        url('frota-bg.jpg');
-      background-size: cover;
-      background-position: center;
-      box-shadow: inset 0 -30px 30px rgba(0,0,0,.18); /* leve sombra na base */
+      position:relative; min-height:280px; display:flex; align-items:flex-end;
+      background-image: linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('frota-bg.jpg');
+      background-size:cover; background-position:center; box-shadow:inset 0 -30px 30px rgba(0,0,0,.18);
     }
-    .hero .wrap{
-      width: 100%;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 32px 20px 36px;
-      display:flex; justify-content: space-between; align-items: flex-end;
-      gap: 16px;
-    }
-    .titulo{
-      color: var(--branco);
-      margin: 0 0 6px 0;
-      font-size: 34px;
-      letter-spacing: .5px;
-      line-height: 1.15;
-      text-shadow: 0 2px 6px rgba(0,0,0,.35);
-    }
-    .sub{
-      color:#eaf7fb;
-      margin:0;
-      font-size:15px;
-      line-height: 1.3;
-    }
-    .chip-user{
-      background: rgba(255,255,255,.95);
-      color:#123;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-size: 13px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.20);
-      white-space: nowrap;
-    }
+    .hero .wrap{ width:100%; max-width:1100px; margin:0 auto; padding:32px 20px 36px;
+      display:flex; justify-content:space-between; align-items:flex-end; gap:16px; }
+    .titulo{ color:var(--branco); margin:0 0 6px 0; font-size:34px; letter-spacing:.5px; line-height:1.15; text-shadow:0 2px 6px rgba(0,0,0,.35); }
+    .sub{ color:#eaf7fb; margin:0; font-size:15px; line-height:1.3; }
+    .chip-user{ background:rgba(255,255,255,.95); color:#123; padding:10px 14px; border-radius:999px; font-size:13px; box-shadow:0 2px 10px rgba(0,0,0,.2); white-space:nowrap; }
 
-    /* CONTEÚDO */
-    .main{
-      max-width:1100px;
-      margin: 26px auto 34px;   /* sem margem negativa: nada sobreposto */
-      padding: 0 20px;
-    }
-    .card{
-      background:#fff;
-      border-radius:14px;
-      box-shadow: 0 10px 24px rgba(16,24,40,.08);
-      padding: 22px;
-    }
-    .card h2{
-      margin: 0 0 16px 2px;
-      color:#124a63;
-      font-size:22px;
-      letter-spacing:.2px;
-    }
-    .grid-actions{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:14px;
-    }
+    /* TOPO */
+    .topbar{ position:fixed; top:10px; right:10px; z-index:20; display:flex; gap:8px; align-items:center; }
+    .btn-top{ background:#6b7280; color:#fff; border:0; border-radius:6px; padding:8px 14px; cursor:pointer; }
+    .btn-top:hover{ background:#4b5563; }
+
+    /* MAIN */
+    .main{ max-width:1100px; margin:26px auto 34px; padding:0 20px; }
+    .card{ background:#fff; border-radius:14px; box-shadow:0 10px 24px rgba(16,24,40,.08); padding:22px; }
+    .card h2{ margin:0 0 16px 2px; color:#124a63; font-size:22px; letter-spacing:.2px; }
+    .grid-actions{ display:grid; grid-template-columns:1fr; gap:14px; }
     .btn{
-      appearance:none; border:0; cursor:pointer;
-      padding:16px 18px; border-radius:12px; font-size:16px; font-weight:bold;
-      color:#fff; background: linear-gradient(135deg, var(--azul), #1d9bb7);
-      box-shadow: 0 8px 18px rgba(13, 135, 160, .25);
-      transition: transform .05s ease, box-shadow .2s ease, opacity .2s ease;
-      text-align:center;
-      width:100%;
-      max-width: 760px;             /* centralizado e largo, mas com limite */
-      margin-inline: auto;
+      appearance:none; border:0; cursor:pointer; padding:16px 18px; border-radius:12px;
+      font-size:16px; font-weight:bold; color:#fff; background:linear-gradient(135deg, var(--azul), #1d9bb7);
+      box-shadow:0 8px 18px rgba(13,135,160,.25); transition:transform .05s ease, box-shadow .2s ease, opacity .2s ease;
+      text-align:center; width:100%; max-width:760px; margin-inline:auto;
     }
-    .btn:hover{ box-shadow: 0 10px 22px rgba(13, 135, 160, .32); }
-    .btn:active{ transform: translateY(1px); }
+    .btn:hover{ box-shadow:0 10px 22px rgba(13,135,160,.32); }
+    .btn:active{ transform:translateY(1px); }
     .muted{ color:#516271; font-size:13px; margin-top:10px; margin-left:2px; }
 
-    /* Topo com Sair */
-    .topbar {
-      position: fixed; top: 10px; right: 10px; z-index: 20;
-      display:flex; gap:8px; align-items:center;
+    /* MODAL */
+    .modal-back{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:50; }
+    .modal{ background:#fff; width:100%; max-width:560px; border-radius:14px; box-shadow:0 20px 40px rgba(0,0,0,.25); }
+    .modal header{ padding:14px 18px; border-bottom:1px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center; }
+    .modal h3{ margin:0; font-size:18px; color:#124a63; }
+    .modal .close{ background:#e5e7eb; border:0; border-radius:6px; padding:6px 10px; cursor:pointer; }
+    .modal .body{ padding:18px; display:grid; gap:12px; }
+    .field label{ display:block; font-size:13px; color:#374151; margin-bottom:4px; }
+    .field input, .field select{
+      width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; outline:none;
     }
-    .btn-sair { background:#6b7280; color:#fff; border:0; border-radius:6px; padding:8px 14px; cursor:pointer; }
-    .btn-sair:hover { background:#4b5563; }
+    .actions{ display:flex; justify-content:flex-end; gap:10px; padding:0 18px 18px; }
+    .btn-secondary{ background:#e5e7eb; color:#111827; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; }
+    .btn-primary{ background:#0ea5b7; color:#fff; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; }
+    .error{ color:#b91c1c; font-size:13px; margin-top:-4px; }
+    .ok{ color:#166534; font-size:13px; }
 
-    @media (max-width: 640px){
-      .titulo{ font-size:28px; }
-      .chip-user{ font-size:12px; padding:8px 12px; }
-    }
+    @media (max-width:640px){ .titulo{ font-size:28px; } .chip-user{ font-size:12px; padding:8px 12px; } }
   </style>
 </head>
 <body>
 
-  <!-- TOPBAR: botão Sair -->
+  <!-- TOPBAR: Menu e Logout -->
   <div class="topbar">
-    <button id="btnSair" class="btn-sair">Sair</button>
+    <button id="btnMenu" class="btn-top">Menu</button>
+    <button id="btnLogout" class="btn-top">Logout</button>
   </div>
 
   <!-- HERO -->
@@ -124,7 +74,7 @@
     <div class="wrap">
       <div>
         <h1 class="titulo">Área do Gestor</h1>
-        <p class="sub">Gestão de usuários, permissões do sistema e atualização de dados</p>
+        <p class="sub">Gestão de usuários e permissões do sistema</p>
       </div>
       <div id="chipUser" class="chip-user"></div>
     </div>
@@ -137,9 +87,44 @@
       <div class="grid-actions">
         <button id="btnCadastrar" class="btn">+ Cadastrar usuário</button>
       </div>
-      <div class="muted">Em breve: listar usuários, redefinir senha, permissões, etc.</div>
+      <div class="muted">Após cadastrar, o usuário poderá entrar com e-mail e senha definidos.</div>
+      <div id="feedback" class="muted"></div>
     </div>
   </main>
+
+  <!-- MODAL CADASTRO -->
+  <div id="modalBack" class="modal-back" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cadTitle">
+      <header>
+        <h3 id="cadTitle">Cadastrar usuário</h3>
+        <button class="close" id="btnClose">Fechar</button>
+      </header>
+      <div class="body">
+        <div class="field">
+          <label for="nome">Nome completo</label>
+          <input id="nome" type="text" placeholder="Ex.: Maria Souza" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="username">Usuário</label>
+          <input id="username" type="text" placeholder="Ex.: maria.souza" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" placeholder="email@ipev.com.br" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="senha">Senha inicial</label>
+          <input id="senha" type="password" placeholder="Mínimo 8 caracteres">
+        </div>
+        <div id="formMsg" class="error" style="display:none"></div>
+        <div id="formOk" class="ok" style="display:none"></div>
+      </div>
+      <div class="actions">
+        <button class="btn-secondary" id="btnCancelar">Cancelar</button>
+        <button class="btn-primary" id="btnSalvar">Salvar</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Proteção + lógica -->
   <script type="module">
@@ -152,49 +137,107 @@
 
     const ADMIN_EMAIL = 'contato.ipev@gmail.com'
 
-    // Exige sessão
+    // exige sessão
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      window.location.replace('index.html')
-    }
+    if (!session) window.location.replace('index.html')
 
-    // Confirma que é admin
+    // garante admin
     const { data: { user } } = await supabase.auth.getUser()
-    const email = (user?.email || '').toLowerCase()
-    if (email !== ADMIN_EMAIL) {
-      window.location.replace('menu.html')
-    }
+    const myEmail = (user?.email || '').toLowerCase()
+    if (myEmail !== ADMIN_EMAIL) window.location.replace('menu.html')
 
-    // Buscar nome do usuário em usuarios_app (display_name → username → fallback e-mail)
-    let nome = email.split('@')[0]
-    try {
-      const { data: perfil, error } = await supabase
+    // exibir NOME logado (display_name -> username -> antes do @)
+    async function loadNome() {
+      let nome = myEmail.split('@')[0]
+      const { data: perfil } = await supabase
         .from('usuarios_app')
         .select('display_name, username')
         .eq('id', user.id)
         .maybeSingle()
-      if (!error && perfil) {
-        nome = perfil.display_name || perfil.username || nome
-      }
-    } catch(_) { /* ignora, usa fallback */ }
+      if (perfil) nome = perfil.display_name || perfil.username || nome
+      document.getElementById('chipUser').textContent = `Logado: ${nome}`
+    }
+    await loadNome()
 
-    // Exibe quem está logado (nome)
-    document.getElementById('chipUser').textContent = `Logado: ${nome}`
-
-    // Botão cadastrar (placeholder)
-    document.getElementById('btnCadastrar').addEventListener('click', () => {
-      alert('Tela de cadastro de usuário (em breve).')
+    // Navegação topo
+    document.getElementById('btnMenu').addEventListener('click', () => {
+      window.location.href = 'menu.html'
     })
-
-    // Botão sair
-    document.getElementById('btnSair')?.addEventListener('click', async () => {
+    document.getElementById('btnLogout').addEventListener('click', async () => {
       await supabase.auth.signOut()
       window.location.replace('index.html')
     })
-
-    // Se deslogar em outra aba, sair aqui também
     supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') window.location.replace('index.html')
+    })
+
+    // Modal helpers
+    const modalBack = document.getElementById('modalBack')
+    const openModal = () => { modalBack.style.display = 'flex' }
+    const closeModal = () => {
+      modalBack.style.display = 'none'
+      document.getElementById('formMsg').style.display = 'none'
+      document.getElementById('formOk').style.display = 'none'
+      ;['nome','username','email','senha'].forEach(id => document.getElementById(id).value = '')
+    }
+
+    document.getElementById('btnCadastrar').addEventListener('click', openModal)
+    document.getElementById('btnClose').addEventListener('click', closeModal)
+    document.getElementById('btnCancelar').addEventListener('click', closeModal)
+
+    // Cadastrar usuário
+    document.getElementById('btnSalvar').addEventListener('click', async () => {
+      const msg = document.getElementById('formMsg')
+      const ok  = document.getElementById('formOk')
+      msg.style.display = 'none'; ok.style.display = 'none'
+
+      const nome = document.getElementById('nome').value.trim()
+      const username = document.getElementById('username').value.trim()
+      const email = document.getElementById('email').value.trim().toLowerCase()
+      const senha = document.getElementById('senha').value
+
+      if (!nome || !username || !email || !senha) {
+        msg.textContent = 'Preencha todos os campos.'; msg.style.display = 'block'; return
+      }
+      if (!email.includes('@')) {
+        msg.textContent = 'Informe um e-mail válido.'; msg.style.display = 'block'; return
+      }
+      if (senha.length < 8) {
+        msg.textContent = 'A senha deve ter pelo menos 8 caracteres.'; msg.style.display = 'block'; return
+      }
+
+      // 1) Cria usuário no Auth (não troca sua sessão se "Confirm email" estiver ligado)
+      const { data: sign, error: eSign } = await supabase.auth.signUp({
+        email, password: senha,
+        options: { emailRedirectTo: window.location.origin + '/index.html' }
+      })
+      if (eSign) {
+        msg.textContent = 'Erro ao criar no Auth: ' + eSign.message
+        msg.style.display = 'block'; return
+      }
+      const newUserId = sign.user?.id
+      if (!newUserId) {
+        msg.textContent = 'Não foi possível obter o ID do novo usuário.'
+        msg.style.display = 'block'; return
+      }
+
+      // 2) Registra no usuarios_app (precisa da policy ua_insert_admin)
+      const { error: eMap } = await supabase
+        .from('usuarios_app')
+        .insert({ id: newUserId, username, email, display_name: nome })
+
+      if (eMap) {
+        msg.innerHTML = 'Criado no Auth, mas falhou ao registrar no app: '
+          + eMap.message + '<br>Verifique se a policy <b>ua_insert_admin</b> foi criada.'
+        msg.style.display = 'block'; return
+      }
+
+      ok.textContent = 'Usuário cadastrado com sucesso!'
+      ok.style.display = 'block'
+
+      // feedback no card principal
+      document.getElementById('feedback').textContent = `Último cadastro: ${nome} <${email}>`
+      setTimeout(() => closeModal(), 900)
     })
   </script>
 </body>
