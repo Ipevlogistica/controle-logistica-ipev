@@ -2,14 +2,116 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Painel do Administrador</title>
+  <title>Área do Gestor — IPEV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root{
+      --azul: #0ea5b7;
+      --branco:#fff;
+    }
+    html,body{
+      margin:0; padding:0; font-family: Arial, Helvetica, sans-serif;
+      background:#f3f7f8; color:#0b2340;
+    }
+
+    /* HERO com a sua imagem (mesma pasta) */
+    .hero{
+      position: relative;
+      min-height: 220px;
+      display:flex; align-items:center;
+      background-image:
+        linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
+        url('frota-bg.jpg');          /* 👈 sua imagem aqui */
+      background-size: cover;
+      background-position: center;
+    }
+    .hero .wrap{
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px;
+      display:flex; justify-content: space-between; align-items: flex-end;
+    }
+    .titulo{
+      color: var(--branco);
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: .5px;
+      text-shadow: 0 2px 6px rgba(0,0,0,.35);
+    }
+    .sub{
+      color:#eaf7fb;
+      margin-top:6px;
+      font-size:14px;
+    }
+    .chip-user{
+      background: rgba(255,255,255,.9);
+      color:#123;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
+
+    /* CONTEÚDO */
+    .main{ max-width:1100px; margin: -28px auto 32px; padding: 0 20px; }
+    .card{
+      background:#fff; border-radius:14px; box-shadow: 0 10px 24px rgba(16,24,40,.08); padding: 22px;
+    }
+    .card h2{ margin: 0 0 14px 0; color:#124a63; font-size:20px; }
+    .grid-actions{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; }
+    .btn{
+      appearance:none; border:0; cursor:pointer;
+      padding:14px 18px; border-radius:12px; font-size:16px; font-weight:bold;
+      color:#fff; background: linear-gradient(135deg, var(--azul), #1d9bb7);
+      box-shadow: 0 8px 18px rgba(13, 135, 160, .25);
+      transition: transform .05s ease, box-shadow .2s ease, opacity .2s ease;
+      text-align:center;
+    }
+    .btn:hover{ box-shadow: 0 10px 22px rgba(13, 135, 160, .32); }
+    .btn:active{ transform: translateY(1px); }
+    .muted{ color:#516271; font-size:13px; margin-top:6px; }
+
+    /* Topo com Sair */
+    .topbar {
+      position: fixed; top: 10px; right: 10px; z-index: 20;
+      display:flex; gap:8px; align-items:center;
+    }
+    .btn-sair { background:#6b7280; color:#fff; border:0; border-radius:6px; padding:8px 14px; cursor:pointer; }
+    .btn-sair:hover { background:#4b5563; }
+  </style>
 </head>
 <body>
-  <h1>Painel do Administrador</h1>
-  <p id="who"></p>
 
-  <button id="btnCadastrar">Cadastrar usuário</button>
+  <!-- TOPBAR: botão Sair -->
+  <div class="topbar">
+    <button id="btnSair" class="btn-sair">Sair</button>
+  </div>
 
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1 class="titulo">Área do Gestor</h1>
+        <div class="sub">Gestão de usuários e permissões do sistema</div>
+      </div>
+      <div id="chipUser" class="chip-user"></div>
+    </div>
+  </section>
+
+  <!-- CONTEÚDO -->
+  <main class="main">
+    <div class="card">
+      <h2>Ações rápidas</h2>
+      <div class="grid-actions">
+        <button id="btnCadastrar" class="btn">+ Cadastrar usuário</button>
+      </div>
+      <div class="muted">Em breve: listar usuários, redefinir senha, permissões, etc.</div>
+    </div>
+  </main>
+
+  <!-- Proteção + lógica -->
   <script type="module">
     import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
 
@@ -18,29 +120,38 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
     )
 
-    const ADMIN_EMAIL = 'contato.ipev@gmail.com' // admin autorizado
+    const ADMIN_EMAIL = 'contato.ipev@gmail.com'
 
-    // exige sessão
+    // Exige sessão
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
-      window.location.href = 'index.html'
+      window.location.replace('index.html')
     }
 
-    // confirma que é admin
+    // Confirma que é admin
     const { data: { user } } = await supabase.auth.getUser()
     const email = (user?.email || '').toLowerCase()
     if (email !== ADMIN_EMAIL) {
-      // se não for admin, manda para o menu normal
-      window.location.href = 'menu.html'
+      window.location.replace('menu.html')
     }
 
-    // exibe quem está logado
-    document.getElementById('who').textContent = `Logado como: ${email}`
+    // Exibe quem está logado
+    document.getElementById('chipUser').textContent = `Logado: ${email}`
 
-    // botão (placeholder)
+    // Botão cadastrar (placeholder)
     document.getElementById('btnCadastrar').addEventListener('click', () => {
       alert('Tela de cadastro de usuário (em breve).')
-      // aqui depois vamos abrir a tela/ formulário de cadastro
+    })
+
+    // Botão sair
+    document.getElementById('btnSair')?.addEventListener('click', async () => {
+      await supabase.auth.signOut()
+      window.location.replace('index.html')
+    })
+
+    // Se deslogar em outra aba, sair aqui também
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') window.location.replace('index.html')
     })
   </script>
 </body>
