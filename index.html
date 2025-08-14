@@ -64,7 +64,7 @@
     import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
 
     const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co'
-    const supabaseKey = 'SUA_ANON_KEY_AQUI' // cole a sua anon key aqui
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     const redirectUrl = 'menu.html' // para onde vai após login
@@ -72,7 +72,6 @@
     const btn = document.getElementById('entrarBtn')
     const erroMsg = document.getElementById('erroMsg')
     const okMsg = document.getElementById('okMsg')
-    const lembrar = document.getElementById('lembrar')
 
     // Se já estiver logado, vai direto para o menu
     const { data: { session } } = await supabase.auth.getSession()
@@ -86,28 +85,19 @@
       okMsg.classList.add('hidden')
       btn.disabled = true
 
-      const email = document.getElementById('email').value.trim().toLowerCase()
+      const rawLogin = document.getElementById('email').value.trim()
       const senha = document.getElementById('senha').value
 
-      // Realiza login
-      const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
+      let email = rawLogin.toLowerCase()
 
-      if (error) {
-        erroMsg.textContent = 'Falha no login: ' + error.message
-        erroMsg.classList.remove('hidden')
-        btn.disabled = false
-        return
-      }
+      // Se não tiver "@", tratar como "usuário": buscar e-mail em public.usuarios_app
+      if (!rawLogin.includes('@')) {
+        const { data, error } = await supabase
+          .from('usuarios_app')
+          .select('email')
+          .ilike('username', rawLogin)   // case-insensitive
+          .maybeSingle()
 
-      // Observação: o supabase-js já persiste a sessão em localStorage por padrão.
-      // Se não quiser manter sessão quando "lembrar" estiver desmarcado,
-      // podemos tratar isso depois nos JS (quando você autorizar).
-
-      okMsg.textContent = 'Login realizado. Redirecionando...'
-      okMsg.classList.remove('hidden')
-      setTimeout(() => window.location.href = redirectUrl, 400)
-    })
-  </script>
-</body>
-</html>
-
+        if (error || !data || !data.email) {
+          erroMsg.textContent = 'Usuário não encontrado.'
+          e
