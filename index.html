@@ -67,16 +67,19 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const redirectUrl = 'menu.html' // para onde vai após login
+    // ✅ e-mail do admin (redireciona para admin.html)
+    const ADMIN_EMAIL = 'contato.ipev@gmail.com'
+
     const form = document.getElementById('loginForm')
     const btn = document.getElementById('entrarBtn')
     const erroMsg = document.getElementById('erroMsg')
     const okMsg = document.getElementById('okMsg')
 
-    // Se já estiver logado, vai direto para o menu
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-      window.location.href = redirectUrl
+    // Se já estiver logado, escolhe destino conforme e-mail
+    const { data: { session} } = await supabase.auth.getSession()
+    if (session?.user?.email) {
+      const go = session.user.email.toLowerCase() === ADMIN_EMAIL ? 'admin.html' : 'menu.html'
+      window.location.href = go
     }
 
     form.addEventListener('submit', async (e) => {
@@ -109,7 +112,6 @@
 
       // Realiza login por e-mail (direto ou obtido pelo username)
       const { error: e1 } = await supabase.auth.signInWithPassword({ email, password: senha })
-
       if (e1) {
         erroMsg.textContent = 'Falha no login: ' + e1.message
         erroMsg.classList.remove('hidden')
@@ -117,9 +119,13 @@
         return
       }
 
+      // ✅ Redireciona conforme e-mail do usuário
+      const { data: { user } } = await supabase.auth.getUser()
+      const go = (user?.email || '').toLowerCase() === ADMIN_EMAIL ? 'admin.html' : 'menu.html'
+
       okMsg.textContent = 'Login realizado. Redirecionando...'
       okMsg.classList.remove('hidden')
-      setTimeout(() => window.location.href = redirectUrl, 400)
+      setTimeout(() => window.location.href = go, 400)
     })
   </script>
 </body>
