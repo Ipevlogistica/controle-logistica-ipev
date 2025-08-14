@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Área do Gestor — IPEV</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <style>
     :root{ --azul:#0ea5b7; --branco:#fff; --texto:#0b2340; }
     html,body{ margin:0; padding:0; font-family:Arial, Helvetica, sans-serif; background:#f3f7f8; color:var(--texto); }
@@ -19,9 +18,11 @@
       display:flex; justify-content:space-between; align-items:flex-end; gap:16px; }
     .titulo{ color:var(--branco); margin:0 0 6px 0; font-size:34px; letter-spacing:.5px; line-height:1.15; text-shadow:0 2px 6px rgba(0,0,0,.35); }
     .sub{ color:#eaf7fb; margin:0; font-size:15px; line-height:1.3; }
+
+    /* CHIP USER */
     .chip-user{ background:rgba(255,255,255,.95); color:#123; padding:10px 14px; border-radius:999px; font-size:13px; box-shadow:0 2px 10px rgba(0,0,0,.2); white-space:nowrap; }
 
-    /* TOPO */
+    /* TOPBAR */
     .topbar{ position:fixed; top:10px; right:10px; z-index:20; display:flex; gap:8px; align-items:center; }
     .btn-top{ background:#6b7280; color:#fff; border:0; border-radius:6px; padding:8px 14px; cursor:pointer; }
     .btn-top:hover{ background:#4b5563; }
@@ -49,9 +50,7 @@
     .modal .close{ background:#e5e7eb; border:0; border-radius:6px; padding:6px 10px; cursor:pointer; }
     .modal .body{ padding:18px; display:grid; gap:12px; }
     .field label{ display:block; font-size:13px; color:#374151; margin-bottom:4px; }
-    .field input, .field select{
-      width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; outline:none;
-    }
+    .field input{ width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; outline:none; }
     .actions{ display:flex; justify-content:flex-end; gap:10px; padding:0 18px 18px; }
     .btn-secondary{ background:#e5e7eb; color:#111827; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; }
     .btn-primary{ background:#0ea5b7; color:#fff; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; }
@@ -63,7 +62,7 @@
 </head>
 <body>
 
-  <!-- TOPBAR: Menu e Logout -->
+  <!-- TOPO: menu e logout -->
   <div class="topbar">
     <button id="btnMenu" class="btn-top">Menu</button>
     <button id="btnLogout" class="btn-top">Logout</button>
@@ -87,7 +86,7 @@
       <div class="grid-actions">
         <button id="btnCadastrar" class="btn">+ Cadastrar usuário</button>
       </div>
-      <div class="muted">Após cadastrar, o usuário poderá entrar com e-mail e senha definidos.</div>
+      <div class="muted">O usuário já sai confirmado e pode logar imediatamente.</div>
       <div id="feedback" class="muted"></div>
     </div>
   </main>
@@ -100,22 +99,10 @@
         <button class="close" id="btnClose">Fechar</button>
       </header>
       <div class="body">
-        <div class="field">
-          <label for="nome">Nome completo</label>
-          <input id="nome" type="text" placeholder="Ex.: Maria Souza" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="username">Usuário</label>
-          <input id="username" type="text" placeholder="Ex.: maria.souza" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="email">E-mail</label>
-          <input id="email" type="email" placeholder="email@ipev.com.br" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="senha">Senha inicial</label>
-          <input id="senha" type="password" placeholder="Mínimo 8 caracteres">
-        </div>
+        <div class="field"><label for="nome">Nome completo</label><input id="nome" type="text" placeholder="Ex.: Maria Souza"></div>
+        <div class="field"><label for="username">Usuário</label><input id="username" type="text" placeholder="Ex.: maria.souza"></div>
+        <div class="field"><label for="email">E-mail</label><input id="email" type="email" placeholder="email@ipev.com.br"></div>
+        <div class="field"><label for="senha">Senha inicial</label><input id="senha" type="password" placeholder="Mínimo 8 caracteres"></div>
         <div id="formMsg" class="error" style="display:none"></div>
         <div id="formOk" class="ok" style="display:none"></div>
       </div>
@@ -126,119 +113,94 @@
     </div>
   </div>
 
-  <!-- Proteção + lógica -->
+  <!-- Lógica -->
   <script type="module">
     import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
 
+    // Supabase (seu projeto)
     const supabase = createClient(
       'https://ilsbyrvnrkutwynujfhs.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
     )
 
-    const ADMIN_EMAIL = 'contato.ipev@gmail.com'
+    // >>>> TROQUE se sua URL da função for diferente (Invoke URL após o Deploy)
+    const FUNCTION_URL = 'https://ilsbyrvnrkutwynujfhs.functions.supabase.co/create-user'
+    const ADMIN_EMAIL  = 'contato.ipev@gmail.com'
 
-    // exige sessão
+    // Exigir sessão
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) window.location.replace('index.html')
 
-    // garante admin
+    // Permitir só o admin
     const { data: { user } } = await supabase.auth.getUser()
-    const myEmail = (user?.email || '').toLowerCase()
-    if (myEmail !== ADMIN_EMAIL) window.location.replace('menu.html')
-
-    // exibir NOME logado (display_name -> username -> antes do @)
-    async function loadNome() {
-      let nome = myEmail.split('@')[0]
-      const { data: perfil } = await supabase
-        .from('usuarios_app')
-        .select('display_name, username')
-        .eq('id', user.id)
-        .maybeSingle()
-      if (perfil) nome = perfil.display_name || perfil.username || nome
-      document.getElementById('chipUser').textContent = `Logado: ${nome}`
+    if ((user?.email || '').toLowerCase() !== ADMIN_EMAIL) {
+      window.location.replace('menu.html')
     }
-    await loadNome()
+
+    // Mostrar nome do logado (display_name -> username -> parte antes do @)
+    let nomeExibicao = (user?.email || '').split('@')[0]
+    const { data: perfil } = await supabase
+      .from('usuarios_app')
+      .select('display_name, username')
+      .eq('id', user.id)
+      .maybeSingle()
+    if (perfil) nomeExibicao = perfil.display_name || perfil.username || nomeExibicao
+    document.getElementById('chipUser').textContent = `Logado: ${nomeExibicao}`
 
     // Navegação topo
-    document.getElementById('btnMenu').addEventListener('click', () => {
-      window.location.href = 'menu.html'
-    })
-    document.getElementById('btnLogout').addEventListener('click', async () => {
-      await supabase.auth.signOut()
-      window.location.replace('index.html')
-    })
-    supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') window.location.replace('index.html')
-    })
+    document.getElementById('btnMenu').onclick   = () => window.location.href = 'menu.html'
+    document.getElementById('btnLogout').onclick = async () => { await supabase.auth.signOut(); window.location.replace('index.html') }
+    supabase.auth.onAuthStateChange((e)=>{ if(e==='SIGNED_OUT') window.location.replace('index.html') })
 
     // Modal helpers
-    const modalBack = document.getElementById('modalBack')
-    const openModal = () => { modalBack.style.display = 'flex' }
-    const closeModal = () => {
-      modalBack.style.display = 'none'
-      document.getElementById('formMsg').style.display = 'none'
-      document.getElementById('formOk').style.display = 'none'
-      ;['nome','username','email','senha'].forEach(id => document.getElementById(id).value = '')
-    }
+    const modal = document.getElementById('modalBack')
+    const open  = () => modal.style.display='flex'
+    const close = () => { modal.style.display='none'; ['nome','username','email','senha'].forEach(id=>document.getElementById(id).value=''); hideMsg() }
+    const hideMsg = () => { document.getElementById('formMsg').style.display='none'; document.getElementById('formOk').style.display='none' }
+    document.getElementById('btnCadastrar').onclick = open
+    document.getElementById('btnClose').onclick    = close
+    document.getElementById('btnCancelar').onclick = close
 
-    document.getElementById('btnCadastrar').addEventListener('click', openModal)
-    document.getElementById('btnClose').addEventListener('click', closeModal)
-    document.getElementById('btnCancelar').addEventListener('click', closeModal)
-
-    // Cadastrar usuário
-    document.getElementById('btnSalvar').addEventListener('click', async () => {
+    // Cadastrar via Edge Function (cria confirmado e grava em usuarios_app)
+    document.getElementById('btnSalvar').onclick = async () => {
+      hideMsg()
       const msg = document.getElementById('formMsg')
       const ok  = document.getElementById('formOk')
-      msg.style.display = 'none'; ok.style.display = 'none'
 
       const nome = document.getElementById('nome').value.trim()
       const username = document.getElementById('username').value.trim()
       const email = document.getElementById('email').value.trim().toLowerCase()
       const senha = document.getElementById('senha').value
 
-      if (!nome || !username || !email || !senha) {
-        msg.textContent = 'Preencha todos os campos.'; msg.style.display = 'block'; return
-      }
-      if (!email.includes('@')) {
-        msg.textContent = 'Informe um e-mail válido.'; msg.style.display = 'block'; return
-      }
-      if (senha.length < 8) {
-        msg.textContent = 'A senha deve ter pelo menos 8 caracteres.'; msg.style.display = 'block'; return
-      }
+      if (!nome || !username || !email || !senha) { msg.textContent='Preencha todos os campos.'; msg.style.display='block'; return }
+      if (!email.includes('@')) { msg.textContent='Informe um e-mail válido.'; msg.style.display='block'; return }
+      if (senha.length < 8) { msg.textContent='A senha deve ter pelo menos 8 caracteres.'; msg.style.display='block'; return }
 
-      // 1) Cria usuário no Auth (não troca sua sessão se "Confirm email" estiver ligado)
-      const { data: sign, error: eSign } = await supabase.auth.signUp({
-        email, password: senha,
-        options: { emailRedirectTo: window.location.origin + '/index.html' }
-      })
-      if (eSign) {
-        msg.textContent = 'Erro ao criar no Auth: ' + eSign.message
-        msg.style.display = 'block'; return
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) { msg.textContent='Sessão expirada. Faça login novamente.'; msg.style.display='block'; return }
+
+      try {
+        const res = await fetch(FUNCTION_URL, {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ name: nome, username, email, password: senha })
+        })
+        const j = await res.json()
+        if (!res.ok) {
+          msg.textContent = 'Erro: ' + (j?.error || 'Falha desconhecida') + (j?.details ? ` — ${j.details}` : '')
+          msg.style.display='block'
+          return
+        }
+
+        ok.textContent = 'Usuário cadastrado com sucesso!'
+        ok.style.display = 'block'
+        document.getElementById('feedback').textContent = `Último cadastro: ${nome} <${email}>`
+        setTimeout(() => close(), 900)
+      } catch (e) {
+        msg.textContent = 'Erro de rede ao chamar a função: ' + e
+        msg.style.display = 'block'
       }
-      const newUserId = sign.user?.id
-      if (!newUserId) {
-        msg.textContent = 'Não foi possível obter o ID do novo usuário.'
-        msg.style.display = 'block'; return
-      }
-
-      // 2) Registra no usuarios_app (precisa da policy ua_insert_admin)
-      const { error: eMap } = await supabase
-        .from('usuarios_app')
-        .insert({ id: newUserId, username, email, display_name: nome })
-
-      if (eMap) {
-        msg.innerHTML = 'Criado no Auth, mas falhou ao registrar no app: '
-          + eMap.message + '<br>Verifique se a policy <b>ua_insert_admin</b> foi criada.'
-        msg.style.display = 'block'; return
-      }
-
-      ok.textContent = 'Usuário cadastrado com sucesso!'
-      ok.style.display = 'block'
-
-      // feedback no card principal
-      document.getElementById('feedback').textContent = `Último cadastro: ${nome} <${email}>`
-      setTimeout(() => closeModal(), 900)
-    })
+    }
   </script>
 </body>
 </html>
