@@ -35,6 +35,10 @@
     .danger:hover{ background:#b91c1c; }
     .pagination{ display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px; }
     .empty{ padding:16px; color:#6b7280; }
+
+    /* === PATCH: dialog/backdrop + fallback === */
+    dialog::backdrop { background: rgba(0,0,0,.45); }
+    dialog[open] { display: block; }
   </style>
 </head>
 <body>
@@ -155,9 +159,9 @@
     </form>
   </dialog>
 
-  <!-- NOVO: Modal Permissões -->
+  <!-- NOVO: Modal Permissões (compatível com fallback) -->
   <dialog id="dlgPerm" style="border:0; border-radius:12px; padding:0; width:95%; max-width:620px;">
-    <form method="dialog" style="padding:18px">
+    <form method="dialog" style="padding:18px" id="formPerm">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
         <h3 style="margin:0">Gerenciar permissões</h3>
         <button class="btn-secondary btn" value="cancel">Fechar</button>
@@ -278,7 +282,7 @@
       dlgReset.close();
     };
 
-    // === Lista de usuários ===
+    // === Lista de usuários (Edge Function list-users) ===
     const tbody = document.getElementById('tbody');
     const busca = document.getElementById('busca');
     const perPageSel = document.getElementById('perPage');
@@ -389,7 +393,7 @@
     }
 
     // ============================================
-    // NOVO: Permissões (modal + ações)
+    // NOVO: Permissões (modal + ações) — com fallback de <dialog>
     // ============================================
     const btnOpenPerm = document.getElementById('btnOpenPerm');
     const dlgPerm = document.getElementById('dlgPerm');
@@ -401,8 +405,24 @@
     const hintPerm = document.getElementById('perm_hint');
     const btnPermSalvar = document.getElementById('perm_salvar');
 
+    function openDialog(el) {
+      try { if (typeof el.showModal === 'function') el.showModal(); else el.setAttribute('open',''); }
+      catch { el.setAttribute('open',''); }
+    }
+    function closeDialog(el) {
+      try { if (typeof el.close === 'function') el.close(); else el.removeAttribute('open'); }
+      catch { el.removeAttribute('open'); }
+    }
+
+    document.getElementById('formPerm')?.addEventListener('submit', e => {
+      e.preventDefault(); closeDialog(dlgPerm);
+    });
+    dlgPerm?.addEventListener('cancel', (e) => {
+      e.preventDefault(); closeDialog(dlgPerm);
+    });
+
     btnOpenPerm.onclick = async () => {
-      dlgPerm.showModal();
+      openDialog(dlgPerm);
       await carregarUsuariosPerm();
     };
 
@@ -411,11 +431,12 @@
       selUser.innerHTML = '<option value="">Selecione um usuário…</option>';
       hintPerm.style.display = 'none';
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { msgPerm.textContent = 'É necessário estar logado.'; return; }
+
+      // RPC do SQL (retorna apenas para admin)
       const { data, error } = await supabase.rpc('list_users');
-      if (error) {
-        msgPerm.textContent = 'Erro ao listar usuários: ' + (error.message || error);
-        return;
-      }
+      if (error) { msgPerm.textContent = 'Erro ao listar usuários: ' + (error.message || error); return; }
       if (!data || data.length === 0) {
         msgPerm.textContent = 'Nenhum usuário encontrado.';
         hintPerm.style.display = 'block';
@@ -448,3 +469,34 @@
         .maybeSingle();
 
       if (error) { msgPerm.textContent = 'Erro: ' + (error.message || error); return; }
+
+      chkAdmin.checked = !!data?.is_admin;
+      chkCtrl.checked  = !!data?.perm_controle_diario;
+      chkCons.checked  = !!data?.perm_consumo_total;
+      msgPerm.textContent = data ? 'Permissões carregadas.' : 'Usuário ainda sem registro; ao salvar será criado.';
+    });
+
+    btnPermSalvar.onclick = async () => {
+      const id = selUser.value;
+      if (!id) { msgPerm.textContent = 'Selecione um usuário.'; return; }
+
+      msgPerm.textContent = 'Salvando…';
+      const { error } = await supabase.rpc('set_permissoes', {
+        p_user_id: id,
+        p_perm_controle: chkCtrl.checked,
+        p_perm_consumo: chkCons.checked,
+        p_is_admin: chkAdmin.checked
+      });
+
+      if (error) { msgPerm.textContent = 'Erro ao salvar: ' + (error.message || error); return; }
+      msgPerm.textContent = 'Permissões salvas com sucesso.';
+    };
+    // ============================================
+    // /NOVO: Permissões
+    // ============================================
+
+    // Não carregamos nada ao abrir a página.
+    // A listagem só abre/carrega ao clicar em "👥 Listar usuários".
+  </script>
+</body>
+</html>
