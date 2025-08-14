@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <title>Controle IPEV - Página Inicial</title>
+
+  <!-- Evitar cache após logout -->
+  <meta http-equiv="Cache-Control" content="no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <style>
     body {
       margin: 0;
@@ -29,7 +35,7 @@
     .logo-left img {
       max-width: 100%;
       max-height: 80vh;
-      opacity: 15;
+      opacity: 15; /* mantido do original */
     }
 
     .buttons-right {
@@ -73,6 +79,35 @@
       background-color: #1f9f4c;
     }
 
+    /* Botão Sair (fixo no topo direito) */
+    .topbar {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      z-index: 10;
+    }
+    .btn-sair {
+      background-color: #6b7280; /* cinza */
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+    .btn-sair:hover {
+      background-color: #4b5563;
+    }
+    .who {
+      color: #1e3a8a;
+      font-size: 12px;
+      background: #ffffffb3;
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
     @media (max-width: 800px) {
       .container {
         flex-direction: column;
@@ -96,6 +131,12 @@
   </style>
 </head>
 <body>
+  <!-- Topo: quem está logado + sair -->
+  <div class="topbar">
+    <span id="who" class="who" title="Usuário logado"></span>
+    <button id="btnSair" class="btn-sair">Sair</button>
+  </div>
+
   <div class="container">
     <div class="logo-left">
       <img src="Logo Ipev Registrado.jpg" alt="Logo IPEV">
@@ -108,7 +149,53 @@
       <a href="relatorio_mensal_dinamico.html" class="btn btn-relatorio">📊 Relatório Mensal</a>
     </div>
   </div>
+
+  <!-- Script: exigir sessão + sair -->
+  <script type="module">
+    import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
+
+    const supabase = createClient(
+      'https://ilsbyrvnrkutwynujfhs.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
+    )
+
+    // 1) Exigir sessão para ver o menu
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      window.location.replace('index.html')
+    }
+
+    // 2) Mostrar quem está logado (e-mail)
+    const who = document.getElementById('who')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (who) {
+      who.textContent = user?.email ? `Logado: ${user.email}` : ''
+    }
+
+    // 3) Botão Sair
+    const btnSair = document.getElementById('btnSair')
+    if (btnSair) {
+      btnSair.addEventListener('click', async () => {
+        await supabase.auth.signOut()
+        // Redireciona pro login após limpar a sessão
+        window.location.replace('index.html')
+      })
+    }
+
+    // 4) Se o usuário for deslogado em outra aba, sair daqui também
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        window.location.replace('index.html')
+      }
+    })
+
+    // 5) Evitar que o botão "Voltar" mostre a página em cache após logout
+    window.addEventListener('pageshow', async (e) => {
+      if (e.persisted) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) window.location.replace('index.html')
+      }
+    })
+  </script>
 </body>
-
-
 </html>
