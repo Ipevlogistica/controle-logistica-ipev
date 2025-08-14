@@ -21,10 +21,8 @@
     .btn-secondary{ background:var(--cinza); }
     .btn-secondary:hover{ background:#4b5563; }
     .main{ max-width:1100px; margin:22px auto 34px; padding:0 18px; }
-
     .card{ background:#fff; border-radius:14px; box-shadow:0 10px 24px rgba(16,24,40,.08); padding:18px; margin-bottom:16px; }
     .card h3{ margin:0 0 12px; font-size:18px; color:#0f172a; }
-
     .toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
     .input{ padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; min-width:240px; background:#fff; }
     .table{ width:100%; border-collapse:collapse; }
@@ -37,7 +35,6 @@
     .danger:hover{ background:#b91c1c; }
     .pagination{ display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px; }
     .empty{ padding:16px; color:#6b7280; }
-    .pill{ display:inline-block; font-size:12px; background:#eef6f8; color:#0c4a6e; padding:3px 8px; border-radius:999px; }
   </style>
 </head>
 <body>
@@ -58,16 +55,15 @@
   </div>
 
   <div class="main">
-    <!-- Ações rápidas -->
     <div class="card">
       <div class="toolbar">
-        <button class="btn" id="btnOpenCreate">+ Cadastrar usuário</button>
+        <!-- alterado: + -> emoji homem -->
+        <button class="btn" id="btnOpenCreate">👨 Cadastrar usuário</button>
         <button class="btn" id="btnOpenReset">🔑 Redefinir senha</button>
         <span class="muted">Em breve: papéis, permissões, auditoria…</span>
       </div>
     </div>
 
-    <!-- Lista de usuários -->
     <div class="card">
       <h3>Usuários</h3>
       <div class="toolbar">
@@ -103,7 +99,7 @@
     </div>
   </div>
 
-  <!-- Modais básicos (Cadastro & Reset) –– MESMOS dos passos anteriores -->
+  <!-- Modal Cadastrar -->
   <dialog id="dlgCreate" style="border:0; border-radius:12px; padding:0; width:95%; max-width:560px;">
     <form method="dialog" style="padding:18px">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
@@ -130,6 +126,7 @@
     </form>
   </dialog>
 
+  <!-- Modal Reset -->
   <dialog id="dlgReset" style="border:0; border-radius:12px; padding:0; width:95%; max-width:520px;">
     <form method="dialog" style="padding:18px">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
@@ -157,10 +154,10 @@
     const SUPABASE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
 
-    // >>> TROQUE pelos Invoke URLs das suas funções <<<
-    const CREATE_URL = 'PASTE_INVOKE_URL_OF_create-user';
-    const RESET_URL  = 'PASTE_INVOKE_URL_OF_reset-password';
-    const LIST_URL   = 'PASTE_INVOKE_URL_OF_list-users';
+    // URLs das Edge Functions (ajuste se renomeou as funções):
+    const CREATE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/create-user';
+    const RESET_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/reset-password';
+    const LIST_URL   = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/list-users';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -169,7 +166,6 @@
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) window.location.href = 'index.html';
     const email = session.user.email;
-    // Nome amigável (tabelinha usuarios_app se existir)
     try {
       const { data: ua } = await supabase.from('usuarios_app').select('display_name').ilike('email', email).maybeSingle();
       chipUser.textContent = 'Logado: ' + (ua?.display_name || email);
@@ -178,13 +174,13 @@
     document.getElementById('btnSairMenu').onclick = () => window.location.href = 'menu.html';
     document.getElementById('btnLogout').onclick = async () => { await supabase.auth.signOut(); window.location.href = 'index.html'; };
 
-    // === Modais cadastro/reset (reaproveitando o que já tínhamos) ===
+    // === Modais cadastro/reset ===
     const dlgCreate = document.getElementById('dlgCreate');
     const dlgReset  = document.getElementById('dlgReset');
     document.getElementById('btnOpenCreate').onclick = () => dlgCreate.showModal();
     document.getElementById('btnOpenReset').onclick  = () => dlgReset.showModal();
 
-    // Criar usuário (via Edge Function create-user)
+    // Criar usuário
     document.getElementById('c_salvar').onclick = async () => {
       const nome  = document.getElementById('c_nome').value.trim();
       const user  = document.getElementById('c_user').value.trim();
@@ -202,10 +198,10 @@
       const json = await resp.json();
       if (!resp.ok) { err.textContent = 'Erro: ' + (json.details || json.error || 'falha'); return; }
       dlgCreate.close();
-      await loadUsers(); // atualiza lista
+      await loadUsers(true);
     };
 
-    // Reset de senha (via Edge Function reset-password)
+    // Reset de senha
     document.getElementById('r_salvar').onclick = async () => {
       const email = document.getElementById('r_email').value.trim().toLowerCase();
       const pass  = document.getElementById('r_senha').value;
@@ -245,7 +241,6 @@
     btnPrev.onclick = () => { if (state.page > 1) { state.page--; loadUsers(true); } };
     btnNext.onclick = () => { if (state.hasMore) { state.page++; loadUsers(true); } };
 
-    // Ordenar ao clicar no cabeçalho
     document.querySelectorAll('th[data-sort]').forEach(th => {
       th.addEventListener('click', () => {
         const col = th.dataset.sort;
@@ -272,7 +267,6 @@
     }
 
     function render() {
-      // filtro da página
       const term = busca.value.trim().toLowerCase();
       let rows = state.raw.slice();
       if (term) {
@@ -281,8 +275,6 @@
           ((u.email||'').toLowerCase().includes(term))
         );
       }
-
-      // ordenar
       rows.sort((a,b) => {
         const k = state.sortBy;
         const va = (a[k] || '') + '';
@@ -292,7 +284,6 @@
         return 0;
       });
 
-      // desenhar
       tbody.innerHTML = '';
       if (!rows.length) {
         const tr = document.createElement('tr');
@@ -334,7 +325,6 @@
       });
       const json = await resp.json();
       if (!resp.ok) { alert('Falha ao excluir: ' + (json.details || json.error || '')); return; }
-      // se acabou a página, volta uma
       if (state.raw.length === 1 && state.page > 1) state.page--;
       await loadUsers(true);
     }
