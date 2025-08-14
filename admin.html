@@ -1,486 +1,480 @@
--- ============================================
--- ✅ PATCH CONSOLIDADO (SEGURO, IDEMPOTENTE)
--- - Não usa DROP TABLE
--- - Não recria tabelas existentes (só cria se não existirem)
--- - Não apaga dados
--- - Cria/ajusta funções RPC (list_users, set_permissoes)
--- - Endurece RLS (ENABLE + FORCE) nas tabelas do app
--- - Remove policies antigas/permissivas e recria as oficiais
--- - Concede permissões e EXECUTE nas funções necessárias
--- ============================================
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Área do Gestor — IPEV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    :root{ --azul:#0ea5b7; --azul2:#12849a; --cinza:#6b7280; --branco:#fff; --texto:#0b2340; }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:Arial,Helvetica,sans-serif; background:#f3f7f8; color:var(--texto); }
+    .hero{ position:relative; min-height:240px; display:flex; align-items:flex-end;
+      background-image: linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('frota-bg.jpg');
+      background-size:cover; background-position:center; box-shadow:inset 0 -30px 30px rgba(0,0,0,.18); }
+    .wrap{ width:100%; max-width:1100px; margin:0 auto; padding:28px 18px 32px; display:flex; justify-content:space-between; align-items:flex-end; }
+    .titulo{ color:#fff; margin:0; font-size:30px; text-shadow:0 2px 6px rgba(0,0,0,.35); }
+    .sub{ color:#eaf7fb; margin:6px 0 0; font-size:14px; }
+    .chip-user{ background:rgba(255,255,255,.95); color:#123; padding:9px 14px; border-radius:999px; font-size:13px; box-shadow:0 2px 10px rgba(0,0,0,.2); white-space:nowrap; }
+    .topbar{ position:fixed; top:10px; right:10px; z-index:10; display:flex; gap:8px; }
+    .btn{ background:var(--azul); color:#fff; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; }
+    .btn:hover{ background:var(--azul2); }
+    .btn-secondary{ background:var(--cinza); }
+    .btn-secondary:hover{ background:#4b5563; }
+    .main{ max-width:1100px; margin:22px auto 34px; padding:0 18px; }
+    .card{ background:#fff; border-radius:14px; box-shadow:0 10px 24px rgba(16,24,40,.08); padding:18px; margin-bottom:16px; }
+    .card h3{ margin:0 0 12px; font-size:18px; color:#0f172a; }
+    .toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+    .input{ padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; min-width:240px; background:#fff; }
+    .table{ width:100%; border-collapse:collapse; }
+    .table th,.table td{ padding:10px 12px; border-bottom:1px solid #eef2f7; }
+    .table th{ text-align:left; font-size:13px; color:#374151; cursor:pointer; user-select:none; }
+    .table td{ font-size:14px; color:#111827; }
+    .muted{ color:#6b7280; font-size:12px; }
+    .right{ text-align:right; }
+    .danger{ background:#dc2626; }
+    .danger:hover{ background:#b91c1c; }
+    .pagination{ display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px; }
+    .empty{ padding:16px; color:#6b7280; }
+  </style>
+</head>
+<body>
 
-BEGIN;
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <h1 class="titulo">Área do Gestor</h1>
+        <p class="sub">Gestão de usuários e permissões do sistema</p>
+      </div>
+      <div class="chip-user" id="chipUser">Logado:</div>
+    </div>
+  </div>
 
--- ============================================================
--- 0) EXTENSÕES E PREPAROS
--- ============================================================
-CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- gen_random_uuid()
--- Se quiser email case-insensitive em usuarios_app, descomente:
--- CREATE EXTENSION IF NOT EXISTS citext;
+  <div class="topbar">
+    <button class="btn-secondary btn" id="btnSairMenu">↩️ Menu</button>
+    <button class="btn-secondary btn" id="btnLogout">🚪 Logout</button>
+  </div>
 
--- ============================================================
--- 1) TABELAS (criar se não existirem) + COLUNAS/ÍNDICES
--- ============================================================
+  <div class="main">
+    <div class="card">
+      <div class="toolbar">
+        <button class="btn" id="btnOpenCreate">👨 Cadastrar usuário</button>
+        <button class="btn" id="btnOpenReset">🔑 Redefinir senha</button>
+        <!-- NOVO: botão que abre a listagem -->
+        <button class="btn" id="btnOpenList">👥 Listar usuários</button>
+        <!-- NOVO: botão Permissões -->
+        <button class="btn" id="btnOpenPerm">🛡️ Permissões</button>
+        <span class="muted">Em breve: papéis, permissões, auditoria…</span>
+      </div>
+    </div>
 
--- 1.1) Tabela de permissões do app
-CREATE TABLE IF NOT EXISTS public.permissoes_app (
-  user_id uuid PRIMARY KEY,
-  is_admin boolean NOT NULL DEFAULT false,
-  perm_controle_diario boolean NOT NULL DEFAULT false,
-  perm_consumo_total boolean NOT NULL DEFAULT false,
-  granted_by uuid NULL,
-  granted_at timestamptz NOT NULL DEFAULT now()
-);
+    <!-- Listagem fica escondida até clicar em "Listar usuários" -->
+    <div class="card" id="cardList" style="display:none;">
+      <h3 style="display:flex;justify-content:space-between;align-items:center;">
+        Usuários
+        <button class="btn-secondary btn" id="btnCloseList" title="Fechar">Fechar</button>
+      </h3>
 
--- FK para auth.users (id)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'permissoes_app_user_id_fkey'
-  ) THEN
-    ALTER TABLE public.permissoes_app
-    ADD CONSTRAINT permissoes_app_user_id_fkey
-    FOREIGN KEY (user_id) REFERENCES auth.users (id) ON UPDATE CASCADE ON DELETE CASCADE;
-  END IF;
-END$$;
+      <div class="toolbar">
+        <input id="busca" class="input" placeholder="Buscar na página (nome ou e-mail)…">
+        <select id="perPage" class="input" style="min-width:120px">
+          <option value="10">10 por página</option>
+          <option value="20">20 por página</option>
+          <option value="50">50 por página</option>
+        </select>
+        <button id="btnRefresh" class="btn">Atualizar</button>
+      </div>
 
--- Índice auxiliar para buscas por admin
-CREATE INDEX IF NOT EXISTS idx_permissoes_admin ON public.permissoes_app (is_admin);
+      <div style="overflow:auto;">
+        <table class="table" id="tbl">
+          <thead>
+            <tr>
+              <th data-sort="display_name">Nome</th>
+              <th data-sort="email">E-mail</th>
+              <th data-sort="created_at">Criado em</th>
+              <th data-sort="last_sign_in_at">Último login</th>
+              <th class="right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
 
--- 1.2) Tabela de perfis/usuarios do app (opcional, usada pela UI p/ mostrar nome)
-CREATE TABLE IF NOT EXISTS public.usuarios_app (
-  user_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  email text UNIQUE,        -- troque para CITEXT se habilitar a extensão
-  display_name text,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+      <div class="pagination">
+        <span id="pageInfo" class="muted"></span>
+        <button class="btn-secondary btn" id="prev">◀</button>
+        <button class="btn-secondary btn" id="next">▶</button>
+      </div>
+    </div>
+  </div>
 
--- FK usuários_app.user_id -> auth.users(id) (opcional, se você armazena o id do auth)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'usuarios_app_user_id_fkey'
-  ) THEN
-    ALTER TABLE public.usuarios_app
-    ADD CONSTRAINT usuarios_app_user_id_fkey
-    FOREIGN KEY (user_id) REFERENCES auth.users (id) ON UPDATE CASCADE ON DELETE SET NULL;
-  END IF;
-END$$;
+  <!-- Modal Cadastrar -->
+  <dialog id="dlgCreate" style="border:0; border-radius:12px; padding:0; width:95%; max-width:560px;">
+    <form method="dialog" style="padding:18px">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+        <h3 style="margin:0">Cadastrar usuário</h3>
+        <button class="btn-secondary btn" value="cancel">Fechar</button>
+      </div>
+      <label>Nome completo
+        <input id="c_nome" class="input" style="width:100%; margin-top:6px">
+      </label><br><br>
+      <label>Usuário
+        <input id="c_user" class="input" style="width:100%; margin-top:6px">
+      </label><br><br>
+      <label>E-mail
+        <input id="c_email" class="input" style="width:100%; margin-top:6px">
+      </label><br><br>
+      <label>Senha inicial
+        <input id="c_senha" type="password" class="input" style="width:100%; margin-top:6px">
+      </label>
+      <p id="c_erro" class="muted" style="color:#dc2626; margin-top:8px"></p>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px">
+        <button class="btn-secondary btn" value="cancel">Cancelar</button>
+        <button id="c_salvar" type="button" class="btn">Salvar</button>
+      </div>
+    </form>
+  </dialog>
 
--- 1.3) Demais tabelas do app (assumimos que já existem):
--- public.motoristas
--- public.controle_diario
--- public.recargas_motoristas
--- Caso alguma não exista, crie-as aqui (sem apagar nada). Exemplos:
--- CREATE TABLE IF NOT EXISTS public.motoristas (
---   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
---   nome text NOT NULL,
---   created_at timestamptz NOT NULL DEFAULT now()
--- );
--- CREATE TABLE IF NOT EXISTS public.controle_diario ( ... );
--- CREATE TABLE IF NOT EXISTS public.recargas_motoristas ( ... );
+  <!-- Modal Reset -->
+  <dialog id="dlgReset" style="border:0; border-radius:12px; padding:0; width:95%; max-width:520px;">
+    <form method="dialog" style="padding:18px">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+        <h3 style="margin:0">Redefinir senha</h3>
+        <button class="btn-secondary btn" value="cancel">Fechar</button>
+      </div>
+      <label>E-mail do usuário
+        <input id="r_email" class="input" style="width:100%; margin-top:6px">
+      </label><br><br>
+      <label>Nova senha
+        <input id="r_senha" type="password" class="input" style="width:100%; margin-top:6px">
+      </label>
+      <p id="r_erro" class="muted" style="color:#dc2626; margin-top:8px"></p>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px">
+        <button class="btn-secondary btn" value="cancel">Cancelar</button>
+        <button id="r_salvar" type="button" class="btn">Salvar</button>
+      </div>
+    </form>
+  </dialog>
 
--- ============================================================
--- 2) GRANTS BÁSICOS (necessários para RLS funcionar com authenticated)
--- ============================================================
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.permissoes_app      TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.usuarios_app        TO authenticated;
--- Se as tabelas abaixo existirem, garantimos os GRANTs também:
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='motoristas') THEN
-    GRANT SELECT, INSERT, UPDATE, DELETE ON public.motoristas TO authenticated;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='controle_diario') THEN
-    GRANT SELECT, INSERT, UPDATE, DELETE ON public.controle_diario TO authenticated;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='recargas_motoristas') THEN
-    GRANT SELECT, INSERT, UPDATE, DELETE ON public.recargas_motoristas TO authenticated;
-  END IF;
-END$$;
+  <!-- NOVO: Modal Permissões -->
+  <dialog id="dlgPerm" style="border:0; border-radius:12px; padding:0; width:95%; max-width:620px;">
+    <form method="dialog" style="padding:18px">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+        <h3 style="margin:0">Gerenciar permissões</h3>
+        <button class="btn-secondary btn" value="cancel">Fechar</button>
+      </div>
 
--- ============================================================
--- 3) FUNÇÕES HELPER DE PERMISSÃO (SECURITY DEFINER + GRANT EXECUTE)
--- ============================================================
-CREATE OR REPLACE FUNCTION public.has_perm_controle_diario()
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.permissoes_app pa
-    WHERE pa.user_id = auth.uid()
-      AND (pa.is_admin OR pa.perm_controle_diario)
-  );
-$$;
+      <label>Usuário
+        <select id="perm_sel_user" class="input" style="width:100%; margin-top:6px">
+          <option value="">Selecione um usuário…</option>
+        </select>
+      </label>
+      <p class="muted" id="perm_hint" style="margin:6px 0 0; display:none;">
+        Se o usuário não aparecer, ele ainda não fez login no sistema.
+      </p>
 
-CREATE OR REPLACE FUNCTION public.has_perm_consumo_total()
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.permissoes_app pa
-    WHERE pa.user_id = auth.uid()
-      AND (pa.is_admin OR pa.perm_consumo_total)
-  );
-$$;
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;">
+        <label class="input" style="display:flex; align-items:center; gap:10px;">
+          <input id="perm_admin" type="checkbox"> Administrador
+        </label>
+        <label class="input" style="display:flex; align-items:center; gap:10px;">
+          <input id="perm_controle" type="checkbox"> Controle Diário
+        </label>
+        <label class="input" style="display:flex; align-items:center; gap:10px;">
+          <input id="perm_consumo" type="checkbox"> Consumo Total
+        </label>
+      </div>
 
-GRANT EXECUTE ON FUNCTION public.has_perm_controle_diario() TO authenticated, anon;
-GRANT EXECUTE ON FUNCTION public.has_perm_consumo_total()  TO authenticated, anon;
+      <p id="perm_msg" class="muted" style="margin:10px 0 0;"></p>
 
--- ============================================================
--- 4) FUNÇÕES RPC (list_users, set_permissoes) — usadas pela UI
--- ============================================================
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px">
+        <button class="btn-secondary btn" value="cancel">Cancelar</button>
+        <button id="perm_salvar" type="button" class="btn">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+  <!-- /NOVO: Modal Permissões -->
 
--- 4.1) list_users: retorna usuários do auth.users (apenas admin pode ver)
-CREATE OR REPLACE FUNCTION public.list_users()
-RETURNS TABLE (
-  user_id uuid,
-  email text,
-  last_sign_in_at timestamptz,
-  created_at timestamptz
-)
-LANGUAGE plpgsql
-STABLE
-SECURITY DEFINER
-SET search_path = public, auth
-AS $$
-BEGIN
-  -- Verificação de admin
-  IF NOT EXISTS (
-    SELECT 1 FROM public.permissoes_app p
-    WHERE p.user_id = auth.uid() AND p.is_admin
-  ) THEN
-    RAISE EXCEPTION 'forbidden: admin required' USING ERRCODE = '42501';
-  END IF;
+  <script type="module">
+    import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
 
-  RETURN QUERY
-    SELECT u.id, u.email, u.last_sign_in_at, u.created_at
-    FROM auth.users u
-    ORDER BY u.email NULLS LAST;
-END$$;
+    // === CONFIG ===
+    const SUPABASE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
 
-COMMENT ON FUNCTION public.list_users() IS 'Lista (id, email, last_sign_in_at, created_at) de auth.users. Restrito a admins.';
-GRANT EXECUTE ON FUNCTION public.list_users() TO authenticated;
+    // URLs das Edge Functions:
+    const CREATE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/create-user';
+    const RESET_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/reset-password';
+    const LIST_URL   = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/list-users';
 
--- 4.2) set_permissoes: cria/ajusta flags de um usuário (apenas admin)
-CREATE OR REPLACE FUNCTION public.set_permissoes(
-  p_user_id uuid,
-  p_perm_controle boolean,
-  p_perm_consumo boolean,
-  p_is_admin boolean
-)
-RETURNS void
-LANGUAGE plpgsql
-VOLATILE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  -- Verificação de admin
-  IF NOT EXISTS (
-    SELECT 1 FROM public.permissoes_app p
-    WHERE p.user_id = auth.uid() AND p.is_admin
-  ) THEN
-    RAISE EXCEPTION 'forbidden: admin required' USING ERRCODE = '42501';
-  END IF;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  INSERT INTO public.permissoes_app AS pa (user_id, is_admin, perm_controle_diario, perm_consumo_total, granted_by, granted_at)
-  VALUES (p_user_id, COALESCE(p_is_admin,false), COALESCE(p_perm_controle,false), COALESCE(p_perm_consumo,false), auth.uid(), now())
-  ON CONFLICT (user_id) DO UPDATE
-    SET is_admin            = EXCLUDED.is_admin,
-        perm_controle_diario= EXCLUDED.perm_controle_diario,
-        perm_consumo_total  = EXCLUDED.perm_consumo_total,
-        granted_by          = EXCLUDED.granted_by,
-        granted_at          = EXCLUDED.granted_at;
-END$$;
+    // === Sessão/boas-vindas ===
+    const chipUser = document.getElementById('chipUser');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) window.location.href = 'index.html';
+    const emailLogado = session.user.email;
+    try {
+      const { data: ua } = await supabase.from('usuarios_app').select('display_name').ilike('email', emailLogado).maybeSingle();
+      chipUser.textContent = 'Logado: ' + (ua?.display_name || emailLogado);
+    } catch { chipUser.textContent = 'Logado: ' + emailLogado; }
 
-COMMENT ON FUNCTION public.set_permissoes(uuid,boolean,boolean,boolean) IS 'Upsert de permissões do app. Restrito a admins.';
-GRANT EXECUTE ON FUNCTION public.set_permissoes(uuid,boolean,boolean,boolean) TO authenticated;
+    document.getElementById('btnSairMenu').onclick = () => window.location.href = 'menu.html';
+    document.getElementById('btnLogout').onclick = async () => { await supabase.auth.signOut(); window.location.href = 'index.html'; };
 
--- ============================================================
--- 5) RLS: HABILITAR + FORÇAR (FORCE) NAS TABELAS
--- ============================================================
-ALTER TABLE public.permissoes_app      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.usuarios_app        ENABLE ROW LEVEL SECURITY;
--- As três abaixo só se existirem:
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='motoristas') THEN
-    EXECUTE 'ALTER TABLE public.motoristas ENABLE ROW LEVEL SECURITY';
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='controle_diario') THEN
-    EXECUTE 'ALTER TABLE public.controle_diario ENABLE ROW LEVEL SECURITY';
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='recargas_motoristas') THEN
-    EXECUTE 'ALTER TABLE public.recargas_motoristas ENABLE ROW LEVEL SECURITY';
-  END IF;
-END$$;
+    // === Modais cadastro/reset ===
+    const dlgCreate = document.getElementById('dlgCreate');
+    const dlgReset  = document.getElementById('dlgReset');
+    document.getElementById('btnOpenCreate').onclick = () => dlgCreate.showModal();
+    document.getElementById('btnOpenReset').onclick  = () => dlgReset.showModal();
 
-ALTER TABLE public.permissoes_app      FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.usuarios_app        FORCE ROW LEVEL SECURITY;
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='motoristas') THEN
-    EXECUTE 'ALTER TABLE public.motoristas FORCE ROW LEVEL SECURITY';
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='controle_diario') THEN
-    EXECUTE 'ALTER TABLE public.controle_diario FORCE ROW LEVEL SECURITY';
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='recargas_motoristas') THEN
-    EXECUTE 'ALTER TABLE public.recargas_motoristas FORCE ROW LEVEL SECURITY';
-  END IF;
-END$$;
+    // === Mostrar/ocultar listagem ===
+    const cardList = document.getElementById('cardList');
+    document.getElementById('btnOpenList').onclick = async () => {
+      cardList.style.display = '';
+      await loadUsers(true);
+      cardList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    document.getElementById('btnCloseList').onclick = () => {
+      cardList.style.display = 'none';
+    };
 
--- ============================================================
--- 6) LIMPEZA DE POLICIES ANTIGAS/PERMISSIVAS
---    (mantém apenas o conjunto oficial abaixo)
--- ============================================================
+    // Criar usuário
+    document.getElementById('c_salvar').onclick = async () => {
+      const nome  = document.getElementById('c_nome').value.trim();
+      const user  = document.getElementById('c_user').value.trim();
+      const email = document.getElementById('c_email').value.trim().toLowerCase();
+      const pass  = document.getElementById('c_senha').value;
+      const err   = document.getElementById('c_erro');
+      err.textContent = '';
+      if (!nome || !user || !email || !pass) { err.textContent = 'Preencha todos os campos.'; return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(CREATE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ email, password: pass, username: user, display_name: nome }),
+      });
+      const json = await resp.json();
+      if (!resp.ok) { err.textContent = 'Erro: ' + (json.details || json.error || 'falha'); return; }
+      dlgCreate.close();
+      // se a listagem estiver aberta, atualiza
+      if (cardList.style.display !== 'none') await loadUsers(true);
+    };
 
--- Alguns nomes comuns de policies antigas em recargas:
-DROP POLICY IF EXISTS recargas_read   ON public.recargas_motoristas;
-DROP POLICY IF EXISTS recargas_write  ON public.recargas_motoristas;
-DROP POLICY IF EXISTS recargas_update ON public.recargas_motoristas;
+    // Reset de senha
+    document.getElementById('r_salvar').onclick = async () => {
+      const email = document.getElementById('r_email').value.trim().toLowerCase();
+      const pass  = document.getElementById('r_senha').value;
+      const err   = document.getElementById('r_erro');
+      err.textContent = '';
+      if (!email || !pass) { err.textContent = 'Informe e-mail e nova senha.'; return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(RESET_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ email, newPassword: pass }),
+      });
+      const json = await resp.json();
+      if (!resp.ok) { err.textContent = 'Erro: ' + (json.details || json.error || 'falha'); return; }
+      dlgReset.close();
+    };
 
--- Remoção de qualquer outra policy fora do conjunto oficial
-DO $$
-DECLARE
-  r record;
-BEGIN
-  FOR r IN
-    SELECT schemaname, tablename, policyname
-    FROM pg_policies
-    WHERE schemaname='public'
-      AND tablename IN ('permissoes_app','usuarios_app','motoristas','controle_diario','recargas_motoristas')
-      AND policyname NOT IN (
-        -- permissoes_app
-        'permissoes_select_self_or_admin','permissoes_insert_self',
-        'permissoes_update_admin','permissoes_delete_admin',
-        -- usuarios_app
-        'uapp_select_self_or_admin','uapp_insert_self','uapp_update_self_or_admin',
-        -- motoristas
-        'motoristas_select_all','motoristas_insert_perm','motoristas_update_perm','motoristas_delete_perm',
-        -- controle_diario
-        'cd_select_all','cd_insert_perm','cd_update_perm','cd_delete_perm',
-        -- recargas_motoristas
-        'recargas_select_perm','recargas_insert_perm','recargas_update_perm','recargas_delete_perm'
-      )
-  LOOP
-    EXECUTE format('DROP POLICY %I ON public.%I', r.policyname, r.tablename);
-  END LOOP;
-END$$;
+    // === Lista de usuários ===
+    const tbody = document.getElementById('tbody');
+    const busca = document.getElementById('busca');
+    const perPageSel = document.getElementById('perPage');
+    const btnPrev = document.getElementById('prev');
+    const btnNext = document.getElementById('next');
+    const pageInfo = document.getElementById('pageInfo');
+    document.getElementById('btnRefresh').onclick = () => loadUsers(true);
 
--- ============================================================
--- 7) POLICIES OFICIAIS (cria apenas se não existirem)
--- ============================================================
+    let state = {
+      page: 1,
+      perPage: parseInt(perPageSel.value, 10),
+      sortBy: 'created_at',
+      sortDir: 'desc',
+      raw: [],
+      hasMore: false,
+    };
 
--- 7.1) permissoes_app
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='permissoes_app' AND policyname='permissoes_select_self_or_admin') THEN
-    CREATE POLICY permissoes_select_self_or_admin
-    ON public.permissoes_app
-    FOR SELECT TO authenticated
-    USING (
-      user_id = auth.uid()
-      OR EXISTS (SELECT 1 FROM public.permissoes_app p WHERE p.user_id = auth.uid() AND p.is_admin)
-    );
-  END IF;
+    perPageSel.onchange = () => { state.perPage = parseInt(perPageSel.value, 10); state.page = 1; loadUsers(true); };
+    btnPrev.onclick = () => { if (state.page > 1) { state.page--; loadUsers(true); } };
+    btnNext.onclick = () => { if (state.hasMore) { state.page++; loadUsers(true); } };
 
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='permissoes_app' AND policyname='permissoes_insert_self') THEN
-    CREATE POLICY permissoes_insert_self
-    ON public.permissoes_app
-    FOR INSERT TO authenticated
-    WITH CHECK (user_id = auth.uid());
-  END IF;
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.sort;
+        if (state.sortBy === col) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+        else { state.sortBy = col; state.sortDir = 'asc'; }
+        render();
+      });
+    });
 
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='permissoes_app' AND policyname='permissoes_update_admin') THEN
-    CREATE POLICY permissoes_update_admin
-    ON public.permissoes_app
-    FOR UPDATE TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.permissoes_app p WHERE p.user_id = auth.uid() AND p.is_admin))
-    WITH CHECK (EXISTS (SELECT 1 FROM public.permissoes_app p WHERE p.user_id = auth.uid() AND p.is_admin));
-  END IF;
+    const fmt = (d) => d ? new Date(d).toLocaleString('pt-BR') : '—';
+    const nomeDe = (u) => u.display_name || u.username || (u.email?.split('@')[0]) || '(sem nome)';
 
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='permissoes_app' AND policyname='permissoes_delete_admin') THEN
-    CREATE POLICY permissoes_delete_admin
-    ON public.permissoes_app
-    FOR DELETE TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.permissoes_app p WHERE p.user_id = auth.uid() AND p.is_admin));
-  END IF;
-END$$;
+    async function loadUsers() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const url = new URL(LIST_URL);
+      url.searchParams.set('page', String(state.page));
+      url.searchParams.set('perPage', String(state.perPage));
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } });
+      const json = await resp.json();
+      if (!resp.ok) { alert('Falha ao listar usuários: ' + (json.error || json.details || '')); return; }
+      state.raw = json.users || [];
+      state.hasMore = !!json.hasMore;
+      render();
+    }
 
--- 7.2) usuarios_app (usuário lê/insere/atualiza o próprio; admin pode tudo)
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='usuarios_app' AND policyname='uapp_select_self_or_admin') THEN
-    CREATE POLICY uapp_select_self_or_admin
-    ON public.usuarios_app
-    FOR SELECT TO authenticated
-    USING (
-      email = (select email from auth.users where id = auth.uid())
-      OR EXISTS (SELECT 1 FROM public.permissoes_app p WHERE p.user_id = auth.uid() AND p.is_admin)
-    );
-  END IF;
+    function render() {
+      const term = busca.value.trim().toLowerCase();
+      let rows = state.raw.slice();
+      if (term) {
+        rows = rows.filter(u =>
+          (nomeDe(u).toLowerCase().includes(term)) ||
+          ((u.email||'').toLowerCase().includes(term))
+        );
+      }
+      rows.sort((a,b) => {
+        const k = state.sortBy;
+        const va = (a[k] || '') + '';
+        const vb = (b[k] || '') + '';
+        if (va < vb) return state.sortDir === 'asc' ? -1 : 1;
+        if (va > vb) return state.sortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
 
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='usuarios_app' AND policyname='uapp_insert_self') THEN
-    CREATE POLICY uapp_insert_self
-    ON public.usuarios_app
-    FOR INSERT TO authenticated
-    WITH CHECK (
-      email = (select email from auth.users where id = auth.uid())
-      OR user_id = auth.uid()
-    );
-  END IF;
+      tbody.innerHTML = '';
+      if (!rows.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 5; td.className = 'empty'; td.textContent = 'Nenhum usuário nesta página.';
+        tr.appendChild(td); tbody.appendChild(tr);
+      } else {
+        for (const u of rows) {
+          const tr = document.createElement('tr');
 
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='usuarios_app' AND policyname='uapp_update_self_or_admin') THEN
-    CREATE POLICY uapp_update_self_or_admin
-    ON public.usuarios_app
-    FOR UPDATE TO authenticated
-    USING (
-      email = (select email from auth.users where id = auth.uid())
-      OR user_id = auth.uid()
-      OR EXISTS (SELECT 1 FROM public.permissoes_app p WHERE p.user_id = auth.uid() AND p.is_admin)
-    )
-    WITH CHECK (
-      email = (select email from auth.users where id = auth.uid())
-      OR user_id = auth.uid()
-      OR EXISTS (SELECT 1 FROM public.permissoes_app p WHERE p.user_id = auth.uid() AND p.is_admin)
-    );
-  END IF;
-END$$;
+          const tdNome = document.createElement('td'); tdNome.textContent = nomeDe(u); tr.appendChild(tdNome);
+          const tdEmail = document.createElement('td'); tdEmail.textContent = u.email || '—'; tr.appendChild(tdEmail);
+          const tdCriado = document.createElement('td'); tdCriado.textContent = fmt(u.created_at); tr.appendChild(tdCriado);
+          const tdUlt = document.createElement('td'); tdUlt.textContent = fmt(u.last_sign_in_at); tr.appendChild(tdUlt);
 
--- 7.3) motoristas (leitura livre para autenticados; escrita só com perm_controle_diario ou admin)
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='motoristas') THEN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='motoristas' AND policyname='motoristas_select_all') THEN
-      CREATE POLICY motoristas_select_all
-      ON public.motoristas
-      FOR SELECT TO authenticated
-      USING (true);
-    END IF;
+          const tdA = document.createElement('td'); tdA.className = 'right';
+          const del = document.createElement('button'); del.className = 'btn danger'; del.textContent = 'Excluir';
+          del.onclick = () => excluir(u);
+          tdA.appendChild(del); tr.appendChild(tdA);
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='motoristas' AND policyname='motoristas_insert_perm') THEN
-      CREATE POLICY motoristas_insert_perm
-      ON public.motoristas
-      FOR INSERT TO authenticated
-      WITH CHECK (public.has_perm_controle_diario());
-    END IF;
+          tbody.appendChild(tr);
+        }
+      }
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='motoristas' AND policyname='motoristas_update_perm') THEN
-      CREATE POLICY motoristas_update_perm
-      ON public.motoristas
-      FOR UPDATE TO authenticated
-      USING (public.has_perm_controle_diario())
-      WITH CHECK (public.has_perm_controle_diario());
-    END IF;
+      pageInfo.textContent = `Página ${state.page} • ${rows.length} itens`;
+      btnPrev.disabled = state.page === 1;
+      btnNext.disabled = !state.hasMore;
+    }
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='motoristas' AND policyname='motoristas_delete_perm') THEN
-      CREATE POLICY motoristas_delete_perm
-      ON public.motoristas
-      FOR DELETE TO authenticated
-      USING (public.has_perm_controle_diario());
-    END IF;
-  END IF;
-END$$;
+    busca.addEventListener('input', () => render());
 
--- 7.4) controle_diario (mesma lógica de motoristas)
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='controle_diario') THEN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='controle_diario' AND policyname='cd_select_all') THEN
-      CREATE POLICY cd_select_all
-      ON public.controle_diario
-      FOR SELECT TO authenticated
-      USING (true);
-    END IF;
+    async function excluir(u) {
+      if (!confirm(`Excluir o usuário "${nomeDe(u)}" (${u.email})? Essa ação não pode ser desfeita.`)) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(LIST_URL, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ id: u.id }),
+      });
+      const json = await resp.json();
+      if (!resp.ok) { alert('Falha ao excluir: ' + (json.details || json.error || '')); return; }
+      if (state.raw.length === 1 && state.page > 1) state.page--;
+      await loadUsers(true);
+    }
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='controle_diario' AND policyname='cd_insert_perm') THEN
-      CREATE POLICY cd_insert_perm
-      ON public.controle_diario
-      FOR INSERT TO authenticated
-      WITH CHECK (public.has_perm_controle_diario());
-    END IF;
+    // ============================================
+    // NOVO: Permissões (modal + ações)
+    // ============================================
+    const btnOpenPerm = document.getElementById('btnOpenPerm');
+    const dlgPerm = document.getElementById('dlgPerm');
+    const selUser = document.getElementById('perm_sel_user');
+    const chkAdmin = document.getElementById('perm_admin');
+    const chkCtrl  = document.getElementById('perm_controle');
+    const chkCons  = document.getElementById('perm_consumo');
+    const msgPerm  = document.getElementById('perm_msg');
+    const hintPerm = document.getElementById('perm_hint');
+    const btnPermSalvar = document.getElementById('perm_salvar');
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='controle_diario' AND policyname='cd_update_perm') THEN
-      CREATE POLICY cd_update_perm
-      ON public.controle_diario
-      FOR UPDATE TO authenticated
-      USING (public.has_perm_controle_diario())
-      WITH CHECK (public.has_perm_controle_diario());
-    END IF;
+    btnOpenPerm.onclick = async () => {
+      dlgPerm.showModal();
+      await carregarUsuariosPerm();
+    };
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='controle_diario' AND policyname='cd_delete_perm') THEN
-      CREATE POLICY cd_delete_perm
-      ON public.controle_diario
-      FOR DELETE TO authenticated
-      USING (public.has_perm_controle_diario());
-    END IF;
-  END IF;
-END$$;
+    async function carregarUsuariosPerm() {
+      msgPerm.textContent = 'Carregando usuários…';
+      selUser.innerHTML = '<option value="">Selecione um usuário…</option>';
+      hintPerm.style.display = 'none';
 
--- 7.5) recargas_motoristas (leitura e escrita restritas a perm_consumo_total ou admin)
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='recargas_motoristas') THEN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='recargas_motoristas' AND policyname='recargas_select_perm') THEN
-      CREATE POLICY recargas_select_perm
-      ON public.recargas_motoristas
-      FOR SELECT TO authenticated
-      USING (public.has_perm_consumo_total());
-    END IF;
+      const { data, error } = await supabase.rpc('list_users');
+      if (error) {
+        msgPerm.textContent = 'Erro ao listar usuários: ' + (error.message || error);
+        return;
+      }
+      if (!data || data.length === 0) {
+        msgPerm.textContent = 'Nenhum usuário encontrado.';
+        hintPerm.style.display = 'block';
+        return;
+      }
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='recargas_motoristas' AND policyname='recargas_insert_perm') THEN
-      CREATE POLICY recargas_insert_perm
-      ON public.recargas_motoristas
-      FOR INSERT TO authenticated
-      WITH CHECK (public.has_perm_consumo_total());
-    END IF;
+      data.sort((a,b) => (a.email || '').localeCompare(b.email || ''));
+      for (const u of data) {
+        const opt = document.createElement('option');
+        opt.value = u.user_id;
+        const last = u.last_sign_in_at ? ` — ${new Date(u.last_sign_in_at).toLocaleString('pt-BR')}` : '';
+        opt.textContent = `${u.email}${last}`;
+        selUser.appendChild(opt);
+      }
+      msgPerm.textContent = 'Selecione um usuário e ajuste as permissões.';
+    }
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='recargas_motoristas' AND policyname='recargas_update_perm') THEN
-      CREATE POLICY recargas_update_perm
-      ON public.recargas_motoristas
-      FOR UPDATE TO authenticated
-      USING (public.has_perm_consumo_total())
-      WITH CHECK (public.has_perm_consumo_total());
-    END IF;
+    selUser.addEventListener('change', async (e) => {
+      const id = e.target.value;
+      chkAdmin.checked = false;
+      chkCtrl.checked  = false;
+      chkCons.checked  = false;
+      if (!id) { msgPerm.textContent = ''; return; }
 
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='recargas_motoristas' AND policyname='recargas_delete_perm') THEN
-      CREATE POLICY recargas_delete_perm
-      ON public.recargas_motoristas
-      FOR DELETE TO authenticated
-      USING (public.has_perm_consumo_total());
-    END IF;
-  END IF;
-END$$;
+      msgPerm.textContent = 'Lendo permissões…';
+      const { data, error } = await supabase
+        .from('permissoes_app')
+        .select('is_admin, perm_controle_diario, perm_consumo_total')
+        .eq('user_id', id)
+        .maybeSingle();
 
-COMMIT;
+      if (error) { msgPerm.textContent = 'Erro: ' + (error.message || error); return; }
 
--- ============================================================
--- 8) DIAGNÓSTICO RÁPIDO (opcional)
--- ============================================================
--- SELECT tablename, policyname, cmd, roles
--- FROM pg_policies
--- WHERE schemaname='public'
---   AND tablename IN ('permissoes_app','usuarios_app','motoristas','controle_diario','recargas_motoristas')
--- ORDER BY tablename, policyname;
+      chkAdmin.checked = !!data?.is_admin;
+      chkCtrl.checked  = !!data?.perm_controle_diario;
+      chkCons.checked  = !!data?.perm_consumo_total;
+      msgPerm.textContent = data ? 'Permissões carregadas.' : 'Usuário ainda sem registro; ao salvar será criado.';
+    });
 
--- Notas importantes:
--- * Se alguém ainda conseguir escrever sem permissão, verifique se a chamada
---   está usando a chave SERVICE ROLE (service_role). Ela ignora RLS.
--- * No front, sempre usar a chave ANON + sessão do usuário autenticado.
--- * A UI de permissões (modal) usa public.list_users e public.set_permissoes.
+    btnPermSalvar.onclick = async () => {
+      const id = selUser.value;
+      if (!id) { msgPerm.textContent = 'Selecione um usuário.'; return; }
 
--- ============================================
--- FIM DO PATCH CONSOLIDADO
--- ============================================
+      msgPerm.textContent = 'Salvando…';
+      const { error } = await supabase.rpc('set_permissoes', {
+        p_user_id: id,
+        p_perm_controle: chkCtrl.checked,
+        p_perm_consumo: chkCons.checked,
+        p_is_admin: chkAdmin.checked
+      });
+      if (error) { msgPerm.textContent = 'Erro ao salvar: ' + (error.message || error); return; }
+      msgPerm.textContent = 'Permissões salvas com sucesso.';
+    };
+    // ============================================
+    // /NOVO: Permissões
+    // ============================================
+
+    // Não carregamos nada ao abrir a página.
+    // A listagem só abre/carrega ao clicar em "👥 Listar usuários".
+  </script>
+</body>
+</html>
