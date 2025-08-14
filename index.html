@@ -1,31 +1,302 @@
+-- ============================================
+-- ✅ PATCH DE SEGURANÇA SEM APAGAR DADOS
+-- - NÃO usa DROP TABLE
+-- - NÃO recria tabelas existentes
+-- - Apenas habilita RLS e cria policies idempotentes
+-- - Mantém seu bloco de recargas_motoristas (com RLS e policies para anon)
+-- ============================================
+
 -- =========================================================
--- USUÁRIOS DO APP (lookup de username → e-mail)
---  - Não altera outras tabelas/policies
---  - Não apaga dados
---  - Idempotente
+-- 0) LISTA BRANCA (e-mails autorizados a escrever)
+--    >>> TROQUE pelos seus e-mails (minúsculos) <<<
+-- =========================================================
+-- Exemplo: {'voce@ipev.com.br','gestor@ipev.com.br'}
+-- Se preferir testar rápido, deixe 1 e-mail só.
+-- Obs.: as policies abaixo usam lower(auth.email()) = ANY (ARRAY[...])
+
+-- =========================================================
+-- 1) GARANTIR/ATUALIZAR ESTRUTURA DE recargas_motoristas
+--    (conforme seu SQL original; idempotente e sem apagar dados)
+-- =========================================================
+create table if not exists public.recargas_motoristas (
+  id bigserial primary key,
+  motorista_nome text not null,
+  placa text,
+  ano int not null,
+  mes int not null,                -- 1..12
+  recarga numeric(12,2) not null default 250.00,
+  adicional numeric(12,2) not null default 0.00,
+  updated_at timestamptz not null default now(),
+  unique (motorista_nome, placa, ano, mes)
+);
+
+-- Ativar Row Level Security
+alter table public.recargas_motoristas enable row level security;
+
+-- Policies para leitura/escrita pelo anon key (cria só se não existirem)
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'recargas_motoristas'
+      and policyname = 'recargas_read'
+  ) then
+    create policy recargas_read
+      on public.recargas_motoristas for select
+      to anon using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'recargas_motoristas'
+      and policyname = 'recargas_write'
+  ) then
+    create policy recargas_write
+      on public.recargas_motoristas for insert
+      to anon with check (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'recargas_motoristas'
+      and policyname = 'recargas_update'
+  ) then
+    create policy recargas_update
+      on public.recargas_motoristas for update
+      to anon using (true) with check (true);
+  end if;
+end $$;
+
+-- Novas colunas solicitadas (idempotente)
+alter table public.recargas_motoristas
+  add column if not exists consumo_geral numeric(12,2) default 0.00;
+
+alter table public.recargas_motoristas
+  add column if not exists resquicio numeric(12,2) default 0.00;
+
+-- Garantir 0 nas linhas já existentes (não destrutivo)
+update public.recargas_motoristas
+set consumo_geral = 0.00
+where consumo_geral is null;
+
+update public.recargas_motoristas
+set resquicio = 0.00
+where resquicio is null;
+
+-- =========================================================
+-- 2) PATCH: Exclusão lógica em motoristas (seu original)
+--    (idempotente; não apaga linhas)
+-- =========================================================
+-- Adiciona coluna "ativo" (default true) e "excluido_em" se faltarem
+alter table public.motoristas
+  add column if not exists ativo boolean;
+
+update public.motoristas
+set ativo = true
+where ativo is null;
+
+alter table public.motoristas
+  alter column ativo set default true,
+  alter column ativo set not null;
+
+alter table public.motoristas
+  add column if not exists excluido_em timestamptz;
+
+-- =========================================================
+-- 3) HABILITAR RLS EM motoristas e controle_diario
+--    (não altera dados)
+-- =========================================================
+alter table if exists public.motoristas enable row level security;
+alter table if exists public.controle_diario enable row level security;
+
+-- =========================================================
+-- 4) POLICIES SEGURAS (idempotentes)
+--    Leitura: qualquer autenticado
+--    Escrita (insert/update/delete): apenas whitelist
 -- =========================================================
 
--- 1) Tabela e chaves (se não existir)
+-- ---------- Tabela: motoristas ----------
+do $$
+begin
+  -- SELECT (authenticated)
+  if not exists (
+    select 1 from pg_policies
+     where schemaname='public' and tablename='motoristas' and policyname='m_select_auth'
+  ) then
+    create policy m_select_auth
+      on public.motoristas
+      for select
+      to authenticated
+      using (true);
+  end if;
+
+  -- INSERT (whitelist)
+  if not exists (
+    select 1 from pg_policies
+     where schemaname='public' and tablename='motoristas' and policyname='m_insert_whitelist'
+  ) then
+    create policy m_insert_whitelist
+      on public.motoristas
+      for insert
+      to authenticated
+      with check ( lower(auth.email()) = any (array['voce@ipev.com.br','gestor@ipev.com.br']) );
+  end if;
+
+  -- UPDATE (whitelist)
+  if not exists (
+    select 1 from pg_policies
+     where schemaname='public' and tablename='motoristas' and policyname='m_update_whitelist'
+  ) then
+    create policy m_update_whitelist
+      on public.motoristas
+      for update
+      to authenticated
+      using ( lower(auth.email()) = any (array['voce@ipev.com.br','gestor@ipev.com.br']) );
+  end if;
+
+  -- DELETE (whitelist)
+  if not exists (
+    select 1 from pg_policies
+     where schemaname='public' and tablename='motoristas' and policyname='m_delete_whitelist'
+  ) then
+    create policy m_delete_whitelist
+      on public.motoristas
+      for delete
+      to authenticated
+      using ( lower(auth.email()) = any (array['voce@ipev.com.br','gestor@ipev.com.br']) );
+  end if;
+end $$;
+
+-- ---------- Tabela: controle_diario ----------
+do $$
+begin
+  -- SELECT (authenticated)
+  if not exists (
+    select 1 from pg_policies
+     where schemaname='public' and tablename='controle_diario' and policyname='cd_select_auth'
+  ) then
+    create policy cd_select_auth
+      on public.controle_diario
+      for select
+      to authenticated
+      using (true);
+  end if;
+
+  -- INSERT (whitelist)
+  if not exists (
+    select 1 from pg_policies
+     where schemaname='public' and tablename='controle_diario' and policyname='cd_insert_whitelist'
+  ) then
+    create policy cd_insert_whitelist
+      on public.controle_diario
+      for insert
+      to authenticated
+      with check ( lower(auth.email()) = any (array['voce@ipev.com.br','gestor@ipev.com.br']) );
+  end if;
+
+  -- UPDATE (whitelist)
+  if not exists (
+    select 1 from pg_policies
+     where schemaname='public' and tablename='controle_diario' and policyname='cd_update_whitelist'
+  ) then
+    create policy cd_update_whitelist
+      on public.controle_diario
+      for update
+      to authenticated
+      using ( lower(auth.email()) = any (array['voce@ipev.com.br','gestor@ipev.com.br']) );
+  end if;
+
+  -- DELETE (whitelist)
+  if not exists (
+    select 1 from pg_policies
+     where schemaname='public' and tablename='controle_diario' and policyname='cd_delete_whitelist'
+  ) then
+    create policy cd_delete_whitelist
+      on public.controle_diario
+      for delete
+      to authenticated
+      using ( lower(auth.email()) = any (array['voce@ipev.com.br','gestor@ipev.com.br']) );
+  end if;
+end $$;
+
+-- ============================================
+-- 5) USUÁRIOS DO APP + PRÉ-CADASTRO "Guilherme"
+--    (NÃO apaga dados; idempotente)
+-- ============================================
+
+-- 5.1) Tabela que mapeia username -> auth.users
 create table if not exists public.usuarios_app (
   id uuid primary key references auth.users(id) on delete cascade,
   username text not null,
-  email    text not null,
+  email text not null,
   display_name text,
   created_at timestamptz default now()
 );
 
--- Índices de unicidade (case-insensitive)
+-- 5.2) Índices de unicidade (case-insensitive)
 create unique index if not exists usuarios_app_username_unique_idx
   on public.usuarios_app (lower(username));
 
 create unique index if not exists usuarios_app_email_unique_idx
   on public.usuarios_app (lower(email));
 
--- 2) Habilita RLS (se já não estiver)
+-- 5.3) (Opcional) RLS habilitado para uso futuro
 alter table public.usuarios_app enable row level security;
 
--- 3) Policy mínima para permitir lookup por username ANTES do login
---    (necessária para o seu index.html atual que consulta a tabela direto)
+-- 5.4) Vincula o usuário do Auth (email contato.ipev@gmail.com) ao username 'Guilherme'
+do $$
+declare
+  v_email text := lower('contato.ipev@gmail.com');
+  v_id uuid;
+  v_exists_by_id boolean;
+  v_exists_by_username boolean;
+begin
+  -- Busca o id no Auth
+  select u.id
+    into v_id
+  from auth.users u
+  where lower(u.email) = v_email
+  limit 1;
+
+  if v_id is null then
+    raise notice 'Não foi encontrado usuário no Auth com o e-mail: %', v_email;
+    return;
+  end if;
+
+  -- Existe registro com este id?
+  select exists(select 1 from public.usuarios_app where id = v_id)
+    into v_exists_by_id;
+
+  -- Existe registro com username 'Guilherme'?
+  select exists(select 1 from public.usuarios_app where lower(username) = 'guilherme')
+    into v_exists_by_username;
+
+  if v_exists_by_id then
+    update public.usuarios_app
+       set username = 'Guilherme',
+           email = v_email,
+           display_name = coalesce(display_name, 'Administrador')
+     where id = v_id;
+
+  elsif v_exists_by_username then
+    update public.usuarios_app
+       set id = v_id,
+           email = v_email,
+           display_name = coalesce(display_name, 'Administrador')
+     where lower(username) = 'guilherme';
+
+  else
+    insert into public.usuarios_app (id, username, email, display_name)
+    values (v_id, 'Guilherme', v_email, 'Administrador');
+  end if;
+
+  raise notice 'Usuário configurado: username=Guilherme, email=%, id=%', v_email, v_id;
+end $$;
+
+-- 5.5) **(NOVO)** Policy mínima para permitir lookup por username antes do login
 do $$
 begin
   if not exists (
@@ -42,31 +313,6 @@ begin
   end if;
 end $$;
 
--- 4) Liga o username "Guilherme" ao e-mail do usuário que você criou no Auth
-do $$
-declare
-  v_email text := lower('contato.ipev@gmail.com');
-  v_id uuid;
-begin
-  -- pega o id no Auth
-  select id into v_id
-  from auth.users
-  where lower(email) = v_email
-  limit 1;
-
-  if v_id is null then
-    raise exception 'Usuário do Auth não encontrado para %', v_email;
-  end if;
-
-  -- insere/atualiza o vínculo (sem apagar nada)
-  insert into public.usuarios_app (id, username, email, display_name)
-  values (v_id, 'Guilherme', v_email, 'Administrador')
-  on conflict (id) do update
-    set username='Guilherme',
-        email=excluded.email,
-        display_name = coalesce(public.usuarios_app.display_name, excluded.display_name);
-end $$;
-
--- (Opcional) Verificação rápida:
--- select id, username, email from public.usuarios_app where lower(username)='guilherme';
--- select id, email, email_confirmed_at from auth.users where lower(email)=lower('contato.ipev@gmail.com');
+-- ============================================
+-- FIM DO PATCH SEGURO (NADA É APAGADO)
+-- ============================================
