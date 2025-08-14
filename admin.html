@@ -57,15 +57,21 @@
   <div class="main">
     <div class="card">
       <div class="toolbar">
-        <!-- alterado: + -> emoji homem -->
         <button class="btn" id="btnOpenCreate">👨 Cadastrar usuário</button>
         <button class="btn" id="btnOpenReset">🔑 Redefinir senha</button>
+        <!-- NOVO: botão que abre a listagem -->
+        <button class="btn" id="btnOpenList">👥 Listar usuários</button>
         <span class="muted">Em breve: papéis, permissões, auditoria…</span>
       </div>
     </div>
 
-    <div class="card">
-      <h3>Usuários</h3>
+    <!-- Listagem fica escondida até clicar em "Listar usuários" -->
+    <div class="card" id="cardList" style="display:none;">
+      <h3 style="display:flex;justify-content:space-between;align-items:center;">
+        Usuários
+        <button class="btn-secondary btn" id="btnCloseList" title="Fechar">Fechar</button>
+      </h3>
+
       <div class="toolbar">
         <input id="busca" class="input" placeholder="Buscar na página (nome ou e-mail)…">
         <select id="perPage" class="input" style="min-width:120px">
@@ -154,7 +160,7 @@
     const SUPABASE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
 
-    // URLs das Edge Functions (ajuste se renomeou as funções):
+    // URLs das Edge Functions:
     const CREATE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/create-user';
     const RESET_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/reset-password';
     const LIST_URL   = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/list-users';
@@ -180,6 +186,17 @@
     document.getElementById('btnOpenCreate').onclick = () => dlgCreate.showModal();
     document.getElementById('btnOpenReset').onclick  = () => dlgReset.showModal();
 
+    // === Mostrar/ocultar listagem ===
+    const cardList = document.getElementById('cardList');
+    document.getElementById('btnOpenList').onclick = async () => {
+      cardList.style.display = '';
+      await loadUsers(true);
+      cardList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    document.getElementById('btnCloseList').onclick = () => {
+      cardList.style.display = 'none';
+    };
+
     // Criar usuário
     document.getElementById('c_salvar').onclick = async () => {
       const nome  = document.getElementById('c_nome').value.trim();
@@ -198,7 +215,8 @@
       const json = await resp.json();
       if (!resp.ok) { err.textContent = 'Erro: ' + (json.details || json.error || 'falha'); return; }
       dlgCreate.close();
-      await loadUsers(true);
+      // se a listagem estiver aberta, atualiza
+      if (cardList.style.display !== 'none') await loadUsers(true);
     };
 
     // Reset de senha
@@ -253,7 +271,7 @@
     const fmt = (d) => d ? new Date(d).toLocaleString('pt-BR') : '—';
     const nomeDe = (u) => u.display_name || u.username || (u.email?.split('@')[0]) || '(sem nome)';
 
-    async function loadUsers(showSpinner=false) {
+    async function loadUsers() {
       const { data: { session } } = await supabase.auth.getSession();
       const url = new URL(LIST_URL);
       url.searchParams.set('page', String(state.page));
@@ -329,8 +347,8 @@
       await loadUsers(true);
     }
 
-    // primeira carga
-    loadUsers(true);
+    // Não carregamos nada ao abrir a página.
+    // A listagem só abre/carrega ao clicar em "👥 Listar usuários".
   </script>
 </body>
 </html>
