@@ -393,7 +393,10 @@
     }
 
     // ============================================
-    // NOVO: Permissões (modal + ações) — com fallback de <dialog>
+    // NOVO (PASSO 2): Acessibilidade do modal Permissões
+    // - Foco automático ao abrir
+    // - ESC fecha
+    // - ENTER confirma (Salvar) quando foco estiver dentro do modal
     // ============================================
     const btnOpenPerm = document.getElementById('btnOpenPerm');
     const dlgPerm = document.getElementById('dlgPerm');
@@ -423,8 +426,27 @@
 
     btnOpenPerm.onclick = async () => {
       openDialog(dlgPerm);
+      // PASSO 2: foco automático após abrir
+      setTimeout(() => selUser?.focus(), 0);
       await carregarUsuariosPerm();
     };
+
+    // PASSO 2: ESC fecha e ENTER salva quando o foco estiver dentro do modal de permissões
+    document.addEventListener('keydown', (e) => {
+      const modalAberto = dlgPerm?.hasAttribute('open');
+      if (!modalAberto) return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeDialog(dlgPerm);
+      } else if (e.key === 'Enter') {
+        // Confirma somente se o foco está dentro do modal
+        if (dlgPerm.contains(document.activeElement)) {
+          e.preventDefault();
+          btnPermSalvar?.click();
+        }
+      }
+    });
 
     async function carregarUsuariosPerm() {
       msgPerm.textContent = 'Carregando usuários…';
@@ -490,10 +512,9 @@
 
       if (error) { msgPerm.textContent = 'Erro ao salvar: ' + (error.message || error); return; }
       msgPerm.textContent = 'Permissões salvas com sucesso.';
+      // fecha após salvar
+      closeDialog(dlgPerm);
     };
-    // ============================================
-    // /NOVO: Permissões
-    // ============================================
 
     // Não carregamos nada ao abrir a página.
     // A listagem só abre/carrega ao clicar em "👥 Listar usuários".
@@ -575,7 +596,6 @@
 
         // Liga a lógica somente se ainda não existir no arquivo principal
         (async function wireLogic(){
-          // Import aqui para evitar conflito com o script principal
           const { createClient } = await import('https://cdn.skypack.dev/@supabase/supabase-js');
 
           const SUPABASE_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
@@ -598,7 +618,19 @@
           document.getElementById('formPerm')?.addEventListener('submit', e => { e.preventDefault(); closeDialog(dlgPerm); });
           dlgPerm?.addEventListener('cancel', e => { e.preventDefault(); closeDialog(dlgPerm); });
 
-          btnOpenPerm.onclick = async () => { openDialog(dlgPerm); await carregarUsuariosPerm(); };
+          btnOpenPerm.onclick = async () => {
+            openDialog(dlgPerm);
+            setTimeout(() => selUser?.focus(), 0); // PASSO 2: foco ao abrir
+            await carregarUsuariosPerm();
+          };
+
+          // PASSO 2: ESC fecha e ENTER salva quando o foco estiver dentro do modal
+          document.addEventListener('keydown', (e) => {
+            const aberto = dlgPerm?.hasAttribute('open');
+            if (!aberto) return;
+            if (e.key === 'Escape') { e.preventDefault(); closeDialog(dlgPerm); }
+            else if (e.key === 'Enter' && dlgPerm.contains(document.activeElement)) { e.preventDefault(); btnPermSalvar?.click(); }
+          });
 
           async function carregarUsuariosPerm() {
             msgPerm.textContent = 'Carregando usuários…';
@@ -649,6 +681,7 @@
             });
             if (error) { msgPerm.textContent = 'Erro ao salvar: ' + (error.message || error); return; }
             msgPerm.textContent = 'Permissões salvas com sucesso.';
+            closeDialog(dlgPerm);
           };
         })();
       }
