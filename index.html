@@ -1,111 +1,174 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Controle de Logística IPEV — Login</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="utf-8" />
+  <title>Controle de Logística IPEV — Acesso</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#dfecff;               /* fundo azul claro (como no original) */
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#6b7280;
+      --primary:#2563eb;          /* botão azul */
+      --primary-hover:#1d4ed8;
+      --error:#dc2626;
+      --border:#d7e3f7;
+      --shadow:0 25px 60px rgba(15,23,42,.15);
+      --focus-ring:0 0 0 3px rgba(37,99,235,.2);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; color:var(--text);
+      font-family: "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+      background:var(--bg);
+      min-height:100vh; display:flex; flex-direction:column;
+    }
+
+    /* Topo com o nome do sistema (alinhado à esquerda) */
+    .site-header{
+      padding:18px 24px 6px;
+      font-weight:800;
+      color:#123a84;               /* azul do título */
+      font-size:30px;
+    }
+
+    /* Conteúdo central */
+    .wrap{ flex:1; display:flex; justify-content:center; align-items:flex-start; }
+    .card{
+      width:100%; max-width:980px;
+      background:var(--card);
+      border-radius:14px;
+      box-shadow:var(--shadow);
+      padding:24px 28px 22px;
+      margin:36px 16px 0;
+    }
+    h1{
+      margin:0 0 18px;
+      font-size:28px; font-weight:800; letter-spacing:.2px;
+    }
+
+    .grid{
+      display:grid; grid-template-columns: 1fr 1fr; gap:16px;
+      align-items:end;
+    }
+    label{ display:block; font-weight:700; color:#374151; margin:10px 0 8px; }
+    input[type="text"],input[type="password"]{
+      width:100%; height:46px; border:1px solid var(--border);
+      background:#f9fbff; border-radius:10px; padding:10px 12px; font-size:16px; outline:none;
+    }
+    input[type="text"]:focus, input[type="password"]:focus{
+      border-color:#93c5fd; background:#fff; box-shadow:var(--focus-ring);
+    }
+
+    .row{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-top:14px; flex-wrap:wrap;
+    }
+    .muted{ color:var(--muted); font-size:14px; }
+
+    .btn{
+      height:44px; min-width:116px; padding:0 20px;
+      background:var(--primary); color:#fff; border:0; border-radius:10px;
+      font-weight:800; cursor:pointer; transition:.15s;
+    }
+    .btn:hover{ background:var(--primary-hover); }
+
+    .error{ color:var(--error); margin-top:12px; min-height:20px; }
+
+    footer{
+      text-align:center; color:var(--muted); font-size:14px;
+      padding:10px 0 22px;
+    }
+
+    @media (max-width:820px){
+      .grid{ grid-template-columns:1fr; }
+      .site-header{ font-size:24px; }
+      .card{ margin-top:18px; }
+    }
+  </style>
 </head>
-<body class="bg-blue-100 min-h-screen">
+<body>
 
-  <!-- Cabeçalho no mesmo padrão visual -->
-  <div class="flex justify-between items-center p-4">
-    <h1 class="text-2xl font-bold text-blue-900">Controle de Logística IPEV</h1>
-    <!-- Espaço reservado p/ logo se quiser
-    <img src="img/logo-ipev.png" class="h-10" alt="IPEV">
-    -->
-  </div>
+  <!-- TÍTULO NO TOPO (igual ao original) -->
+  <div class="site-header">Controle de Logística IPEV</div>
 
-  <!-- Container central semelhante ao seu "card" -->
-  <div class="max-w-3xl mx-auto px-4">
-    <div class="bg-white rounded-lg shadow-lg p-6">
-      <h2 class="text-xl font-semibold text-blue-900 mb-4">Acesso ao Sistema</h2>
+  <main class="wrap">
+    <section class="card" aria-labelledby="titulo">
+      <h1 id="titulo">Acesso ao Sistema</h1>
 
-      <!-- Grid lembra a organização do seu index -->
-      <form id="loginForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="col-span-1">
-          <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-          <input type="email" id="email" required
-                 class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-500"
-                 placeholder="seuemail@ipev.com.br">
+      <div class="grid" role="group" aria-label="Credenciais">
+        <div>
+          <label for="email_input">E-mail</label>
+          <input id="email_input" type="text" inputmode="email" autocomplete="username"
+                 placeholder="seuemail@ipev.com.br" />
         </div>
-
-        <div class="col-span-1">
-          <label for="senha" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-          <input type="password" id="senha" required
-                 class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-500"
-                 placeholder="••••••••">
+        <div>
+          <label for="senha_input">Senha</label>
+          <input id="senha_input" type="password" autocomplete="current-password"
+                 placeholder="Sua senha" />
         </div>
+      </div>
 
-        <div class="col-span-1 flex items-center space-x-2">
-          <input id="lembrar" type="checkbox" class="h-4 w-4">
-          <label for="lembrar" class="text-sm text-gray-700">Manter-me conectado neste dispositivo</label>
-        </div>
+      <div class="row">
+        <label class="muted" style="display:flex;align-items:center;gap:8px;user-select:none;">
+          <input id="keep" type="checkbox" /> Manter-me conectado neste dispositivo
+        </label>
+        <button id="btnEntrar" class="btn">Entrar</button>
+      </div>
 
-        <div class="col-span-1 sm:text-right">
-          <button id="entrarBtn" type="submit"
-                  class="bg-blue-700 text-white px-5 py-2 rounded hover:bg-blue-800 disabled:opacity-60">
-            Entrar
-          </button>
-        </div>
+      <p id="msg" class="error" role="alert" aria-live="polite"></p>
+    </section>
+  </main>
 
-        <div class="col-span-2">
-          <p id="erroMsg" class="text-red-600 hidden"></p>
-          <p id="okMsg" class="text-green-600 hidden"></p>
-        </div>
-      </form>
-    </div>
+  <footer>© IPEV — Sistema interno de logística</footer>
 
-    <!-- Rodapé leve, mantendo a identidade -->
-    <div class="text-center text-sm text-gray-600 mt-6">
-      © IPEV — Sistema interno de logística
-    </div>
-  </div>
-
+  <!-- Login por e-mail + senha (sem Edge) -->
   <script type="module">
-    import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
+    import { createClient } from "https://cdn.skypack.dev/@supabase/supabase-js";
 
-    const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co'
-    const supabaseKey = 'SUA_ANON_KEY_AQUI' // cole sua anon key
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    const SUPABASE_URL  = "https://ilsbyrvnrkutwynujfhs.supabase.co";
+    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-    const redirectUrl = 'menu.html' // para onde vai depois do login
-    const form = document.getElementById('loginForm')
-    const btn = document.getElementById('entrarBtn')
-    const erroMsg = document.getElementById('erroMsg')
-    const okMsg = document.getElementById('okMsg')
-    const lembrar = document.getElementById('lembrar')
+    const emailInput = document.getElementById("email_input");
+    const pwdInput   = document.getElementById("senha_input");
+    const keepCk     = document.getElementById("keep");
+    const btn        = document.getElementById("btnEntrar");
+    const msgEl      = document.getElementById("msg");
 
-    // Se já estiver logado, pula a tela
-    (await supabase.auth.getSession()).data.session && (window.location.href = redirectUrl)
+    // Se já estiver logado, manda para o menu
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) window.location.href = "menu.html";
+    })();
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault()
-      erroMsg.classList.add('hidden')
-      okMsg.classList.add('hidden')
-      btn.disabled = true
+    btn.addEventListener("click", doLogin);
+    emailInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") doLogin(); });
+    pwdInput.addEventListener("keydown",   (e)=>{ if (e.key === "Enter") doLogin(); });
 
-      const email = document.getElementById('email').value.trim().toLowerCase()
-      const senha = document.getElementById('senha').value
+    function isEmail(s){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha })
+    async function doLogin(){
+      msgEl.textContent = "";
+      const email = (emailInput.value || "").trim().toLowerCase();
+      const password = pwdInput.value;
 
-      if (error) {
-        erroMsg.textContent = 'Falha no login: ' + error.message
-        erroMsg.classList.remove('hidden')
-        btn.disabled = false
-        return
+      if (!email || !password) { msgEl.textContent = "Informe e-mail e senha."; return; }
+      if (!isEmail(email))     { msgEl.textContent = "Digite o e-mail completo (ex.: seuemail@ipev.com.br)."; return; }
+
+      try{
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error){ msgEl.textContent = error.message || "Falha no login."; return; }
+
+        if (!keepCk.checked){
+          window.addEventListener("beforeunload", () => { supabase.auth.signOut(); });
+        }
+        window.location.href = "menu.html";
+      }catch(e){
+        msgEl.textContent = "Erro inesperado. Tente novamente.";
       }
-
-      // Persistência da sessão (opcional “lembrar”)
-      // O supabase-js já persiste em localStorage por padrão.
-      // Se não quiser persistir quando "lembrar" não estiver marcado, você pode fazer signOut ao fechar aba, etc.
-      okMsg.textContent = 'Login realizado. Redirecionando...'
-      okMsg.classList.remove('hidden')
-
-      // pequena pausa para UX
-      setTimeout(() => window.location.href = redirectUrl, 400)
-    })
+    }
   </script>
 </body>
 </html>
