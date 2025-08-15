@@ -4,62 +4,52 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin • IPEV</title>
-  <!-- Tailwind -->
+  <!-- Tailwind CDN -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>
-    /* pequenos toques visuais compatíveis com seu layout */
-    .btn { @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm; }
-    .btn-primary { @apply bg-teal-600 text-white hover:bg-teal-700; }
-    .btn-secondary { @apply bg-gray-500 text-white hover:bg-gray-600; }
-    .btn-danger { @apply bg-red-600 text-white hover:bg-red-700; }
-    .chip { @apply inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700; }
-    .card { @apply bg-white rounded-2xl shadow p-4; }
-    .input { @apply w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500; }
-    .select { @apply border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500; }
-    .modal-backdrop { @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center; }
-    .modal { @apply bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6; }
-  </style>
 </head>
 <body class="bg-gray-100">
   <div class="max-w-7xl mx-auto p-4">
+
     <!-- Barra de ações -->
-    <div class="card mb-4">
+    <div class="bg-white rounded-2xl shadow p-4 mb-4">
       <div class="flex flex-wrap items-center gap-3">
-        <button id="btnAbrirCadastro" class="btn btn-primary">
-          <span>🧑‍💼</span> Cadastrar usuário
+        <button id="btnAbrirCadastro" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm bg-teal-600 text-white hover:bg-teal-700">
+          <span>🧑‍💼</span> <span>Cadastrar usuário</span>
         </button>
 
-        <button id="btnResetSenha" class="btn btn-primary">
-          <span>🔑</span> Redefinir senha
+        <button id="btnResetSenha" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm bg-teal-600 text-white hover:bg-teal-700">
+          <span>🔑</span> <span>Redefinir senha</span>
         </button>
 
-        <button id="btnListarUsuarios" class="btn btn-primary">
-          <span>👥</span> Listar usuários
+        <button id="btnListarUsuarios" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm bg-teal-600 text-white hover:bg-teal-700">
+          <span>👥</span> <span>Listar usuários</span>
         </button>
 
-        <button id="btnAbrirPermissoes" class="btn btn-primary">
-          <span>🛡️</span> Permissões
+        <button id="btnAbrirPermissoes" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm bg-teal-600 text-white hover:bg-teal-700">
+          <span>🛡️</span> <span>Permissões</span>
         </button>
 
-        <span class="chip">Em breve: papéis, permissões, auditoria…</span>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700">
+          Em breve: papéis, permissões, auditoria…
+        </span>
       </div>
     </div>
 
     <!-- Painel de Usuários -->
-    <div id="painelUsuarios" class="card mb-8 hidden">
+    <div id="painelUsuarios" class="bg-white rounded-2xl shadow p-4 mb-8 hidden">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-semibold">Usuários</h2>
-        <button id="btnFecharUsuarios" class="btn btn-secondary">Fechar</button>
+        <button id="btnFecharUsuarios" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">Fechar</button>
       </div>
 
       <div class="flex items-center gap-3 mb-4">
-        <input id="buscaUsuarios" class="input" type="text" placeholder="Buscar na página (nome ou e-mail)..">
-        <select id="selPorPagina" class="select">
+        <input id="buscaUsuarios" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" type="text" placeholder="Buscar na página (nome ou e-mail)..">
+        <select id="selPorPagina" class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500">
           <option value="10">10 por página</option>
           <option value="25">25 por página</option>
           <option value="50">50 por página</option>
         </select>
-        <button id="btnAtualizarLista" class="btn btn-primary">Atualizar</button>
+        <button id="btnAtualizarLista" class="px-4 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700">Atualizar</button>
       </div>
 
       <div class="overflow-auto rounded-lg border border-gray-200">
@@ -82,109 +72,103 @@
       <div class="flex items-center justify-between mt-4 text-sm text-gray-600">
         <div id="paginacaoInfo">Página 1 • 0 itens</div>
         <div class="flex gap-2">
-          <button id="btnPrev" class="btn btn-secondary">◀</button>
-          <button id="btnNext" class="btn btn-secondary">▶</button>
+          <button id="btnPrev" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">◀</button>
+          <button id="btnNext" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">▶</button>
         </div>
       </div>
       <div id="statusMsg" class="mt-3 text-gray-600"></div>
     </div>
 
     <!-- Modal: Cadastrar Usuário -->
-    <div id="modalCadastro" class="modal-backdrop hidden" role="dialog" aria-modal="true">
-      <div class="modal relative">
+    <div id="modalCadastro" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="ttlCadastro">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-semibold">Cadastrar usuário</h3>
-          <button id="btnFecharCadastro" class="btn btn-secondary">Fechar</button>
+          <h3 id="ttlCadastro" class="text-xl font-semibold">Cadastrar usuário</h3>
+          <button id="btnFecharCadastro" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">Fechar</button>
         </div>
 
         <div class="space-y-3">
           <div>
             <label class="block text-sm font-medium mb-1">Nome completo</label>
-            <input id="nomeCompleto" class="input" type="text" autocomplete="off">
+            <input id="nomeCompleto" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" type="text" autocomplete="off">
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Usuário</label>
-            <input id="usuario" class="input" type="text" autocomplete="off">
+            <input id="usuario" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" type="text" autocomplete="off">
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">E-mail</label>
-            <input id="email" class="input" type="email" autocomplete="off">
+            <input id="email" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" type="email" autocomplete="off">
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Senha inicial</label>
-            <input id="senhaInicial" class="input" type="password" autocomplete="new-password">
+            <input id="senhaInicial" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" type="password" autocomplete="new-password">
           </div>
           <div id="statusCadastro" class="text-red-600 text-sm"></div>
         </div>
 
         <div class="mt-6 flex justify-end gap-3">
-          <button id="btnCancelarCadastro" class="btn btn-secondary">Cancelar</button>
-          <button id="btnSalvarUsuario" class="btn btn-primary">Salvar</button>
+          <button id="btnCancelarCadastro" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">Cancelar</button>
+          <button id="btnSalvarUsuario" class="px-4 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700">Salvar</button>
         </div>
       </div>
     </div>
 
     <!-- Modal: Permissões -->
-    <div id="modalPermissoes" class="modal-backdrop hidden" role="dialog" aria-modal="true">
-      <div class="modal">
+    <div id="modalPermissoes" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="ttlPerm">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-semibold">Gerenciar Permissões</h3>
-          <button id="btnFecharPerm" class="btn btn-secondary">Fechar</button>
+          <h3 id="ttlPerm" class="text-xl font-semibold">Gerenciar Permissões</h3>
+          <button id="btnFecharPerm" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">Fechar</button>
         </div>
 
         <div class="space-y-4">
           <div>
             <label for="selectUsuarioPermissao" class="block text-sm font-medium mb-1">Usuário</label>
-            <select id="selectUsuarioPermissao" class="select w-full">
-              <!-- opções preenchidas pelo JS (exclui o admin logado) -->
-            </select>
+            <select id="selectUsuarioPermissao" class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-teal-500"></select>
           </div>
 
           <div class="space-y-2">
             <label class="block text-sm font-medium">Permissões de edição</label>
-            <div class="flex items-center gap-2">
-              <input id="chkControleDiario" type="checkbox" class="form-checkbox h-5 w-5">
-              <label for="chkControleDiario">Controle Diário (index_final_motorista.html)</label>
-            </div>
-            <div class="flex items-center gap-2">
-              <input id="chkConsumoTotal" type="checkbox" class="form-checkbox h-5 w-5">
-              <label for="chkConsumoTotal">Consumo Total por Motorista (consumo_total_motoristas_alerta.html)</label>
-            </div>
+            <label class="flex items-center gap-2">
+              <input id="chkControleDiario" type="checkbox" class="h-5 w-5">
+              <span>Controle Diário (index_final_motorista.html)</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input id="chkConsumoTotal" type="checkbox" class="h-5 w-5">
+              <span>Consumo Total por Motorista (consumo_total_motoristas_alerta.html)</span>
+            </label>
           </div>
         </div>
 
         <div id="statusPermissoes" class="mt-3 text-sm"></div>
 
         <div class="mt-6 flex justify-end gap-3">
-          <button id="btnCancelarPermissao" class="btn btn-secondary">Cancelar</button>
-          <button id="btnSalvarPermissao" class="btn btn-primary">Salvar</button>
+          <button id="btnCancelarPermissao" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">Cancelar</button>
+          <button id="btnSalvarPermissao" class="px-4 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700">Salvar</button>
         </div>
       </div>
     </div>
+
   </div>
 
-  <!-- Supabase (ESM) -->
+  <!-- Supabase + Lógica -->
   <script type="module">
     import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
 
     const SUPABASE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    window._supabaseAdminClient = supabase;
 
-    // Helpers de UI
+    // Helpers
     const el = (id) => document.getElementById(id);
     const setStatus = (msg, type='info', targetId='statusMsg') => {
-      const target = el(targetId);
-      if (!target) return;
-      target.textContent = msg;
-      target.className =
-        type === 'success' ? 'text-green-600' :
-        type === 'error' ? 'text-red-600' :
-        'text-gray-600';
+      const t = el(targetId); if (!t) return;
+      t.textContent = msg;
+      t.className = type==='success' ? 'text-green-600' : type==='error' ? 'text-red-600' : 'text-gray-600';
     };
 
-    // Sessão atual (admin)
+    // Sessão / Token
     async function getSessionAccessToken() {
       const { data, error } = await supabase.auth.getSession();
       if (error) throw new Error(error.message);
@@ -198,18 +182,18 @@
       return data?.user ?? null;
     }
 
-    // Invocações de Edge Functions com Authorization: Bearer <access_token>
-    async function fnInvoke(name, payload) {
+    // Invocar Edge Function com Authorization
+    async function fnInvoke(name, body) {
       const token = await getSessionAccessToken();
       const { data, error } = await supabase.functions.invoke(name, {
-        body: payload,
+        body,
         headers: { Authorization: `Bearer ${token}` },
       });
       if (error) throw new Error(error.message);
       return data;
     }
 
-    // ====== CREATE USER (mantém sua lógica) ======
+    // -------- CADASTRAR USUÁRIO ----------
     async function salvarUsuario() {
       try {
         const nome = el('nomeCompleto')?.value?.trim();
@@ -225,10 +209,10 @@
       }
     }
 
-    // ====== LIST USERS (oculta ADMIN logado) ======
+    // -------- LISTAR USUÁRIOS (sem admin atual) ----------
     let pagina = 1;
     let porPagina = 10;
-    let cacheLista = [];
+
     async function carregarUsuarios() {
       try {
         setStatus('Carregando usuários…');
@@ -236,25 +220,17 @@
         const query = el('buscaUsuarios')?.value?.trim() || '';
         porPagina = parseInt(el('selPorPagina')?.value || '10', 10) || 10;
 
-        // Chama sua Edge Function list-users (use pagina/porPagina/query se ela aceitar)
         const data = await fnInvoke('list-users', { page: pagina, perPage: porPagina, query });
 
-        // data.users esperado como array de { id, email, created_at, last_sign_in_at, user_metadata?.nome }
         const lista = Array.isArray(data?.users) ? data.users : [];
-
-        // 🔒 FILTRA o admin logado (por id e por email)
         const adminId = admin?.id || '';
         const adminEmail = (admin?.email || '').toLowerCase();
-        const semAdmin = lista.filter(u => {
-          const idOk = u.id !== adminId;
-          const emailOk = (u.email || '').toLowerCase() !== adminEmail;
-          return idOk && emailOk;
-        });
 
-        cacheLista = semAdmin;
-        renderTabela(semAdmin, data?.total || semAdmin.length);
+        const semAdmin = lista.filter(u => u.id !== adminId && (u.email || '').toLowerCase() !== adminEmail);
+
+        renderTabela(semAdmin, data?.total ?? semAdmin.length);
         setStatus('', 'info');
-        // Preenche select do modal de permissões também sem admin:
+
         preencherSelectPermissoes(semAdmin);
       } catch (err) {
         setStatus(`Erro ao listar usuários: ${err.message || err}`, 'error');
@@ -272,21 +248,20 @@
           <td class="px-4 py-2">${formatDateTime(u.created_at)}</td>
           <td class="px-4 py-2">${formatDateTime(u.last_sign_in_at)}</td>
           <td class="px-4 py-2">
-            <button class="btn btn-danger" data-id="${u.id}" data-email="${u.email}">Excluir</button>
+            <button class="px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700" data-id="${u.id}" data-email="${u.email}">Excluir</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
       el('paginacaoInfo').textContent = `Página ${pagina} • ${total} itens`;
 
-      // Bind de excluir (se você já tem function própria, substitua aqui)
-      [...tbody.querySelectorAll('button.btn-danger')].forEach(btn => {
+      [...tbody.querySelectorAll('button.bg-red-600')].forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.getAttribute('data-id');
           const email = btn.getAttribute('data-email');
           if (!confirm(`Excluir usuário ${email}?`)) return;
           try {
-            await fnInvoke('delete-user', { id }); // sua Edge Function
+            await fnInvoke('delete-user', { id });
             setStatus('Usuário excluído.', 'success');
             carregarUsuarios();
           } catch (err) {
@@ -310,7 +285,7 @@
       } catch { return v; }
     }
 
-    // ====== PERMISSÕES ======
+    // -------- PERMISSÕES ----------
     function preencherSelectPermissoes(lista) {
       const sel = el('selectUsuarioPermissao');
       if (!sel) return;
@@ -318,72 +293,69 @@
       sel.appendChild(new Option('Selecione', '', true, true));
       for (const u of lista) {
         const nome = u.user_metadata?.nome || '';
-        const label = nome ? `${nome} • ${u.email}` : u.email;
-        sel.appendChild(new Option(label, u.id));
+        sel.appendChild(new Option(nome ? `${nome} • ${u.email}` : u.email, u.id));
       }
     }
 
-    // Acessibilidade: foco + Esc + Enter dentro do modal de permissões
+    // -------- Acessibilidade modais ----------
     const modalPerm = el('modalPermissoes');
     const selPerm = el('selectUsuarioPermissao');
     const btnSalvarPerm = el('btnSalvarPermissao');
     const btnCancelarPerm = el('btnCancelarPermissao');
+
     function openModalPermissoes() {
       modalPerm.classList.remove('hidden');
+      modalPerm.classList.add('flex');
       document.body.style.overflow = 'hidden';
       setTimeout(() => selPerm?.focus(), 0);
     }
     function closeModalPermissoes() {
       modalPerm.classList.add('hidden');
+      modalPerm.classList.remove('flex');
       document.body.style.overflow = '';
     }
-    document.addEventListener('keydown', (e) => {
-      if (modalPerm.classList.contains('hidden')) return;
-      if (e.key === 'Escape') { e.preventDefault(); closeModalPermissoes(); }
-      if (e.key === 'Enter' && modalPerm.contains(document.activeElement)) {
-        e.preventDefault(); btnSalvarPerm?.click();
-      }
-    });
-    el('btnAbrirPermissoes').addEventListener('click', () => openModalPermissoes());
-    el('btnFecharPerm').addEventListener('click', () => closeModalPermissoes());
-    btnCancelarPerm?.addEventListener('click', () => closeModalPermissoes());
 
-    // Salvar permissões (exemplo; conecte na sua tabela permissoes_app)
-    btnSalvarPerm?.addEventListener('click', async () => {
-      try {
-        const user_id = selPerm.value;
-        if (!user_id) { el('statusPermissoes').textContent = 'Selecione um usuário.'; return; }
-        const controle_diario = el('chkControleDiario').checked;
-        const consumo_total = el('chkConsumoTotal').checked;
-        await fnInvoke('set-permissions', { user_id, controle_diario, consumo_total });
-        el('statusPermissoes').textContent = 'Permissões salvas.';
-        el('statusPermissoes').className = 'mt-3 text-sm text-green-600';
-        closeModalPermissoes();
-      } catch (err) {
-        el('statusPermissoes').textContent = `Erro: ${err.message || err}`;
-        el('statusPermissoes').className = 'mt-3 text-sm text-red-600';
-      }
-    });
-
-    // ====== MODAL CADASTRO (acessibilidade e bind) ======
     const modalCad = el('modalCadastro');
     function openModalCadastro() {
       modalCad.classList.remove('hidden');
+      modalCad.classList.add('flex');
       document.body.style.overflow = 'hidden';
       setTimeout(() => el('nomeCompleto')?.focus(), 0);
     }
     function closeModalCadastro() {
       modalCad.classList.add('hidden');
+      modalCad.classList.remove('flex');
       document.body.style.overflow = '';
     }
-    window.closeModalCadastro = closeModalCadastro; // usado no sucesso
+    window.closeModalCadastro = closeModalCadastro;
+
+    document.addEventListener('keydown', (e) => {
+      // ESC fecha modal aberto
+      if (e.key === 'Escape') {
+        if (!modalPerm.classList.contains('hidden')) { e.preventDefault(); closeModalPermissoes(); }
+        if (!modalCad.classList.contains('hidden')) { e.preventDefault(); closeModalCadastro(); }
+      }
+      // ENTER confirma dentro do modal
+      if (e.key === 'Enter') {
+        if (!modalPerm.classList.contains('hidden') && modalPerm.contains(document.activeElement)) {
+          e.preventDefault(); btnSalvarPerm?.click();
+        }
+        if (!modalCad.classList.contains('hidden') && modalCad.contains(document.activeElement)) {
+          e.preventDefault(); el('btnSalvarUsuario')?.click();
+        }
+      }
+    });
+
+    // -------- Binds UI ----------
+    el('btnAbrirPermissoes').addEventListener('click', openModalPermissoes);
+    el('btnFecharPerm').addEventListener('click', closeModalPermissoes);
+    btnCancelarPerm?.addEventListener('click', closeModalPermissoes);
 
     el('btnAbrirCadastro').addEventListener('click', openModalCadastro);
     el('btnFecharCadastro').addEventListener('click', closeModalCadastro);
     el('btnCancelarCadastro').addEventListener('click', closeModalCadastro);
     el('btnSalvarUsuario').addEventListener('click', (e) => { e.preventDefault(); salvarUsuario(); });
 
-    // ====== LISTAGEM - binds ======
     el('btnListarUsuarios').addEventListener('click', () => {
       el('painelUsuarios').classList.remove('hidden');
       pagina = 1;
@@ -396,11 +368,27 @@
     el('btnPrev').addEventListener('click', () => { if (pagina > 1) { pagina--; carregarUsuarios(); }});
     el('btnNext').addEventListener('click', () => { pagina++; carregarUsuarios(); });
 
-    // (Opcional) Reset senha – apenas placeholder de integração
+    // Placeholder para reset de senha (conecte à sua function)
     el('btnResetSenha').addEventListener('click', async () => {
-      alert('Conecte aqui a função de reset de senha (Edge Function).');
+      alert('Conecte aqui a Edge Function de redefinição de senha.');
+    });
+
+    // Salvar permissões (conecte à sua function "set-permissions")
+    el('btnSalvarPermissao').addEventListener('click', async () => {
+      try {
+        const user_id = el('selectUsuarioPermissao').value;
+        if (!user_id) { el('statusPermissoes').textContent = 'Selecione um usuário.'; return; }
+        const controle_diario = el('chkControleDiario').checked;
+        const consumo_total = el('chkConsumoTotal').checked;
+        await fnInvoke('set-permissions', { user_id, controle_diario, consumo_total });
+        el('statusPermissoes').textContent = 'Permissões salvas.';
+        el('statusPermissoes').className = 'mt-3 text-sm text-green-600';
+        closeModalPermissoes();
+      } catch (err) {
+        el('statusPermissoes').textContent = `Erro: ${err.message || err}`;
+        el('statusPermissoes').className = 'mt-3 text-sm text-red-600';
+      }
     });
   </script>
 </body>
 </html>
-
