@@ -1,394 +1,660 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin • IPEV</title>
-  <!-- Tailwind CDN -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Área do Gestor — IPEV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    :root{ --azul:#0ea5b7; --azul2:#12849a; --cinza:#6b7280; --branco:#fff; --texto:#0b2340; }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:Arial,Helvetica,sans-serif; background:#f3f7f8; color:var(--texto); }
+    .hero{ position:relative; min-height:240px; display:flex; align-items:flex-end;
+      background-image: linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('frota-bg.jpg');
+      background-size:cover; background-position:center; box-shadow:inset 0 -30px 30px rgba(0,0,0,.18); }
+    .wrap{ width:100%; max-width:1100px; margin:0 auto; padding:28px 18px 32px; display:flex; justify-content:space-between; align-items:flex-end; }
+    .titulo{ color:#fff; margin:0; font-size:30px; text-shadow:0 2px 6px rgba(0,0,0,.35); }
+    .sub{ color:#eaf7fb; margin:6px 0 0; font-size:14px; }
+    .chip-user{ background:rgba(255,255,255,.95); color:#123; padding:9px 14px; border-radius:999px; font-size:13px; box-shadow:0 2px 10px rgba(0,0,0,.2); white-space:nowrap; }
+    .topbar{ position:fixed; top:10px; right:10px; z-index:10; display:flex; gap:8px; }
+    .btn{ background:var(--azul); color:#fff; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; }
+    .btn:hover{ background:var(--azul2); }
+    .btn-secondary{ background:var(--cinza); }
+    .btn-secondary:hover{ background:#4b5563; }
+    .main{ max-width:1100px; margin:22px auto 34px; padding:0 18px; }
+    .card{ background:#fff; border-radius:14px; box-shadow:0 10px 24px rgba(16,24,40,.08); padding:18px; margin-bottom:16px; }
+    .card h3{ margin:0 0 12px; font-size:18px; color:#0f172a; }
+    .toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+    .input{ padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; min-width:240px; background:#fff; }
+    .table{ width:100%; border-collapse:collapse; }
+    .table th,.table td{ padding:10px 12px; border-bottom:1px solid #eef2f7; }
+    .table th{ text-align:left; font-size:13px; color:#374151; cursor:pointer; user-select:none; }
+    .table td{ font-size:14px; color:#111827; }
+    .muted{ color:#6b7280; font-size:12px; }
+    .right{ text-align:right; }
+    .danger{ background:#dc2626; }
+    .danger:hover{ background:#b91c1c; }
+    .pagination{ display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px; }
+    .empty{ padding:16px; color:#6b7280; }
+
+    /* === PATCH: dialog/backdrop + fallback === */
+    dialog::backdrop { background: rgba(0,0,0,.45); }
+    dialog[open] { display: block; }
+  </style>
 </head>
-<body class="bg-gray-100">
-  <div class="max-w-7xl mx-auto p-4">
+<body>
 
-    <!-- Barra de ações -->
-    <div class="bg-white rounded-2xl shadow p-4 mb-4">
-      <div class="flex flex-wrap items-center gap-3">
-        <button id="btnAbrirCadastro" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm bg-teal-600 text-white hover:bg-teal-700">
-          <span>🧑‍💼</span> <span>Cadastrar usuário</span>
-        </button>
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <h1 class="titulo">Área do Gestor</h1>
+        <p class="sub">Gestão de usuários e permissões do sistema</p>
+      </div>
+      <div class="chip-user" id="chipUser">Logado:</div>
+    </div>
+  </div>
 
-        <button id="btnResetSenha" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm bg-teal-600 text-white hover:bg-teal-700">
-          <span>🔑</span> <span>Redefinir senha</span>
-        </button>
+  <div class="topbar">
+    <button class="btn-secondary btn" id="btnSairMenu">↩️ Menu</button>
+    <button class="btn-secondary btn" id="btnLogout">🚪 Logout</button>
+  </div>
 
-        <button id="btnListarUsuarios" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm bg-teal-600 text-white hover:bg-teal-700">
-          <span>👥</span> <span>Listar usuários</span>
-        </button>
-
-        <button id="btnAbrirPermissoes" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm bg-teal-600 text-white hover:bg-teal-700">
-          <span>🛡️</span> <span>Permissões</span>
-        </button>
-
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700">
-          Em breve: papéis, permissões, auditoria…
-        </span>
+  <div class="main">
+    <div class="card">
+      <div class="toolbar">
+        <button class="btn" id="btnOpenCreate">👨 Cadastrar usuário</button>
+        <button class="btn" id="btnOpenReset">🔑 Redefinir senha</button>
+        <!-- NOVO: botão que abre a listagem -->
+        <button class="btn" id="btnOpenList">👥 Listar usuários</button>
+        <!-- NOVO: botão Permissões -->
+        <button class="btn" id="btnOpenPerm">🛡️ Permissões</button>
+        <span class="muted">Em breve: papéis, permissões, auditoria…</span>
       </div>
     </div>
 
-    <!-- Painel de Usuários -->
-    <div id="painelUsuarios" class="bg-white rounded-2xl shadow p-4 mb-8 hidden">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-semibold">Usuários</h2>
-        <button id="btnFecharUsuarios" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">Fechar</button>
-      </div>
+    <!-- Listagem fica escondida até clicar em "Listar usuários" -->
+    <div class="card" id="cardList" style="display:none;">
+      <h3 style="display:flex;justify-content:space-between;align-items:center;">
+        Usuários
+        <button class="btn-secondary btn" id="btnCloseList" title="Fechar">Fechar</button>
+      </h3>
 
-      <div class="flex items-center gap-3 mb-4">
-        <input id="buscaUsuarios" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" type="text" placeholder="Buscar na página (nome ou e-mail)..">
-        <select id="selPorPagina" class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500">
+      <div class="toolbar">
+        <input id="busca" class="input" placeholder="Buscar na página (nome ou e-mail)…">
+        <select id="perPage" class="input" style="min-width:120px">
           <option value="10">10 por página</option>
-          <option value="25">25 por página</option>
+          <option value="20">20 por página</option>
           <option value="50">50 por página</option>
         </select>
-        <button id="btnAtualizarLista" class="px-4 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700">Atualizar</button>
+        <button id="btnRefresh" class="btn">Atualizar</button>
       </div>
 
-      <div class="overflow-auto rounded-lg border border-gray-200">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+      <div style="overflow:auto;">
+        <table class="table" id="tbl">
+          <thead>
             <tr>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">E-mail</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Criado em</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Último login</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+              <th data-sort="display_name">Nome</th>
+              <th data-sort="email">E-mail</th>
+              <th data-sort="created_at">Criado em</th>
+              <th data-sort="last_sign_in_at">Último login</th>
+              <th class="right">Ações</th>
             </tr>
           </thead>
-          <tbody id="tbodyUsuarios" class="bg-white divide-y divide-gray-100">
-            <!-- linhas renderizadas por JS -->
-          </tbody>
+          <tbody id="tbody"></tbody>
         </table>
       </div>
 
-      <div class="flex items-center justify-between mt-4 text-sm text-gray-600">
-        <div id="paginacaoInfo">Página 1 • 0 itens</div>
-        <div class="flex gap-2">
-          <button id="btnPrev" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">◀</button>
-          <button id="btnNext" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">▶</button>
-        </div>
-      </div>
-      <div id="statusMsg" class="mt-3 text-gray-600"></div>
-    </div>
-
-    <!-- Modal: Cadastrar Usuário -->
-    <div id="modalCadastro" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="ttlCadastro">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h3 id="ttlCadastro" class="text-xl font-semibold">Cadastrar usuário</h3>
-          <button id="btnFecharCadastro" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">Fechar</button>
-        </div>
-
-        <div class="space-y-3">
-          <div>
-            <label class="block text-sm font-medium mb-1">Nome completo</label>
-            <input id="nomeCompleto" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" type="text" autocomplete="off">
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Usuário</label>
-            <input id="usuario" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" type="text" autocomplete="off">
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">E-mail</label>
-            <input id="email" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" type="email" autocomplete="off">
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1">Senha inicial</label>
-            <input id="senhaInicial" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" type="password" autocomplete="new-password">
-          </div>
-          <div id="statusCadastro" class="text-red-600 text-sm"></div>
-        </div>
-
-        <div class="mt-6 flex justify-end gap-3">
-          <button id="btnCancelarCadastro" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">Cancelar</button>
-          <button id="btnSalvarUsuario" class="px-4 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700">Salvar</button>
-        </div>
+      <div class="pagination">
+        <span id="pageInfo" class="muted"></span>
+        <button class="btn-secondary btn" id="prev">◀</button>
+        <button class="btn-secondary btn" id="next">▶</button>
       </div>
     </div>
-
-    <!-- Modal: Permissões -->
-    <div id="modalPermissoes" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="ttlPerm">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h3 id="ttlPerm" class="text-xl font-semibold">Gerenciar Permissões</h3>
-          <button id="btnFecharPerm" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">Fechar</button>
-        </div>
-
-        <div class="space-y-4">
-          <div>
-            <label for="selectUsuarioPermissao" class="block text-sm font-medium mb-1">Usuário</label>
-            <select id="selectUsuarioPermissao" class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-teal-500"></select>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium">Permissões de edição</label>
-            <label class="flex items-center gap-2">
-              <input id="chkControleDiario" type="checkbox" class="h-5 w-5">
-              <span>Controle Diário (index_final_motorista.html)</span>
-            </label>
-            <label class="flex items-center gap-2">
-              <input id="chkConsumoTotal" type="checkbox" class="h-5 w-5">
-              <span>Consumo Total por Motorista (consumo_total_motoristas_alerta.html)</span>
-            </label>
-          </div>
-        </div>
-
-        <div id="statusPermissoes" class="mt-3 text-sm"></div>
-
-        <div class="mt-6 flex justify-end gap-3">
-          <button id="btnCancelarPermissao" class="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600">Cancelar</button>
-          <button id="btnSalvarPermissao" class="px-4 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700">Salvar</button>
-        </div>
-      </div>
-    </div>
-
   </div>
 
-  <!-- Supabase + Lógica -->
+  <!-- Modal Cadastrar -->
+  <dialog id="dlgCreate" style="border:0; border-radius:12px; padding:0; width:95%; max-width:560px;">
+    <form method="dialog" style="padding:18px">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+        <h3 style="margin:0">Cadastrar usuário</h3>
+        <button class="btn-secondary btn" value="cancel">Fechar</button>
+      </div>
+      <label>Nome completo
+        <input id="c_nome" class="input" style="width:100%; margin-top:6px">
+      </label><br><br>
+      <label>Usuário
+        <input id="c_user" class="input" style="width:100%; margin-top:6px">
+      </label><br><br>
+      <label>E-mail
+        <input id="c_email" class="input" style="width:100%; margin-top:6px">
+      </label><br><br>
+      <label>Senha inicial
+        <input id="c_senha" type="password" class="input" style="width:100%; margin-top:6px">
+      </label>
+      <p id="c_erro" class="muted" style="color:#dc2626; margin-top:8px"></p>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px">
+        <button class="btn-secondary btn" value="cancel">Cancelar</button>
+        <button id="c_salvar" type="button" class="btn">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Modal Reset -->
+  <dialog id="dlgReset" style="border:0; border-radius:12px; padding:0; width:95%; max-width:520px;">
+    <form method="dialog" style="padding:18px">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+        <h3 style="margin:0">Redefinir senha</h3>
+        <button class="btn-secondary btn" value="cancel">Fechar</button>
+      </div>
+      <label>E-mail do usuário
+        <input id="r_email" class="input" style="width:100%; margin-top:6px">
+      </label><br><br>
+      <label>Nova senha
+        <input id="r_senha" type="password" class="input" style="width:100%; margin-top:6px">
+      </label>
+      <p id="r_erro" class="muted" style="color:#dc2626; margin-top:8px"></p>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px">
+        <button class="btn-secondary btn" value="cancel">Cancelar</button>
+        <button id="r_salvar" type="button" class="btn">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- NOVO: Modal Permissões (compatível com fallback) -->
+  <dialog id="dlgPerm" style="border:0; border-radius:12px; padding:0; width:95%; max-width:620px;">
+    <form method="dialog" style="padding:18px" id="formPerm">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+        <h3 style="margin:0">Gerenciar permissões</h3>
+        <button class="btn-secondary btn" value="cancel">Fechar</button>
+      </div>
+
+      <label>Usuário
+        <select id="perm_sel_user" class="input" style="width:100%; margin-top:6px">
+          <option value="">Selecione um usuário…</option>
+        </select>
+      </label>
+      <p class="muted" id="perm_hint" style="margin:6px 0 0; display:none;">
+        Se o usuário não aparecer, ele ainda não fez login no sistema.
+      </p>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;">
+        <label class="input" style="display:flex; align-items:center; gap:10px;">
+          <input id="perm_admin" type="checkbox"> Administrador
+        </label>
+        <label class="input" style="display:flex; align-items:center; gap:10px;">
+          <input id="perm_controle" type="checkbox"> Controle Diário
+        </label>
+        <label class="input" style="display:flex; align-items:center; gap:10px;">
+          <input id="perm_consumo" type="checkbox"> Consumo Total
+        </label>
+      </div>
+
+      <p id="perm_msg" class="muted" style="margin:10px 0 0;"></p>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px">
+        <button class="btn-secondary btn" value="cancel">Cancelar</button>
+        <button id="perm_salvar" type="button" class="btn">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+  <!-- /NOVO: Modal Permissões -->
+
   <script type="module">
     import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
 
+    // === CONFIG ===
     const SUPABASE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
 
-    // Helpers
-    const el = (id) => document.getElementById(id);
-    const setStatus = (msg, type='info', targetId='statusMsg') => {
-      const t = el(targetId); if (!t) return;
-      t.textContent = msg;
-      t.className = type==='success' ? 'text-green-600' : type==='error' ? 'text-red-600' : 'text-gray-600';
+    // URLs das Edge Functions:
+    const CREATE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/create-user';
+    const RESET_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/reset-password';
+    const LIST_URL   = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/list-users';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    // === Sessão/boas-vindas ===
+    const chipUser = document.getElementById('chipUser');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) window.location.href = 'index.html';
+    const emailLogado = session.user.email;
+    try {
+      const { data: ua } = await supabase.from('usuarios_app').select('display_name').ilike('email', emailLogado).maybeSingle();
+      chipUser.textContent = 'Logado: ' + (ua?.display_name || emailLogado);
+    } catch { chipUser.textContent = 'Logado: ' + emailLogado; }
+
+    document.getElementById('btnSairMenu').onclick = () => window.location.href = 'menu.html';
+    document.getElementById('btnLogout').onclick = async () => { await supabase.auth.signOut(); window.location.href = 'index.html'; };
+
+    // === Modais cadastro/reset ===
+    const dlgCreate = document.getElementById('dlgCreate');
+    const dlgReset  = document.getElementById('dlgReset');
+    document.getElementById('btnOpenCreate').onclick = () => dlgCreate.showModal();
+    document.getElementById('btnOpenReset').onclick  = () => dlgReset.showModal();
+
+    // === Mostrar/ocultar listagem ===
+    const cardList = document.getElementById('cardList');
+    document.getElementById('btnOpenList').onclick = async () => {
+      cardList.style.display = '';
+      await loadUsers(true);
+      cardList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    document.getElementById('btnCloseList').onclick = () => {
+      cardList.style.display = 'none';
     };
 
-    // Sessão / Token
-    async function getSessionAccessToken() {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) throw new Error(error.message);
-      const token = data?.session?.access_token;
-      if (!token) throw new Error('Admin não autenticado. Faça login.');
-      return token;
-    }
-    async function getCurrentUser() {
-      const { data, error } = await supabase.auth.getUser();
-      if (error) throw new Error(error.message);
-      return data?.user ?? null;
-    }
-
-    // Invocar Edge Function com Authorization
-    async function fnInvoke(name, body) {
-      const token = await getSessionAccessToken();
-      const { data, error } = await supabase.functions.invoke(name, {
-        body,
-        headers: { Authorization: `Bearer ${token}` },
+    // Criar usuário
+    document.getElementById('c_salvar').onclick = async () => {
+      const nome  = document.getElementById('c_nome').value.trim();
+      const user  = document.getElementById('c_user').value.trim();
+      const email = document.getElementById('c_email').value.trim().toLowerCase();
+      const pass  = document.getElementById('c_senha').value;
+      const err   = document.getElementById('c_erro');
+      err.textContent = '';
+      if (!nome || !user || !email || !pass) { err.textContent = 'Preencha todos os campos.'; return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(CREATE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ email, password: pass, username: user, display_name: nome }),
       });
-      if (error) throw new Error(error.message);
-      return data;
+      const json = await resp.json();
+      if (!resp.ok) { err.textContent = 'Erro: ' + (json.details || json.error || 'falha'); return; }
+      dlgCreate.close();
+      // se a listagem estiver aberta, atualiza
+      if (cardList.style.display !== 'none') await loadUsers(true);
+    };
+
+    // Reset de senha
+    document.getElementById('r_salvar').onclick = async () => {
+      const email = document.getElementById('r_email').value.trim().toLowerCase();
+      const pass  = document.getElementById('r_senha').value;
+      const err   = document.getElementById('r_erro');
+      err.textContent = '';
+      if (!email || !pass) { err.textContent = 'Informe e-mail e nova senha.'; return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(RESET_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ email, newPassword: pass }),
+      });
+      const json = await resp.json();
+      if (!resp.ok) { err.textContent = 'Erro: ' + (json.details || json.error || 'falha'); return; }
+      dlgReset.close();
+    };
+
+    // === Lista de usuários (Edge Function list-users) ===
+    const tbody = document.getElementById('tbody');
+    const busca = document.getElementById('busca');
+    const perPageSel = document.getElementById('perPage');
+    const btnPrev = document.getElementById('prev');
+    const btnNext = document.getElementById('next');
+    const pageInfo = document.getElementById('pageInfo');
+    document.getElementById('btnRefresh').onclick = () => loadUsers(true);
+
+    let state = {
+      page: 1,
+      perPage: parseInt(perPageSel.value, 10),
+      sortBy: 'created_at',
+      sortDir: 'desc',
+      raw: [],
+      hasMore: false,
+    };
+
+    perPageSel.onchange = () => { state.perPage = parseInt(perPageSel.value, 10); state.page = 1; loadUsers(true); };
+    btnPrev.onclick = () => { if (state.page > 1) { state.page--; loadUsers(true); } };
+    btnNext.onclick = () => { if (state.hasMore) { state.page++; loadUsers(true); } };
+
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.sort;
+        if (state.sortBy === col) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+        else { state.sortBy = col; state.sortDir = 'asc'; }
+        render();
+      });
+    });
+
+    const fmt = (d) => d ? new Date(d).toLocaleString('pt-BR') : '—';
+    const nomeDe = (u) => u.display_name || u.username || (u.email?.split('@')[0]) || '(sem nome)';
+
+    async function loadUsers() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const url = new URL(LIST_URL);
+      url.searchParams.set('page', String(state.page));
+      url.searchParams.set('perPage', String(state.perPage));
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } });
+      const json = await resp.json();
+      if (!resp.ok) { alert('Falha ao listar usuários: ' + (json.error || json.details || '')); return; }
+      state.raw = json.users || [];
+      state.hasMore = !!json.hasMore;
+      render();
     }
 
-    // -------- CADASTRAR USUÁRIO ----------
-    async function salvarUsuario() {
-      try {
-        const nome = el('nomeCompleto')?.value?.trim();
-        const username = el('usuario')?.value?.trim();
-        const email = el('email')?.value?.trim();
-        const senha = el('senhaInicial')?.value ?? '';
-        await fnInvoke('create-user', { nome, username, email, senha });
-        el('statusCadastro').textContent = '';
-        setStatus('Usuário criado com sucesso!', 'success');
-        closeModalCadastro();
-      } catch (err) {
-        el('statusCadastro').textContent = `Erro: ${err.message || err}`;
+    function render() {
+      const term = busca.value.trim().toLowerCase();
+      let rows = state.raw.slice();
+      if (term) {
+        rows = rows.filter(u =>
+          (nomeDe(u).toLowerCase().includes(term)) ||
+          ((u.email||'').toLowerCase().includes(term))
+        );
       }
-    }
+      rows.sort((a,b) => {
+        const k = state.sortBy;
+        const va = (a[k] || '') + '';
+        const vb = (b[k] || '') + '';
+        if (va < vb) return state.sortDir === 'asc' ? -1 : 1;
+        if (va > vb) return state.sortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
 
-    // -------- LISTAR USUÁRIOS (sem admin atual) ----------
-    let pagina = 1;
-    let porPagina = 10;
-
-    async function carregarUsuarios() {
-      try {
-        setStatus('Carregando usuários…');
-        const admin = await getCurrentUser();
-        const query = el('buscaUsuarios')?.value?.trim() || '';
-        porPagina = parseInt(el('selPorPagina')?.value || '10', 10) || 10;
-
-        const data = await fnInvoke('list-users', { page: pagina, perPage: porPagina, query });
-
-        const lista = Array.isArray(data?.users) ? data.users : [];
-        const adminId = admin?.id || '';
-        const adminEmail = (admin?.email || '').toLowerCase();
-
-        const semAdmin = lista.filter(u => u.id !== adminId && (u.email || '').toLowerCase() !== adminEmail);
-
-        renderTabela(semAdmin, data?.total ?? semAdmin.length);
-        setStatus('', 'info');
-
-        preencherSelectPermissoes(semAdmin);
-      } catch (err) {
-        setStatus(`Erro ao listar usuários: ${err.message || err}`, 'error');
-      }
-    }
-
-    function renderTabela(rows, total) {
-      const tbody = el('tbodyUsuarios');
       tbody.innerHTML = '';
-      rows.forEach(u => {
+      if (!rows.length) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="px-4 py-2">${u.user_metadata?.nome || '-'}</td>
-          <td class="px-4 py-2">${u.email || '-'}</td>
-          <td class="px-4 py-2">${formatDateTime(u.created_at)}</td>
-          <td class="px-4 py-2">${formatDateTime(u.last_sign_in_at)}</td>
-          <td class="px-4 py-2">
-            <button class="px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700" data-id="${u.id}" data-email="${u.email}">Excluir</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-      el('paginacaoInfo').textContent = `Página ${pagina} • ${total} itens`;
+        const td = document.createElement('td');
+        td.colSpan = 5; td.className = 'empty'; td.textContent = 'Nenhum usuário nesta página.';
+        tr.appendChild(td); tbody.appendChild(tr);
+      } else {
+        for (const u of rows) {
+          const tr = document.createElement('tr');
 
-      [...tbody.querySelectorAll('button.bg-red-600')].forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const id = btn.getAttribute('data-id');
-          const email = btn.getAttribute('data-email');
-          if (!confirm(`Excluir usuário ${email}?`)) return;
-          try {
-            await fnInvoke('delete-user', { id });
-            setStatus('Usuário excluído.', 'success');
-            carregarUsuarios();
-          } catch (err) {
-            setStatus(`Erro ao excluir: ${err.message || err}`, 'error');
-          }
-        });
-      });
-    }
+          const tdNome = document.createElement('td'); tdNome.textContent = nomeDe(u); tr.appendChild(tdNome);
+          const tdEmail = document.createElement('td'); tdEmail.textContent = u.email || '—'; tr.appendChild(tdEmail);
+          const tdCriado = document.createElement('td'); tdCriado.textContent = fmt(u.created_at); tr.appendChild(tdCriado);
+          const tdUlt = document.createElement('td'); tdUlt.textContent = fmt(u.last_sign_in_at); tr.appendChild(tdUlt);
 
-    function formatDateTime(v) {
-      if (!v) return '-';
-      try {
-        const d = new Date(v);
-        const dd = String(d.getDate()).padStart(2, '0');
-        const mm = String(d.getMonth()+1).padStart(2, '0');
-        const yyyy = d.getFullYear();
-        const hh = String(d.getHours()).padStart(2, '0');
-        const mi = String(d.getMinutes()).padStart(2, '0');
-        const ss = String(d.getSeconds()).padStart(2, '0');
-        return `${dd}/${mm}/${yyyy}, ${hh}:${mi}:${ss}`;
-      } catch { return v; }
-    }
+          const tdA = document.createElement('td'); tdA.className = 'right';
+          const del = document.createElement('button'); del.className = 'btn danger'; del.textContent = 'Excluir';
+          del.onclick = () => excluir(u);
+          tdA.appendChild(del); tr.appendChild(tdA);
 
-    // -------- PERMISSÕES ----------
-    function preencherSelectPermissoes(lista) {
-      const sel = el('selectUsuarioPermissao');
-      if (!sel) return;
-      sel.innerHTML = '';
-      sel.appendChild(new Option('Selecione', '', true, true));
-      for (const u of lista) {
-        const nome = u.user_metadata?.nome || '';
-        sel.appendChild(new Option(nome ? `${nome} • ${u.email}` : u.email, u.id));
-      }
-    }
-
-    // -------- Acessibilidade modais ----------
-    const modalPerm = el('modalPermissoes');
-    const selPerm = el('selectUsuarioPermissao');
-    const btnSalvarPerm = el('btnSalvarPermissao');
-    const btnCancelarPerm = el('btnCancelarPermissao');
-
-    function openModalPermissoes() {
-      modalPerm.classList.remove('hidden');
-      modalPerm.classList.add('flex');
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => selPerm?.focus(), 0);
-    }
-    function closeModalPermissoes() {
-      modalPerm.classList.add('hidden');
-      modalPerm.classList.remove('flex');
-      document.body.style.overflow = '';
-    }
-
-    const modalCad = el('modalCadastro');
-    function openModalCadastro() {
-      modalCad.classList.remove('hidden');
-      modalCad.classList.add('flex');
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => el('nomeCompleto')?.focus(), 0);
-    }
-    function closeModalCadastro() {
-      modalCad.classList.add('hidden');
-      modalCad.classList.remove('flex');
-      document.body.style.overflow = '';
-    }
-    window.closeModalCadastro = closeModalCadastro;
-
-    document.addEventListener('keydown', (e) => {
-      // ESC fecha modal aberto
-      if (e.key === 'Escape') {
-        if (!modalPerm.classList.contains('hidden')) { e.preventDefault(); closeModalPermissoes(); }
-        if (!modalCad.classList.contains('hidden')) { e.preventDefault(); closeModalCadastro(); }
-      }
-      // ENTER confirma dentro do modal
-      if (e.key === 'Enter') {
-        if (!modalPerm.classList.contains('hidden') && modalPerm.contains(document.activeElement)) {
-          e.preventDefault(); btnSalvarPerm?.click();
-        }
-        if (!modalCad.classList.contains('hidden') && modalCad.contains(document.activeElement)) {
-          e.preventDefault(); el('btnSalvarUsuario')?.click();
+          tbody.appendChild(tr);
         }
       }
+
+      pageInfo.textContent = `Página ${state.page} • ${rows.length} itens`;
+      btnPrev.disabled = state.page === 1;
+      btnNext.disabled = !state.hasMore;
+    }
+
+    busca.addEventListener('input', () => render());
+
+    async function excluir(u) {
+      if (!confirm(`Excluir o usuário "${nomeDe(u)}" (${u.email})? Essa ação não pode ser desfeita.`)) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(LIST_URL, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ id: u.id }),
+      });
+      const json = await resp.json();
+      if (!resp.ok) { alert('Falha ao excluir: ' + (json.details || json.error || '')); return; }
+      if (state.raw.length === 1 && state.page > 1) state.page--;
+      await loadUsers(true);
+    }
+
+    // ============================================
+    // NOVO: Permissões (modal + ações) — com fallback de <dialog>
+    // ============================================
+    const btnOpenPerm = document.getElementById('btnOpenPerm');
+    const dlgPerm = document.getElementById('dlgPerm');
+    const selUser = document.getElementById('perm_sel_user');
+    const chkAdmin = document.getElementById('perm_admin');
+    const chkCtrl  = document.getElementById('perm_controle');
+    const chkCons  = document.getElementById('perm_consumo');
+    const msgPerm  = document.getElementById('perm_msg');
+    const hintPerm = document.getElementById('perm_hint');
+    const btnPermSalvar = document.getElementById('perm_salvar');
+
+    function openDialog(el) {
+      try { if (typeof el.showModal === 'function') el.showModal(); else el.setAttribute('open',''); }
+      catch { el.setAttribute('open',''); }
+    }
+    function closeDialog(el) {
+      try { if (typeof el.close === 'function') el.close(); else el.removeAttribute('open'); }
+      catch { el.removeAttribute('open'); }
+    }
+
+    document.getElementById('formPerm')?.addEventListener('submit', e => {
+      e.preventDefault(); closeDialog(dlgPerm);
+    });
+    dlgPerm?.addEventListener('cancel', (e) => {
+      e.preventDefault(); closeDialog(dlgPerm);
     });
 
-    // -------- Binds UI ----------
-    el('btnAbrirPermissoes').addEventListener('click', openModalPermissoes);
-    el('btnFecharPerm').addEventListener('click', closeModalPermissoes);
-    btnCancelarPerm?.addEventListener('click', closeModalPermissoes);
+    btnOpenPerm.onclick = async () => {
+      openDialog(dlgPerm);
+      await carregarUsuariosPerm();
+    };
 
-    el('btnAbrirCadastro').addEventListener('click', openModalCadastro);
-    el('btnFecharCadastro').addEventListener('click', closeModalCadastro);
-    el('btnCancelarCadastro').addEventListener('click', closeModalCadastro);
-    el('btnSalvarUsuario').addEventListener('click', (e) => { e.preventDefault(); salvarUsuario(); });
+    async function carregarUsuariosPerm() {
+      msgPerm.textContent = 'Carregando usuários…';
+      selUser.innerHTML = '<option value="">Selecione um usuário…</option>';
+      hintPerm.style.display = 'none';
 
-    el('btnListarUsuarios').addEventListener('click', () => {
-      el('painelUsuarios').classList.remove('hidden');
-      pagina = 1;
-      carregarUsuarios();
-    });
-    el('btnFecharUsuarios').addEventListener('click', () => el('painelUsuarios').classList.add('hidden'));
-    el('btnAtualizarLista').addEventListener('click', () => { pagina = 1; carregarUsuarios(); });
-    el('selPorPagina').addEventListener('change', () => { pagina = 1; carregarUsuarios(); });
-    el('buscaUsuarios').addEventListener('input', () => { pagina = 1; carregarUsuarios(); });
-    el('btnPrev').addEventListener('click', () => { if (pagina > 1) { pagina--; carregarUsuarios(); }});
-    el('btnNext').addEventListener('click', () => { pagina++; carregarUsuarios(); });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { msgPerm.textContent = 'É necessário estar logado.'; return; }
 
-    // Placeholder para reset de senha (conecte à sua function)
-    el('btnResetSenha').addEventListener('click', async () => {
-      alert('Conecte aqui a Edge Function de redefinição de senha.');
-    });
-
-    // Salvar permissões (conecte à sua function "set-permissions")
-    el('btnSalvarPermissao').addEventListener('click', async () => {
-      try {
-        const user_id = el('selectUsuarioPermissao').value;
-        if (!user_id) { el('statusPermissoes').textContent = 'Selecione um usuário.'; return; }
-        const controle_diario = el('chkControleDiario').checked;
-        const consumo_total = el('chkConsumoTotal').checked;
-        await fnInvoke('set-permissions', { user_id, controle_diario, consumo_total });
-        el('statusPermissoes').textContent = 'Permissões salvas.';
-        el('statusPermissoes').className = 'mt-3 text-sm text-green-600';
-        closeModalPermissoes();
-      } catch (err) {
-        el('statusPermissoes').textContent = `Erro: ${err.message || err}`;
-        el('statusPermissoes').className = 'mt-3 text-sm text-red-600';
+      // RPC do SQL (retorna apenas para admin)
+      const { data, error } = await supabase.rpc('list_users');
+      if (error) { msgPerm.textContent = 'Erro ao listar usuários: ' + (error.message || error); return; }
+      if (!data || data.length === 0) {
+        msgPerm.textContent = 'Nenhum usuário encontrado.';
+        hintPerm.style.display = 'block';
+        return;
       }
+
+      data.sort((a,b) => (a.email || '').localeCompare(b.email || ''));
+      for (const u of data) {
+        const opt = document.createElement('option');
+        opt.value = u.user_id;
+        const last = u.last_sign_in_at ? ` — ${new Date(u.last_sign_in_at).toLocaleString('pt-BR')}` : '';
+        opt.textContent = `${u.email}${last}`;
+        selUser.appendChild(opt);
+      }
+      msgPerm.textContent = 'Selecione um usuário e ajuste as permissões.';
+    }
+
+    selUser.addEventListener('change', async (e) => {
+      const id = e.target.value;
+      chkAdmin.checked = false;
+      chkCtrl.checked  = false;
+      chkCons.checked  = false;
+      if (!id) { msgPerm.textContent = ''; return; }
+
+      msgPerm.textContent = 'Lendo permissões…';
+      const { data, error } = await supabase
+        .from('permissoes_app')
+        .select('is_admin, perm_controle_diario, perm_consumo_total')
+        .eq('user_id', id)
+        .maybeSingle();
+
+      if (error) { msgPerm.textContent = 'Erro: ' + (error.message || error); return; }
+
+      chkAdmin.checked = !!data?.is_admin;
+      chkCtrl.checked  = !!data?.perm_controle_diario;
+      chkCons.checked  = !!data?.perm_consumo_total;
+      msgPerm.textContent = data ? 'Permissões carregadas.' : 'Usuário ainda sem registro; ao salvar será criado.';
     });
+
+    btnPermSalvar.onclick = async () => {
+      const id = selUser.value;
+      if (!id) { msgPerm.textContent = 'Selecione um usuário.'; return; }
+
+      msgPerm.textContent = 'Salvando…';
+      const { error } = await supabase.rpc('set_permissoes', {
+        p_user_id: id,
+        p_perm_controle: chkCtrl.checked,
+        p_perm_consumo: chkCons.checked,
+        p_is_admin: chkAdmin.checked
+      });
+
+      if (error) { msgPerm.textContent = 'Erro ao salvar: ' + (error.message || error); return; }
+      msgPerm.textContent = 'Permissões salvas com sucesso.';
+    };
+    // ============================================
+    // /NOVO: Permissões
+    // ============================================
+
+    // Não carregamos nada ao abrir a página.
+    // A listagem só abre/carrega ao clicar em "👥 Listar usuários".
   </script>
+
+  <!-- ===========================================================
+       ADDON NÃO-DESTRUTIVO (idempotente)
+       - Só atua se NÃO existirem btnOpenPerm/dlgPerm/JS acima
+       - Não remove/edita nada do arquivo original
+     =========================================================== -->
+  <script type="module" id="permissoes-addon">
+    // Evita rodar 2x
+    if (!window.__permissoes_addon_init__) {
+      window.__permissoes_addon_init__ = true;
+
+      // Se já existem o botão e o modal, não faz nada
+      const alreadyHas = document.getElementById('btnOpenPerm') && document.getElementById('dlgPerm');
+      if (alreadyHas) {
+        // Já está tudo no arquivo principal; addon não interfere.
+      } else {
+        // Injeta CSS de fallback se necessário
+        if (!document.getElementById('dlg-perm-style')) {
+          const st = document.createElement('style');
+          st.id = 'dlg-perm-style';
+          st.textContent = `dialog::backdrop{background:rgba(0,0,0,.45);} dialog[open]{display:block;}`;
+          document.head.appendChild(st);
+        }
+
+        // Garante botão Permissões
+        (function ensurePermButton(){
+          if (document.getElementById('btnOpenPerm')) return;
+          const toolbar = document.querySelector('.toolbar');
+          if (!toolbar) return;
+          const btn = document.createElement('button');
+          btn.className = 'btn';
+          btn.id = 'btnOpenPerm';
+          btn.textContent = '🛡️ Permissões';
+          const muted = toolbar.querySelector('.muted');
+          toolbar.insertBefore(btn, muted || null);
+        })();
+
+        // Garante modal Permissões
+        (function ensurePermModal(){
+          if (document.getElementById('dlgPerm')) return;
+          const dlg = document.createElement('dialog');
+          dlg.id = 'dlgPerm';
+          dlg.style.cssText = 'border:0; border-radius:12px; padding:0; width:95%; max-width:620px;';
+          dlg.innerHTML = `
+            <form method="dialog" style="padding:18px" id="formPerm">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                <h3 style="margin:0">Gerenciar permissões</h3>
+                <button class="btn-secondary btn" value="cancel">Fechar</button>
+              </div>
+              <label>Usuário
+                <select id="perm_sel_user" class="input" style="width:100%; margin-top:6px">
+                  <option value="">Selecione um usuário…</option>
+                </select>
+              </label>
+              <p class="muted" id="perm_hint" style="margin:6px 0 0; display:none;">Se o usuário não aparecer, ele ainda não fez login no sistema.</p>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;">
+                <label class="input" style="display:flex; align-items:center; gap:10px;">
+                  <input id="perm_admin" type="checkbox"> Administrador
+                </label>
+                <label class="input" style="display:flex; align-items:center; gap:10px;">
+                  <input id="perm_controle" type="checkbox"> Controle Diário
+                </label>
+                <label class="input" style="display:flex; align-items:center; gap:10px;">
+                  <input id="perm_consumo" type="checkbox"> Consumo Total
+                </label>
+              </div>
+              <p id="perm_msg" class="muted" style="margin:10px 0 0;"></p>
+              <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px">
+                <button class="btn-secondary btn" value="cancel">Cancelar</button>
+                <button id="perm_salvar" type="button" class="btn">Salvar</button>
+              </div>
+            </form>`;
+          document.body.appendChild(dlg);
+        })();
+
+        // Liga a lógica somente se ainda não existir no arquivo principal
+        (async function wireLogic(){
+          // Import aqui para evitar conflito com o script principal
+          const { createClient } = await import('https://cdn.skypack.dev/@supabase/supabase-js');
+
+          const SUPABASE_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
+          const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
+          const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+          const btnOpenPerm = document.getElementById('btnOpenPerm');
+          const dlgPerm = document.getElementById('dlgPerm');
+          const selUser = document.getElementById('perm_sel_user');
+          const chkAdmin = document.getElementById('perm_admin');
+          const chkCtrl  = document.getElementById('perm_controle');
+          const chkCons  = document.getElementById('perm_consumo');
+          const msgPerm  = document.getElementById('perm_msg');
+          const hintPerm = document.getElementById('perm_hint');
+          const btnPermSalvar = document.getElementById('perm_salvar');
+
+          function openDialog(el){ try{ if(el.showModal) el.showModal(); else el.setAttribute('open',''); } catch{ el.setAttribute('open',''); } }
+          function closeDialog(el){ try{ if(el.close) el.close(); else el.removeAttribute('open'); } catch{ el.removeAttribute('open'); } }
+
+          document.getElementById('formPerm')?.addEventListener('submit', e => { e.preventDefault(); closeDialog(dlgPerm); });
+          dlgPerm?.addEventListener('cancel', e => { e.preventDefault(); closeDialog(dlgPerm); });
+
+          btnOpenPerm.onclick = async () => { openDialog(dlgPerm); await carregarUsuariosPerm(); };
+
+          async function carregarUsuariosPerm() {
+            msgPerm.textContent = 'Carregando usuários…';
+            selUser.innerHTML = '<option value="">Selecione um usuário…</option>';
+            hintPerm.style.display = 'none';
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { msgPerm.textContent = 'É necessário estar logado.'; return; }
+            const { data, error } = await supabase.rpc('list_users');
+            if (error) { msgPerm.textContent = 'Erro ao listar usuários: ' + (error.message || error); return; }
+            if (!data || data.length === 0) { msgPerm.textContent = 'Nenhum usuário encontrado.'; hintPerm.style.display = 'block'; return; }
+            data.sort((a,b) => (a.email || '').localeCompare(b.email || ''));
+            for (const u of data) {
+              const opt = document.createElement('option');
+              opt.value = u.user_id;
+              const last = u.last_sign_in_at ? ` — ${new Date(u.last_sign_in_at).toLocaleString('pt-BR')}` : '';
+              opt.textContent = `${u.email}${last}`;
+              selUser.appendChild(opt);
+            }
+            msgPerm.textContent = 'Selecione um usuário e ajuste as permissões.';
+          }
+
+          selUser.addEventListener('change', async (e) => {
+            const id = e.target.value;
+            chkAdmin.checked = chkCtrl.checked = chkCons.checked = false;
+            if (!id) { msgPerm.textContent = ''; return; }
+            msgPerm.textContent = 'Lendo permissões…';
+            const { data, error } = await supabase
+              .from('permissoes_app')
+              .select('is_admin, perm_controle_diario, perm_consumo_total')
+              .eq('user_id', id)
+              .maybeSingle();
+            if (error) { msgPerm.textContent = 'Erro: ' + (error.message || error); return; }
+            chkAdmin.checked = !!data?.is_admin;
+            chkCtrl.checked  = !!data?.perm_controle_diario;
+            chkCons.checked  = !!data?.perm_consumo_total;
+            msgPerm.textContent = data ? 'Permissões carregadas.' : 'Usuário ainda sem registro; ao salvar será criado.';
+          });
+
+          btnPermSalvar.onclick = async () => {
+            const id = selUser.value;
+            if (!id) { msgPerm.textContent = 'Selecione um usuário.'; return; }
+            msgPerm.textContent = 'Salvando…';
+            const { error } = await supabase.rpc('set_permissoes', {
+              p_user_id: id,
+              p_perm_controle: chkCtrl.checked,
+              p_perm_consumo: chkCons.checked,
+              p_is_admin: chkAdmin.checked
+            });
+            if (error) { msgPerm.textContent = 'Erro ao salvar: ' + (error.message || error); return; }
+            msgPerm.textContent = 'Permissões salvas com sucesso.';
+          };
+        })();
+      }
+    }
+  </script>
+  <!-- /ADDON NÃO-DESTRUTIVO -->
+
 </body>
 </html>
