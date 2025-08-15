@@ -2,25 +2,27 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>Acesso — IPEV</title>
+  <title>Acesso ao Sistema — IPEV</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{ --azul:#2563eb; --azul-esc:#1d4ed8; --cinza:#6b7280; --bg:#eaf1ff; --card:#fff; }
     *{ box-sizing:border-box; }
-    body{ margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); }
-    .wrap{ max-width:920px; margin:28px auto; padding:0 16px; }
-    .card{ background:var(--card); border-radius:14px; box-shadow:0 10px 30px rgba(16,24,40,.12); padding:24px; }
-    h1{ margin:0 0 18px; color:#1f2937; font-size:28px; }
-    label{ display:block; margin:14px 0 6px; color:#374151; font-weight:600; }
+    body{ margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:#111827; }
+    .wrap{ max-width:1000px; margin:40px auto; padding:0 16px; }
+    .card{ background:var(--card); border-radius:18px; box-shadow:0 16px 40px rgba(2,8,20,.15); padding:26px 26px 20px; }
+    h1{ margin:0 0 18px; color:#0f172a; font-weight:800; font-size:38px; letter-spacing:.2px; }
+    label{ display:block; margin:14px 0 6px; color:#374151; font-weight:700; }
     input[type="text"], input[type="password"]{
-      width:100%; padding:12px 14px; border:1px solid #d1d5db; border-radius:10px; font-size:16px; background:#f8fbff;
+      width:100%; padding:14px 16px; border:1px solid #d1d5db; border-radius:12px; font-size:16px; background:#f8fbff;
+      outline:none;
     }
-    .row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    input[type="text"]:focus, input[type="password"]:focus{ border-color:#93c5fd; box-shadow:0 0 0 4px rgba(59,130,246,.15); }
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
     .actions{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; }
-    .btn{ background:var(--azul); color:#fff; border:0; border-radius:10px; padding:12px 18px; font-weight:700; cursor:pointer; }
+    .btn{ background:var(--azul); color:#fff; border:0; border-radius:12px; padding:12px 22px; font-weight:800; cursor:pointer; min-width:120px; }
     .btn:hover{ background:var(--azul-esc); }
     .muted{ color:var(--cinza); font-size:14px; }
-    .error{ color:#dc2626; margin-top:8px; }
+    .error{ color:#dc2626; margin-top:10px; min-height:22px; }
     footer{ text-align:center; color:#6b7280; font-size:13px; margin-top:18px; }
     .center{ display:flex; align-items:center; justify-content:center; min-height:40vh; }
   </style>
@@ -28,24 +30,24 @@
 <body>
   <div class="wrap">
     <div class="center">
-      <div class="card" style="max-width:760px; width:100%;">
+      <div class="card" style="max-width:860px; width:100%;">
         <h1>Acesso ao Sistema</h1>
 
         <div class="row">
           <div>
             <label for="id_input">Usuário ou E-mail</label>
-            <input id="id_input" type="text" placeholder="ex.: Guilherme ou usuario@empresa.com" autocomplete="username" />
+            <input id="id_input" type="text" inputmode="text" autocomplete="off"
+                   placeholder="ex.: Guilherme ou usuario@empresa.com" />
           </div>
           <div>
             <label for="pwd_input">Senha</label>
-            <input id="pwd_input" type="password" placeholder="Sua senha" autocomplete="current-password" />
+            <input id="pwd_input" type="password" autocomplete="new-password" placeholder="Sua senha" />
           </div>
         </div>
 
         <div class="actions">
           <label class="muted" style="display:flex; align-items:center; gap:8px; user-select:none;">
-            <input id="keep" type="checkbox" />
-            Manter-me conectado neste dispositivo
+            <input id="keep" type="checkbox" /> Manter-me conectado neste dispositivo
           </label>
           <button id="loginBtn" class="btn">Entrar</button>
         </div>
@@ -63,8 +65,6 @@
     // === CONFIG ===
     const SUPABASE_URL  = "https://ilsbyrvnrkutwynujfhs.supabase.co";
     const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ";
-
-    // URL da Edge que traduz username/display_name -> email
     const RESOLVE_URL   = `${SUPABASE_URL}/functions/v1/resolve-login-identifier`;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -75,17 +75,23 @@
     const msgEl    = document.getElementById("msg");
     const btn      = document.getElementById("loginBtn");
 
-    // Se já tiver sessão, redireciona para o menu
+    // Evita preencher automático do navegador
+    window.addEventListener("pageshow", () => {
+      idInput.value = "";
+      pwdInput.value = "";
+    });
+
+    // Se já tiver sessão, redireciona
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        window.location.href = "menu.html";
-      }
+      if (session) window.location.href = "menu.html";
     })();
 
     btn.addEventListener("click", doLogin);
-    pwdInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
-    idInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
+    ["keydown","keyup"].forEach(evt => {
+      idInput.addEventListener(evt, (e) => { if (e.key === "Enter") doLogin(); });
+      pwdInput.addEventListener(evt, (e) => { if (e.key === "Enter") doLogin(); });
+    });
 
     async function doLogin() {
       msgEl.textContent = "";
@@ -98,14 +104,14 @@
       }
 
       try {
-        // 1) Resolve para email
+        // 1) Resolve para e-mail (aceita username/display_name sem considerar maiúsculas/minúsculas)
         const r = await fetch(RESOLVE_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ identifier })
         });
-
         const json = await r.json();
+
         if (!r.ok) {
           msgEl.textContent = json?.error || "Usuário não encontrado.";
           return;
@@ -113,29 +119,21 @@
         const email = (json.email || "").toLowerCase();
 
         // 2) Login no Auth
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           msgEl.textContent = error.message || "Falha no login.";
           return;
         }
 
-        // 3) Persistência de sessão
-        // O Supabase já persiste por padrão em localStorage;
-        // se NÃO marcar "manter conectado", podemos forçar signOut ao fechar a aba.
+        // 3) Persistência (se não marcar, encerra sessão ao fechar aba)
         if (!keepCk.checked) {
-          // Estratégia simples: registra um event para signOut ao descarregar.
           window.addEventListener("beforeunload", () => { supabase.auth.signOut(); });
         }
 
-        // 4) Redireciona
         window.location.href = "menu.html";
       } catch (e) {
-        msgEl.textContent = "Erro inesperado. Tente novamente.";
         console.error(e);
+        msgEl.textContent = "Erro inesperado. Tente novamente.";
       }
     }
   </script>
