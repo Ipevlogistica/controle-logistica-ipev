@@ -6,122 +6,203 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
-      --bg:#e9f0ff;
+      --bg:#eaf1ff;
       --card:#ffffff;
       --text:#0f172a;
       --muted:#6b7280;
       --primary:#2563eb;
-      --primary-dark:#1d4ed8;
+      --primary-hover:#1d4ed8;
       --error:#dc2626;
-      --border:#d1d5db;
-      --focus:rgba(59,130,246,.18);
+      --border:#dbe3f3;
+      --shadow:0 18px 48px rgba(15,23,42,.12);
+      --focus-ring:0 0 0 4px rgba(37,99,235,.18);
     }
-    *{ box-sizing:border-box; }
-    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); }
-    .wrap{ max-width:1060px; margin:38px auto; padding:0 16px; }
-    .center{ display:flex; align-items:center; justify-content:center; min-height:42vh; }
-    .card{ background:var(--card); border-radius:18px; box-shadow:0 16px 40px rgba(2,8,20,.12); padding:28px; width:100%; max-width:880px; }
-    h1{ margin:0 0 18px; font-size:38px; font-weight:800; letter-spacing:.2px; }
-    .row{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-    label{ display:block; margin:10px 0 6px; color:#374151; font-weight:700; }
-    input[type="text"], input[type="password"]{
-      width:100%; padding:14px 16px; border:1px solid var(--border); border-radius:12px; font-size:16px; background:#f8fbff; outline:none;
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+      color:var(--text);
+      background:linear-gradient(180deg,#f3f7ff 0%, #e9f0ff 100%);
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
     }
-    input[type="text"]:focus, input[type="password"]:focus{ border-color:#93c5fd; box-shadow:0 0 0 4px var(--focus); }
-    .actions{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; flex-wrap:wrap; }
+    .wrap{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:32px 16px 24px;
+    }
+    .card{
+      width:100%;
+      max-width:880px;
+      background:var(--card);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      padding:32px;
+    }
+    h1{
+      margin:0 0 22px;
+      font-size:40px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:18px;
+    }
+    label{
+      display:block;
+      font-weight:700;
+      color:#374151;
+      margin:8px 0 8px;
+    }
+    input[type="text"],input[type="password"]{
+      width:100%;
+      height:50px;
+      border:1px solid var(--border);
+      background:#f8fbff;
+      border-radius:12px;
+      padding:12px 14px;
+      font-size:16px;
+      outline:none;
+      transition:.15s;
+    }
+    input[type="text"]:focus,input[type="password"]:focus{
+      border-color:#93c5fd;
+      box-shadow:var(--focus-ring);
+      background:#fff;
+    }
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-top:16px;
+      flex-wrap:wrap;
+    }
     .muted{ color:var(--muted); font-size:14px; }
-    .btn{ background:var(--primary); color:#fff; border:0; border-radius:12px; padding:12px 22px; font-weight:800; cursor:pointer; min-width:120px; }
-    .btn:hover{ background:var(--primary-dark); }
-    .error{ color:var(--error); margin-top:12px; min-height:22px; }
-    footer{ text-align:center; color:var(--muted); font-size:13px; margin-top:18px; }
+    .btn{
+      min-width:120px;
+      height:46px;
+      padding:0 22px;
+      background:var(--primary);
+      color:#fff;
+      border:0;
+      border-radius:12px;
+      font-weight:800;
+      cursor:pointer;
+      transition:.15s;
+    }
+    .btn:hover{ background:var(--primary-hover); }
+    .error{
+      min-height:22px;
+      margin-top:12px;
+      color:var(--error);
+      font-size:16px;
+    }
+    footer{
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+      padding:8px 0 22px;
+    }
+    @media (max-width:760px){
+      .grid{ grid-template-columns:1fr; }
+      h1{ font-size:32px; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="center">
-      <div class="card">
-        <h1>Acesso ao Sistema</h1>
+  <main class="wrap">
+    <section class="card" aria-labelledby="titulo">
+      <h1 id="titulo">Acesso ao Sistema</h1>
 
-        <div class="row">
-          <div>
-            <label for="email_input">E-mail</label>
-            <input id="email_input" type="text" inputmode="email" autocomplete="username"
-                   placeholder="ex.: usuario@empresa.com" />
-          </div>
-          <div>
-            <label for="senha_input">Senha</label>
-            <input id="senha_input" type="password" autocomplete="current-password" placeholder="Sua senha" />
-          </div>
+      <div class="grid" role="group" aria-label="Credenciais">
+        <div>
+          <label for="usuario_input">Usuário ou E-mail</label>
+          <input id="usuario_input" type="text" inputmode="text" autocomplete="username"
+                 placeholder="ex.: Guilherme ou usuario@empresa.com" />
         </div>
-
-        <div class="actions">
-          <label class="muted" style="display:flex; align-items:center; gap:8px; user-select:none;">
-            <input id="keep" type="checkbox" /> Manter-me conectado neste dispositivo
-          </label>
-          <button id="btnEntrar" class="btn">Entrar</button>
+        <div>
+          <label for="senha_input">Senha</label>
+          <input id="senha_input" type="password" autocomplete="current-password" placeholder="Sua senha" />
         </div>
-
-        <p id="msg" class="error" role="alert" aria-live="polite"></p>
       </div>
-    </div>
 
-    <footer>© IPEV — Sistema interno de logística</footer>
-  </div>
+      <div class="row">
+        <label class="muted" style="display:flex;align-items:center;gap:8px;user-select:none;">
+          <input id="keep" type="checkbox" /> Manter-me conectado neste dispositivo
+        </label>
+        <button id="btnEntrar" class="btn">Entrar</button>
+      </div>
 
-  <!-- Script de login (somente e-mail + senha) -->
+      <p id="msg" class="error" role="alert" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer>© IPEV — Sistema interno de logística</footer>
+
+  <!-- Script de login embutido (email + senha; sem Edge) -->
   <script type="module">
     import { createClient } from "https://cdn.skypack.dev/@supabase/supabase-js";
 
+    // === SEU PROJETO SUPABASE ===
     const SUPABASE_URL  = "https://ilsbyrvnrkutwynujfhs.supabase.co";
     const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ";
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-    const emailInput = document.getElementById("email_input");
-    const pwdInput   = document.getElementById("senha_input");
-    const keepCk     = document.getElementById("keep");
-    const btn        = document.getElementById("btnEntrar");
-    const msgEl      = document.getElementById("msg");
+    // elementos
+    const idInput  = document.getElementById("usuario_input");
+    const pwdInput = document.getElementById("senha_input");
+    const keepCk   = document.getElementById("keep");
+    const btn      = document.getElementById("btnEntrar");
+    const msgEl    = document.getElementById("msg");
 
-    // Se já estiver logado, manda para o menu
+    // se já estiver logado, envia pro menu
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) window.location.href = "menu.html";
     })();
 
-    // Evita autofill persistente
-    window.addEventListener("pageshow", () => { /* não limpamos e-mail para facilitar */ pwdInput.value = ""; });
-
+    // eventos
     btn.addEventListener("click", doLogin);
-    emailInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") doLogin(); });
-    pwdInput.addEventListener("keydown",   (e)=>{ if (e.key === "Enter") doLogin(); });
+    idInput.addEventListener("keydown",  (e)=>{ if (e.key === "Enter") doLogin(); });
+    pwdInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") doLogin(); });
 
-    function isEmail(s){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+    function isEmail(s){ return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(s); }
 
     async function doLogin(){
       msgEl.textContent = "";
-      const email = (emailInput.value || "").trim().toLowerCase();
+      const ident = (idInput.value || "").trim();
       const password = pwdInput.value;
 
-      if (!email || !password) {
-        msgEl.textContent = "Informe e-mail e senha.";
+      if (!ident || !password){
+        msgEl.textContent = "Preencha usuário/e-mail e senha.";
         return;
       }
-      if (!isEmail(email)) {
-        msgEl.textContent = "Digite o e-mail completo (ex.: usuario@empresa.com).";
+
+      // sem Edge: exigimos e-mail para autenticar
+      if (!isEmail(ident)){
+        msgEl.textContent = "Para entrar, digite o e-mail completo (ex.: usuario@empresa.com).";
         return;
       }
 
       try {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email: ident.toLowerCase(),
+          password
+        });
         if (error){
           msgEl.textContent = error.message || "Falha no login.";
           return;
         }
 
-        if (!keepCk.checked) {
+        if (!keepCk.checked){
           window.addEventListener("beforeunload", () => { supabase.auth.signOut(); });
         }
-
         window.location.href = "menu.html";
       } catch (e){
         msgEl.textContent = "Erro inesperado. Tente novamente.";
