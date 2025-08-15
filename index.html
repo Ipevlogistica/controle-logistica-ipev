@@ -5,20 +5,19 @@
   <title>Acesso ao Sistema — IPEV</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root{ --azul:#2563eb; --azul-esc:#1d4ed8; --cinza:#6b7280; --bg:#eaf1ff; --card:#fff; }
+    :root{ --azul:#2563eb; --azul-esc:#1d4ed8; --cinza:#6b7280; --bg:#e9f0ff; --card:#fff; }
     *{ box-sizing:border-box; }
-    body{ margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:#111827; }
-    .wrap{ max-width:1000px; margin:40px auto; padding:0 16px; }
-    .card{ background:var(--card); border-radius:18px; box-shadow:0 16px 40px rgba(2,8,20,.15); padding:26px 26px 20px; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:#0f172a; }
+    .wrap{ max-width:1060px; margin:40px auto; padding:0 16px; }
+    .card{ background:var(--card); border-radius:18px; box-shadow:0 16px 40px rgba(2,8,20,.12); padding:28px; }
     h1{ margin:0 0 18px; color:#0f172a; font-weight:800; font-size:38px; letter-spacing:.2px; }
     label{ display:block; margin:14px 0 6px; color:#374151; font-weight:700; }
     input[type="text"], input[type="password"]{
-      width:100%; padding:14px 16px; border:1px solid #d1d5db; border-radius:12px; font-size:16px; background:#f8fbff;
-      outline:none;
+      width:100%; padding:14px 16px; border:1px solid #d1d5db; border-radius:12px; font-size:16px; background:#f8fbff; outline:none;
     }
     input[type="text"]:focus, input[type="password"]:focus{ border-color:#93c5fd; box-shadow:0 0 0 4px rgba(59,130,246,.15); }
     .row{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-    .actions{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; }
+    .actions{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; flex-wrap:wrap; }
     .btn{ background:var(--azul); color:#fff; border:0; border-radius:12px; padding:12px 22px; font-weight:800; cursor:pointer; min-width:120px; }
     .btn:hover{ background:var(--azul-esc); }
     .muted{ color:var(--cinza); font-size:14px; }
@@ -30,18 +29,18 @@
 <body>
   <div class="wrap">
     <div class="center">
-      <div class="card" style="max-width:860px; width:100%;">
+      <div class="card" style="max-width:880px; width:100%;">
         <h1>Acesso ao Sistema</h1>
 
         <div class="row">
           <div>
-            <label for="id_input">Usuário ou E-mail</label>
-            <input id="id_input" type="text" inputmode="text" autocomplete="off"
+            <label for="usuario_input">Usuário ou E-mail</label>
+            <input id="usuario_input" type="text" inputmode="text" autocomplete="off"
                    placeholder="ex.: Guilherme ou usuario@empresa.com" />
           </div>
           <div>
-            <label for="pwd_input">Senha</label>
-            <input id="pwd_input" type="password" autocomplete="new-password" placeholder="Sua senha" />
+            <label for="senha_input">Senha</label>
+            <input id="senha_input" type="password" autocomplete="current-password" placeholder="Sua senha" />
           </div>
         </div>
 
@@ -49,7 +48,7 @@
           <label class="muted" style="display:flex; align-items:center; gap:8px; user-select:none;">
             <input id="keep" type="checkbox" /> Manter-me conectado neste dispositivo
           </label>
-          <button id="loginBtn" class="btn">Entrar</button>
+          <button id="btnEntrar" class="btn">Entrar</button>
         </div>
 
         <p id="msg" class="error" role="alert" aria-live="polite"></p>
@@ -59,39 +58,38 @@
     <footer>© IPEV — Sistema interno de logística</footer>
   </div>
 
+  <!-- SCRIPT EMBUTIDO: login por nome OU e-mail mantendo Supabase Auth -->
   <script type="module">
     import { createClient } from "https://cdn.skypack.dev/@supabase/supabase-js";
 
     // === CONFIG ===
     const SUPABASE_URL  = "https://ilsbyrvnrkutwynujfhs.supabase.co";
     const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ";
+
+    // Edge que resolve "nome → e-mail" (publiquei o arquivo completo pra você)
     const RESOLVE_URL   = `${SUPABASE_URL}/functions/v1/resolve-login-identifier`;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-    const idInput  = document.getElementById("id_input");
-    const pwdInput = document.getElementById("pwd_input");
+    // Elementos
+    const idInput  = document.getElementById("usuario_input");
+    const pwdInput = document.getElementById("senha_input");
     const keepCk   = document.getElementById("keep");
+    const btn      = document.getElementById("btnEntrar");
     const msgEl    = document.getElementById("msg");
-    const btn      = document.getElementById("loginBtn");
 
-    // Evita preencher automático do navegador
-    window.addEventListener("pageshow", () => {
-      idInput.value = "";
-      pwdInput.value = "";
-    });
+    // Evita autofill repondo placeholders
+    window.addEventListener("pageshow", () => { idInput.value = ""; pwdInput.value = ""; });
 
-    // Se já tiver sessão, redireciona
+    // Se já tiver sessão, vai pro menu
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) window.location.href = "menu.html";
     })();
 
     btn.addEventListener("click", doLogin);
-    ["keydown","keyup"].forEach(evt => {
-      idInput.addEventListener(evt, (e) => { if (e.key === "Enter") doLogin(); });
-      pwdInput.addEventListener(evt, (e) => { if (e.key === "Enter") doLogin(); });
-    });
+    idInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") doLogin(); });
+    pwdInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") doLogin(); });
 
     async function doLogin() {
       msgEl.textContent = "";
@@ -104,7 +102,7 @@
       }
 
       try {
-        // 1) Resolve para e-mail (aceita username/display_name sem considerar maiúsculas/minúsculas)
+        // 1) Resolve para e-mail (aceita username ou display_name, case-insensitive)
         const r = await fetch(RESOLVE_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -112,11 +110,11 @@
         });
         const json = await r.json();
 
-        if (!r.ok) {
+        if (!r.ok || !json?.email) {
           msgEl.textContent = json?.error || "Usuário não encontrado.";
           return;
         }
-        const email = (json.email || "").toLowerCase();
+        const email = String(json.email).toLowerCase();
 
         // 2) Login no Auth
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -125,7 +123,7 @@
           return;
         }
 
-        // 3) Persistência (se não marcar, encerra sessão ao fechar aba)
+        // 3) Persistência simples: se não marcar "manter", encerra ao fechar a aba
         if (!keepCk.checked) {
           window.addEventListener("beforeunload", () => { supabase.auth.signOut(); });
         }
