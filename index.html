@@ -1,154 +1,111 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <title>Acesso ao Sistema — IPEV</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      --bg:#e9f0ff;
-      --card:#ffffff;
-      --text:#0f172a;
-      --muted:#6b7280;
-      --primary:#2563eb;
-      --primary-dark:#1d4ed8;
-      --error:#dc2626;
-      --border:#d1d5db;
-      --focus:rgba(59,130,246,.18);
-    }
-    *{ box-sizing:border-box; }
-    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); }
-    .wrap{ max-width:1060px; margin:38px auto; padding:0 16px; }
-    .center{ display:flex; align-items:center; justify-content:center; min-height:42vh; }
-    .card{ background:var(--card); border-radius:18px; box-shadow:0 16px 40px rgba(2,8,20,.12); padding:28px; width:100%; max-width:880px; }
-    h1{ margin:0 0 18px; font-size:38px; font-weight:800; letter-spacing:.2px; }
-    .row{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-    label{ display:block; margin:10px 0 6px; color:#374151; font-weight:700; }
-    input[type="text"], input[type="password"]{
-      width:100%; padding:14px 16px; border:1px solid var(--border); border-radius:12px; font-size:16px; background:#f8fbff; outline:none;
-    }
-    input[type="text"]:focus, input[type="password"]:focus{ border-color:#93c5fd; box-shadow:0 0 0 4px var(--focus); }
-    .actions{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; flex-wrap:wrap; }
-    .muted{ color:var(--muted); font-size:14px; }
-    .btn{ background:var(--primary); color:#fff; border:0; border-radius:12px; padding:12px 22px; font-weight:800; cursor:pointer; min-width:120px; }
-    .btn:hover{ background:var(--primary-dark); }
-    .error{ color:var(--error); margin-top:12px; min-height:22px; }
-    footer{ text-align:center; color:var(--muted); font-size:13px; margin-top:18px; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Controle de Logística IPEV — Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-  <div class="wrap">
-    <div class="center">
-      <div class="card">
-        <h1>Acesso ao Sistema</h1>
+<body class="bg-blue-100 min-h-screen">
 
-        <div class="row">
-          <div>
-            <label for="usuario_input">Usuário ou E-mail</label>
-            <input id="usuario_input" type="text" inputmode="text" autocomplete="off"
-                   placeholder="ex.: Guilherme ou usuario@empresa.com" />
-          </div>
-          <div>
-            <label for="senha_input">Senha</label>
-            <input id="senha_input" type="password" autocomplete="current-password" placeholder="Sua senha" />
-          </div>
-        </div>
-
-        <div class="actions">
-          <label class="muted" style="display:flex; align-items:center; gap:8px; user-select:none;">
-            <input id="keep" type="checkbox" /> Manter-me conectado neste dispositivo
-          </label>
-          <button id="btnEntrar" class="btn">Entrar</button>
-        </div>
-
-        <p id="msg" class="error" role="alert" aria-live="polite"></p>
-      </div>
-    </div>
-
-    <footer>© IPEV — Sistema interno de logística</footer>
+  <!-- Cabeçalho no mesmo padrão visual -->
+  <div class="flex justify-between items-center p-4">
+    <h1 class="text-2xl font-bold text-blue-900">Controle de Logística IPEV</h1>
+    <!-- Espaço reservado p/ logo se quiser
+    <img src="img/logo-ipev.png" class="h-10" alt="IPEV">
+    -->
   </div>
 
-  <!-- Script de login embutido -->
+  <!-- Container central semelhante ao seu "card" -->
+  <div class="max-w-3xl mx-auto px-4">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h2 class="text-xl font-semibold text-blue-900 mb-4">Acesso ao Sistema</h2>
+
+      <!-- Grid lembra a organização do seu index -->
+      <form id="loginForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="col-span-1">
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+          <input type="email" id="email" required
+                 class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-500"
+                 placeholder="seuemail@ipev.com.br">
+        </div>
+
+        <div class="col-span-1">
+          <label for="senha" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+          <input type="password" id="senha" required
+                 class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-500"
+                 placeholder="••••••••">
+        </div>
+
+        <div class="col-span-1 flex items-center space-x-2">
+          <input id="lembrar" type="checkbox" class="h-4 w-4">
+          <label for="lembrar" class="text-sm text-gray-700">Manter-me conectado neste dispositivo</label>
+        </div>
+
+        <div class="col-span-1 sm:text-right">
+          <button id="entrarBtn" type="submit"
+                  class="bg-blue-700 text-white px-5 py-2 rounded hover:bg-blue-800 disabled:opacity-60">
+            Entrar
+          </button>
+        </div>
+
+        <div class="col-span-2">
+          <p id="erroMsg" class="text-red-600 hidden"></p>
+          <p id="okMsg" class="text-green-600 hidden"></p>
+        </div>
+      </form>
+    </div>
+
+    <!-- Rodapé leve, mantendo a identidade -->
+    <div class="text-center text-sm text-gray-600 mt-6">
+      © IPEV — Sistema interno de logística
+    </div>
+  </div>
+
   <script type="module">
-    import { createClient } from "https://cdn.skypack.dev/@supabase/supabase-js";
+    import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
 
-    // === CONFIG DO SEU PROJETO ===
-    const SUPABASE_URL  = "https://ilsbyrvnrkutwynujfhs.supabase.co";
-    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ";
-    const RESOLVE_URL   = `${SUPABASE_URL}/functions/v1/resolve-login-identifier`; // Edge publicada com esse nome
+    const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co'
+    const supabaseKey = 'SUA_ANON_KEY_AQUI' // cole sua anon key
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+    const redirectUrl = 'menu.html' // para onde vai depois do login
+    const form = document.getElementById('loginForm')
+    const btn = document.getElementById('entrarBtn')
+    const erroMsg = document.getElementById('erroMsg')
+    const okMsg = document.getElementById('okMsg')
+    const lembrar = document.getElementById('lembrar')
 
-    // Elements
-    const idInput  = document.getElementById("usuario_input");
-    const pwdInput = document.getElementById("senha_input");
-    const keepCk   = document.getElementById("keep");
-    const btn      = document.getElementById("btnEntrar");
-    const msgEl    = document.getElementById("msg");
+    // Se já estiver logado, pula a tela
+    (await supabase.auth.getSession()).data.session && (window.location.href = redirectUrl)
 
-    // Se já estiver logado, manda para o menu
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) window.location.href = "menu.html";
-    })();
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      erroMsg.classList.add('hidden')
+      okMsg.classList.add('hidden')
+      btn.disabled = true
 
-    // Evita autofill persistente
-    window.addEventListener("pageshow", () => { idInput.value = ""; pwdInput.value = ""; });
+      const email = document.getElementById('email').value.trim().toLowerCase()
+      const senha = document.getElementById('senha').value
 
-    btn.addEventListener("click", doLogin);
-    idInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") doLogin(); });
-    pwdInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") doLogin(); });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha })
 
-    function isEmail(s){ return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(s); }
-
-    async function resolveIdentifier(identifier){
-      // Tenta a Edge (nome → e-mail). Se a Edge não existir (404), faz fallback local.
-      try {
-        const r = await fetch(RESOLVE_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ identifier })
-        });
-        const j = await r.json().catch(()=> ({}));
-        if (r.ok && j?.email) return j.email.toLowerCase();
-        // Se Edge respondeu erro conhecido, repassa mensagem
-        if (!r.ok && j?.error) throw new Error(j.error);
-      } catch (_) {
-        // Fallback: se já parece e-mail, usa direto
-        if (isEmail(identifier)) return identifier.toLowerCase();
-      }
-      throw new Error("Usuário não encontrado.");
-    }
-
-    async function doLogin(){
-      msgEl.textContent = "";
-      const identifier = idInput.value.trim();
-      const password   = pwdInput.value;
-
-      if (!identifier || !password){
-        msgEl.textContent = "Preencha usuário/e-mail e senha.";
-        return;
+      if (error) {
+        erroMsg.textContent = 'Falha no login: ' + error.message
+        erroMsg.classList.remove('hidden')
+        btn.disabled = false
+        return
       }
 
-      try {
-        const email = await resolveIdentifier(identifier);
+      // Persistência da sessão (opcional “lembrar”)
+      // O supabase-js já persiste em localStorage por padrão.
+      // Se não quiser persistir quando "lembrar" não estiver marcado, você pode fazer signOut ao fechar aba, etc.
+      okMsg.textContent = 'Login realizado. Redirecionando...'
+      okMsg.classList.remove('hidden')
 
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error){
-          msgEl.textContent = error.message || "Falha no login.";
-          return;
-        }
-
-        // Persistência simples: se não marcar "manter", encerra ao fechar a aba
-        if (!keepCk.checked) {
-          window.addEventListener("beforeunload", () => { supabase.auth.signOut(); });
-        }
-
-        window.location.href = "menu.html";
-      } catch (e){
-        msgEl.textContent = e?.message || "Usuário não encontrado.";
-      }
-    }
+      // pequena pausa para UX
+      setTimeout(() => window.location.href = redirectUrl, 400)
+    })
   </script>
 </body>
 </html>
