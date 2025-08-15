@@ -1,114 +1,73 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Controle IPEV - Página Inicial</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      background-color: #AFEEEE;
-    }
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Painel Administrativo - IPEV</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = "https://ilsbyrvnrkutwynujfhs.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    .container {
-      display: flex;
-      height: 100vh;
-      align-items: center;
-      justify-content: space-between;
-      padding: 40px;
-    }
-
-    .logo-left {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .logo-left img {
-      max-width: 100%;
-      max-height: 80vh;
-      opacity: 15;
-    }
-
-    .buttons-right {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    h1 {
-      color: #1e3a8a;
-      font-size: 32px;
-      margin-bottom: 40px;
-    }
-
-    .btn {
-      display: inline-block;
-      background-color: #1e40af;
-      color: white;
-      padding: 15px 30px;
-      margin: 10px;
-      border: none;
-      border-radius: 8px;
-      font-size: 18px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-      text-decoration: none;
-      width: 280px;
-      text-align: center;
-    }
-
-    .btn:hover {
-      background-color: #374fc7;
-    }
-
-    .btn-relatorio {
-      background-color: #15803d;
-    }
-
-    .btn-relatorio:hover {
-      background-color: #1f9f4c;
-    }
-
-    @media (max-width: 800px) {
-      .container {
-        flex-direction: column;
-        justify-content: center;
-      }
-
-      .logo-left, .buttons-right {
-        flex: unset;
-        width: 100%;
-      }
-
-      .logo-left img {
-        max-height: 30vh;
-        margin-bottom: 20px;
-      }
-
-      .btn {
-        width: 90%;
+    async function getUserInfo() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (user) {
+        document.getElementById("user-name").innerText = user.user_metadata?.display_name || user.email;
+      } else {
+        window.location.href = "login.html";
       }
     }
-  </style>
+
+    async function logout() {
+      await supabaseClient.auth.signOut();
+      window.location.href = "login.html";
+    }
+
+    document.addEventListener("DOMContentLoaded", getUserInfo);
+  </script>
 </head>
-<body>
-  <div class="container">
-    <div class="logo-left">
-      <img src="Logo Ipev Registrado.jpg" alt="Logo IPEV">
+<body class="bg-gray-100 min-h-screen">
+  <!-- Header -->
+  <header class="bg-blue-800 text-white p-4 flex justify-between items-center shadow">
+    <div class="flex items-center space-x-4">
+      <img src="logo.png" alt="IPEV" class="h-10">
+      <h1 class="text-xl font-bold">Painel Administrativo - IPEV</h1>
     </div>
-    <div class="buttons-right">
-      <h1>Controle de Logística IPEV</h1>
+    <div class="flex items-center space-x-4">
+      <span id="user-name" class="font-semibold"></span>
+      <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600">Sair</button>
+    </div>
+  </header>
 
-      <a href="index_final_motorista.html" class="btn">📝 Controle Diário</a>
-      <a href="consumo_total_motoristas_alerta.html" class="btn">⛽ Consumo Total</a>
-      <a href="relatorio_mensal_dinamico.html" class="btn btn-relatorio">📊 Relatório Mensal</a>
+  <!-- Conteúdo principal -->
+  <main class="p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Botão Gerenciar Usuários -->
+      <a href="usuarios.html" class="bg-white rounded shadow p-6 flex flex-col items-center justify-center hover:shadow-lg transition">
+        <img src="icons/users.png" alt="Usuários" class="h-16 mb-4">
+        <h2 class="text-lg font-semibold text-gray-700">Gerenciar Usuários</h2>
+      </a>
+
+      <!-- Botão Controle de Logística -->
+      <a href="index_final_motorista.html" class="bg-white rounded shadow p-6 flex flex-col items-center justify-center hover:shadow-lg transition">
+        <img src="icons/logistica.png" alt="Logística" class="h-16 mb-4">
+        <h2 class="text-lg font-semibold text-gray-700">Controle de Logística</h2>
+      </a>
+
+      <!-- Botão Consumo Total Motoristas -->
+      <a href="consumo_total_motoristas_alerta.html" class="bg-white rounded shadow p-6 flex flex-col items-center justify-center hover:shadow-lg transition">
+        <img src="icons/combustivel.png" alt="Consumo" class="h-16 mb-4">
+        <h2 class="text-lg font-semibold text-gray-700">Consumo Total Motoristas</h2>
+      </a>
+
+      <!-- Botão Relatório Mensal -->
+      <a href="relatorio_mensal_dinamico.html" class="bg-white rounded shadow p-6 flex flex-col items-center justify-center hover:shadow-lg transition">
+        <img src="icons/relatorio.png" alt="Relatório" class="h-16 mb-4">
+        <h2 class="text-lg font-semibold text-gray-700">Relatório Mensal</h2>
+      </a>
     </div>
-  </div>
+  </main>
 </body>
-
-
 </html>
