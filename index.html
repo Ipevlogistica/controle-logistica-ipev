@@ -1,1 +1,111 @@
-<!DOCTYPE html> <html lang="pt-BR"> <head> <meta charset="UTF-8"> <title>Área do Gestor — IPEV</title> <meta name="viewport" content="width=device-width, initial-scale=1"/> <style> :root{ --azul:#0ea5b7; --azul2:#12849a; --cinza:#6b7280; --branco:#fff; --texto:#0b2340; } *{ box-sizing:border-box; } body{ margin:0; font-family:Arial,Helvetica,sans-serif; background:#f3f7f8; color:var(--texto); } .hero{ position:relative; min-height:240px; display:flex; align-items:flex-end; background-image: linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('frota-bg.jpg'); background-size:cover; background-position:center; box-shadow:inset 0 -30px 30px rgba(0,0,0,.18); } .wrap{ width:100%; max-width:1100px; margin:0 auto; padding:28px 18px 32px; display:flex; justify-content:space-between; align-items:flex-end; } .titulo{ color:#fff; margin:0; font-size:30px; text-shadow:0 2px 6px rgba(0,0,0,.35); } .sub{ color:#eaf7fb; margin:6px 0 0; font-size:14px; } .chip-user{ background:rgba(255,255,255,.95); color:#123; padding:9px 14px; border-radius:999px; font-size:13px; box-shadow:0 2px 10px rgba(0,0,0,.2); white-space:nowrap; } .topbar{ position:fixed; top:10px; right:10px; z-index:10; display:flex; gap:8px; } .btn{ background:var(--azul); color:#fff; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; } .btn:hover{ background:var(--azul2); } .btn-secondary{ background:var(--cinza); } .btn-secondary:hover{ background:#4b5563; } .main{ max-width:1100px; margin:22px auto 34px; padding:0 18px; } .card{ background:#fff; border-radius:14px; box-shadow:0 10px 24px rgba(16,24,40,.08); padding:18px; margin-bottom:16px; } .card h3{ margin:0 0 12px; font-size:18px; color:#0f172a; } .toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; } .input{ padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; min-width:240px; background:#fff; } .table{ width:100%; border-collapse:collapse; } .table th,.table td{ padding:10px 12px; border-bottom:1px solid #eef2f7; } .table th{ text-align:left; font-size:13px; color:#374151; cursor:pointer; user-select:none; } .table td{ font-size:14px; color:#111827; } .muted{ color:#6b7280; font-size:12px; } .right{ text-align:right; } .danger{ background:#dc2626; } .danger:hover{ background:#b91c1c; } .pagination{ display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px; } .empty{ padding:16px; color:#6b7280; } </style> </head> <body> <div class="hero"> <div class="wrap"> <div> <h1 class="titulo">Área do Gestor</h1> <p class="sub">Gestão de usuários e permissões do sistema</p> </div> <div class="chip-user" id="chipUser">Logado:</div> </div> </div> <div class="topbar"> <button class="btn-secondary btn" id="btnSairMenu">↩️ Menu</button> <button class="btn-secondary btn" id="btnLogout">🚪 Logout</button> </div> <div class="main"> <div class="card"> <div class="toolbar"> <button class="btn" id="btnOpenCreate">👨 Cadastrar usuário</button> <button class="btn" id="btnOpenReset">🔑 Redefinir senha</button> <!-- NOVO: botão que abre a listagem --> <button class="btn" id="btnOpenList">👥 Listar usuários</button> <span class="muted">Em breve: papéis, permissões, auditoria…</span> </div> </div> <!-- Listagem fica escondida até clicar em "Listar usuários" --> <div class="card" id="cardList" style="display:none;"> <h3 style="display:flex;justify-content:space-between;align-items:center;"> Usuários <button class="btn-secondary btn" id="btnCloseList" title="Fechar">Fechar</button> </h3> <div class="toolbar"> <input id="busca" class="input" placeholder="Buscar na página (nome ou e-mail)…"> <select id="perPage" class="input" style="min-width:120px"> <option value="10">10 por página</option> <option value="20">20 por página</option> <option value="50">50 por página</option> </select> <button id="btnRefresh" class="btn">Atualizar</button> </div> <div style="overflow:auto;"> <table class="table" id="tbl"> <thead> <tr> <th data-sort="display_name">Nome</th> <th data-sort="email">E-mail</th> <th data-sort="created_at">Criado em</th> <th data-sort="last_sign_in_at">Último login</th> <th class="right">Ações</th> </tr> </thead> <tbody id="tbody"></tbody> </table> </div> <div class="pagination"> <span id="pageInfo" class="muted"></span> <button class="btn-secondary btn" id="prev">◀</button> <button class="btn-secondary btn" id="next">▶</button> </div> </div> </div> <!-- Modal Cadastrar --> <dialog id="dlgCreate" style="border:0; border-radius:12px; padding:0; width:95%; max-width:560px;"> <form method="dialog" style="padding:18px"> <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px"> <h3 style="margin:0">Cadastrar usuário</h3> <button class="btn-secondary btn" value="cancel">Fechar</button> </div> <label>Nome completo <input id="c_nome" class="input" style="width:100%; margin-top:6px"> </label><br><br> <label>Usuário <input id="c_user" class="input" style="width:100%; margin-top:6px"> </label><br><br> <label>E-mail <input id="c_email" class="input" style="width:100%; margin-top:6px"> </label><br><br> <label>Senha inicial <input id="c_senha" type="password" class="input" style="width:100%; margin-top:6px"> </label> <p id="c_erro" class="muted" style="color:#dc2626; margin-top:8px"></p> <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px"> <button class="btn-secondary btn" value="cancel">Cancelar</button> <button id="c_salvar" type="button" class="btn">Salvar</button> </div> </form> </dialog> <!-- Modal Reset --> <dialog id="dlgReset" style="border:0; border-radius:12px; padding:0; width:95%; max-width:520px;"> <form method="dialog" style="padding:18px"> <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px"> <h3 style="margin:0">Redefinir senha</h3> <button class="btn-secondary btn" value="cancel">Fechar</button> </div> <label>E-mail do usuário <input id="r_email" class="input" style="width:100%; margin-top:6px"> </label><br><br> <label>Nova senha <input id="r_senha" type="password" class="input" style="width:100%; margin-top:6px"> </label> <p id="r_erro" class="muted" style="color:#dc2626; margin-top:8px"></p> <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px"> <button class="btn-secondary btn" value="cancel">Cancelar</button> <button id="r_salvar" type="button" class="btn">Salvar</button> </div> </form> </dialog> <script type="module"> import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'; // === CONFIG === const SUPABASE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co'; const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'; // URLs das Edge Functions: const CREATE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/create-user'; const RESET_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/reset-password'; const LIST_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/list-users'; const supabase = createClient(SUPABASE_URL, SUPABASE_ANON); // === Sessão/boas-vindas === const chipUser = document.getElementById('chipUser'); const { data: { session } } = await supabase.auth.getSession(); if (!session) window.location.href = 'index.html'; const email = session.user.email; try { const { data: ua } = await supabase.from('usuarios_app').select('display_name').ilike('email', email).maybeSingle(); chipUser.textContent = 'Logado: ' + (ua?.display_name || email); } catch { chipUser.textContent = 'Logado: ' + email; } document.getElementById('btnSairMenu').onclick = () => window.location.href = 'menu.html'; document.getElementById('btnLogout').onclick = async () => { await supabase.auth.signOut(); window.location.href = 'index.html'; }; // === Modais cadastro/reset === const dlgCreate = document.getElementById('dlgCreate'); const dlgReset = document.getElementById('dlgReset'); document.getElementById('btnOpenCreate').onclick = () => dlgCreate.showModal(); document.getElementById('btnOpenReset').onclick = () => dlgReset.showModal(); // === Mostrar/ocultar listagem === const cardList = document.getElementById('cardList'); document.getElementById('btnOpenList').onclick = async () => { cardList.style.display = ''; await loadUsers(true); cardList.scrollIntoView({ behavior: 'smooth', block: 'start' }); }; document.getElementById('btnCloseList').onclick = () => { cardList.style.display = 'none'; }; // Criar usuário document.getElementById('c_salvar').onclick = async () => { const nome = document.getElementById('c_nome').value.trim(); const user = document.getElementById('c_user').value.trim(); const email = document.getElementById('c_email').value.trim().toLowerCase(); const pass = document.getElementById('c_senha').value; const err = document.getElementById('c_erro'); err.textContent = ''; if (!nome || !user || !email || !pass) { err.textContent = 'Preencha todos os campos.'; return; } const { data: { session } } = await supabase.auth.getSession(); const resp = await fetch(CREATE_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': Bearer ${session.access_token} }, body: JSON.stringify({ email, password: pass, username: user, display_name: nome }), }); const json = await resp.json(); if (!resp.ok) { err.textContent = 'Erro: ' + (json.details || json.error || 'falha'); return; } dlgCreate.close(); // se a listagem estiver aberta, atualiza if (cardList.style.display !== 'none') await loadUsers(true); }; // Reset de senha document.getElementById('r_salvar').onclick = async () => { const email = document.getElementById('r_email').value.trim().toLowerCase(); const pass = document.getElementById('r_senha').value; const err = document.getElementById('r_erro'); err.textContent = ''; if (!email || !pass) { err.textContent = 'Informe e-mail e nova senha.'; return; } const { data: { session } } = await supabase.auth.getSession(); const resp = await fetch(RESET_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': Bearer ${session.access_token} }, body: JSON.stringify({ email, newPassword: pass }), }); const json = await resp.json(); if (!resp.ok) { err.textContent = 'Erro: ' + (json.details || json.error || 'falha'); return; } dlgReset.close(); }; // === Lista de usuários === const tbody = document.getElementById('tbody'); const busca = document.getElementById('busca'); const perPageSel = document.getElementById('perPage'); const btnPrev = document.getElementById('prev'); const btnNext = document.getElementById('next'); const pageInfo = document.getElementById('pageInfo'); document.getElementById('btnRefresh').onclick = () => loadUsers(true); let state = { page: 1, perPage: parseInt(perPageSel.value, 10), sortBy: 'created_at', sortDir: 'desc', raw: [], hasMore: false, }; perPageSel.onchange = () => { state.perPage = parseInt(perPageSel.value, 10); state.page = 1; loadUsers(true); }; btnPrev.onclick = () => { if (state.page > 1) { state.page--; loadUsers(true); } }; btnNext.onclick = () => { if (state.hasMore) { state.page++; loadUsers(true); } }; document.querySelectorAll('th[data-sort]').forEach(th => { th.addEventListener('click', () => { const col = th.dataset.sort; if (state.sortBy === col) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc'; else { state.sortBy = col; state.sortDir = 'asc'; } render(); }); }); const fmt = (d) => d ? new Date(d).toLocaleString('pt-BR') : '—'; const nomeDe = (u) => u.display_name || u.username || (u.email?.split('@')[0]) || '(sem nome)'; async function loadUsers() { const { data: { session } } = await supabase.auth.getSession(); const url = new URL(LIST_URL); url.searchParams.set('page', String(state.page)); url.searchParams.set('perPage', String(state.perPage)); const resp = await fetch(url, { headers: { Authorization: Bearer ${session.access_token} } }); const json = await resp.json(); if (!resp.ok) { alert('Falha ao listar usuários: ' + (json.error || json.details || '')); return; } state.raw = json.users || []; state.hasMore = !!json.hasMore; render(); } function render() { const term = busca.value.trim().toLowerCase(); let rows = state.raw.slice(); if (term) { rows = rows.filter(u => (nomeDe(u).toLowerCase().includes(term)) || ((u.email||'').toLowerCase().includes(term)) ); } rows.sort((a,b) => { const k = state.sortBy; const va = (a[k] || '') + ''; const vb = (b[k] || '') + ''; if (va < vb) return state.sortDir === 'asc' ? -1 : 1; if (va > vb) return state.sortDir === 'asc' ? 1 : -1; return 0; }); tbody.innerHTML = ''; if (!rows.length) { const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 5; td.className = 'empty'; td.textContent = 'Nenhum usuário nesta página.'; tr.appendChild(td); tbody.appendChild(tr); } else { for (const u of rows) { const tr = document.createElement('tr'); const tdNome = document.createElement('td'); tdNome.textContent = nomeDe(u); tr.appendChild(tdNome); const tdEmail = document.createElement('td'); tdEmail.textContent = u.email || '—'; tr.appendChild(tdEmail); const tdCriado = document.createElement('td'); tdCriado.textContent = fmt(u.created_at); tr.appendChild(tdCriado); const tdUlt = document.createElement('td'); tdUlt.textContent = fmt(u.last_sign_in_at); tr.appendChild(tdUlt); const tdA = document.createElement('td'); tdA.className = 'right'; const del = document.createElement('button'); del.className = 'btn danger'; del.textContent = 'Excluir'; del.onclick = () => excluir(u); tdA.appendChild(del); tr.appendChild(tdA); tbody.appendChild(tr); } } pageInfo.textContent = Página ${state.page} • ${rows.length} itens; btnPrev.disabled = state.page === 1; btnNext.disabled = !state.hasMore; } busca.addEventListener('input', () => render()); async function excluir(u) { if (!confirm(Excluir o usuário "${nomeDe(u)}" (${u.email})? Essa ação não pode ser desfeita.)) return; const { data: { session } } = await supabase.auth.getSession(); const resp = await fetch(LIST_URL, { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: Bearer ${session.access_token} }, body: JSON.stringify({ id: u.id }), }); const json = await resp.json(); if (!resp.ok) { alert('Falha ao excluir: ' + (json.details || json.error || '')); return; } if (state.raw.length === 1 && state.page > 1) state.page--; await loadUsers(true); } // Não carregamos nada ao abrir a página. // A listagem só abre/carrega ao clicar em "👥 Listar usuários". </script> </body> </html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Controle de Logística IPEV — Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-blue-100 min-h-screen">
+
+  <!-- Cabeçalho no mesmo padrão visual -->
+  <div class="flex justify-between items-center p-4">
+    <h1 class="text-2xl font-bold text-blue-900">Controle de Logística IPEV</h1>
+    <!-- Espaço reservado p/ logo se quiser
+    <img src="img/logo-ipev.png" class="h-10" alt="IPEV">
+    -->
+  </div>
+
+  <!-- Container central semelhante ao seu "card" -->
+  <div class="max-w-3xl mx-auto px-4">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h2 class="text-xl font-semibold text-blue-900 mb-4">Acesso ao Sistema</h2>
+
+      <!-- Grid lembra a organização do seu index -->
+      <form id="loginForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="col-span-1">
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+          <input type="email" id="email" required
+                 class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-500"
+                 placeholder="seuemail@ipev.com.br">
+        </div>
+
+        <div class="col-span-1">
+          <label for="senha" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+          <input type="password" id="senha" required
+                 class="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-500"
+                 placeholder="••••••••">
+        </div>
+
+        <div class="col-span-1 flex items-center space-x-2">
+          <input id="lembrar" type="checkbox" class="h-4 w-4">
+          <label for="lembrar" class="text-sm text-gray-700">Manter-me conectado neste dispositivo</label>
+        </div>
+
+        <div class="col-span-1 sm:text-right">
+          <button id="entrarBtn" type="submit"
+                  class="bg-blue-700 text-white px-5 py-2 rounded hover:bg-blue-800 disabled:opacity-60">
+            Entrar
+          </button>
+        </div>
+
+        <div class="col-span-2">
+          <p id="erroMsg" class="text-red-600 hidden"></p>
+          <p id="okMsg" class="text-green-600 hidden"></p>
+        </div>
+      </form>
+    </div>
+
+    <!-- Rodapé leve, mantendo a identidade -->
+    <div class="text-center text-sm text-gray-600 mt-6">
+      © IPEV — Sistema interno de logística
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
+
+    const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co'
+    const supabaseKey = 'SUA_ANON_KEY_AQUI' // cole sua anon key
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    const redirectUrl = 'menu.html' // para onde vai depois do login
+    const form = document.getElementById('loginForm')
+    const btn = document.getElementById('entrarBtn')
+    const erroMsg = document.getElementById('erroMsg')
+    const okMsg = document.getElementById('okMsg')
+    const lembrar = document.getElementById('lembrar')
+
+    // Se já estiver logado, pula a tela
+    (await supabase.auth.getSession()).data.session && (window.location.href = redirectUrl)
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      erroMsg.classList.add('hidden')
+      okMsg.classList.add('hidden')
+      btn.disabled = true
+
+      const email = document.getElementById('email').value.trim().toLowerCase()
+      const senha = document.getElementById('senha').value
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha })
+
+      if (error) {
+        erroMsg.textContent = 'Falha no login: ' + error.message
+        erroMsg.classList.remove('hidden')
+        btn.disabled = false
+        return
+      }
+
+      // Persistência da sessão (opcional “lembrar”)
+      // O supabase-js já persiste em localStorage por padrão.
+      // Se não quiser persistir quando "lembrar" não estiver marcado, você pode fazer signOut ao fechar aba, etc.
+      okMsg.textContent = 'Login realizado. Redirecionando...'
+      okMsg.classList.remove('hidden')
+
+      // pequena pausa para UX
+      setTimeout(() => window.location.href = redirectUrl, 400)
+    })
+  </script>
+</body>
+</html>
