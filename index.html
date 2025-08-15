@@ -1,73 +1,154 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Painel Administrativo - IPEV</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-  <script>
-    const SUPABASE_URL = "https://ilsbyrvnrkutwynujfhs.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ";
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <meta charset="utf-8" />
+  <title>Acesso ao Sistema — IPEV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#e9f0ff;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#6b7280;
+      --primary:#2563eb;
+      --primary-dark:#1d4ed8;
+      --error:#dc2626;
+      --border:#d1d5db;
+      --focus:rgba(59,130,246,.18);
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); }
+    .wrap{ max-width:1060px; margin:38px auto; padding:0 16px; }
+    .center{ display:flex; align-items:center; justify-content:center; min-height:42vh; }
+    .card{ background:var(--card); border-radius:18px; box-shadow:0 16px 40px rgba(2,8,20,.12); padding:28px; width:100%; max-width:880px; }
+    h1{ margin:0 0 18px; font-size:38px; font-weight:800; letter-spacing:.2px; }
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    label{ display:block; margin:10px 0 6px; color:#374151; font-weight:700; }
+    input[type="text"], input[type="password"]{
+      width:100%; padding:14px 16px; border:1px solid var(--border); border-radius:12px; font-size:16px; background:#f8fbff; outline:none;
+    }
+    input[type="text"]:focus, input[type="password"]:focus{ border-color:#93c5fd; box-shadow:0 0 0 4px var(--focus); }
+    .actions{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; flex-wrap:wrap; }
+    .muted{ color:var(--muted); font-size:14px; }
+    .btn{ background:var(--primary); color:#fff; border:0; border-radius:12px; padding:12px 22px; font-weight:800; cursor:pointer; min-width:120px; }
+    .btn:hover{ background:var(--primary-dark); }
+    .error{ color:var(--error); margin-top:12px; min-height:22px; }
+    footer{ text-align:center; color:var(--muted); font-size:13px; margin-top:18px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="center">
+      <div class="card">
+        <h1>Acesso ao Sistema</h1>
 
-    async function getUserInfo() {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (user) {
-        document.getElementById("user-name").innerText = user.user_metadata?.display_name || user.email;
-      } else {
-        window.location.href = "login.html";
+        <div class="row">
+          <div>
+            <label for="usuario_input">Usuário ou E-mail</label>
+            <input id="usuario_input" type="text" inputmode="text" autocomplete="off"
+                   placeholder="ex.: Guilherme ou usuario@empresa.com" />
+          </div>
+          <div>
+            <label for="senha_input">Senha</label>
+            <input id="senha_input" type="password" autocomplete="current-password" placeholder="Sua senha" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <label class="muted" style="display:flex; align-items:center; gap:8px; user-select:none;">
+            <input id="keep" type="checkbox" /> Manter-me conectado neste dispositivo
+          </label>
+          <button id="btnEntrar" class="btn">Entrar</button>
+        </div>
+
+        <p id="msg" class="error" role="alert" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <footer>© IPEV — Sistema interno de logística</footer>
+  </div>
+
+  <!-- Script de login embutido -->
+  <script type="module">
+    import { createClient } from "https://cdn.skypack.dev/@supabase/supabase-js";
+
+    // === CONFIG DO SEU PROJETO ===
+    const SUPABASE_URL  = "https://ilsbyrvnrkutwynujfhs.supabase.co";
+    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ";
+    const RESOLVE_URL   = `${SUPABASE_URL}/functions/v1/resolve-login-identifier`; // Edge publicada com esse nome
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    // Elements
+    const idInput  = document.getElementById("usuario_input");
+    const pwdInput = document.getElementById("senha_input");
+    const keepCk   = document.getElementById("keep");
+    const btn      = document.getElementById("btnEntrar");
+    const msgEl    = document.getElementById("msg");
+
+    // Se já estiver logado, manda para o menu
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) window.location.href = "menu.html";
+    })();
+
+    // Evita autofill persistente
+    window.addEventListener("pageshow", () => { idInput.value = ""; pwdInput.value = ""; });
+
+    btn.addEventListener("click", doLogin);
+    idInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") doLogin(); });
+    pwdInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") doLogin(); });
+
+    function isEmail(s){ return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(s); }
+
+    async function resolveIdentifier(identifier){
+      // Tenta a Edge (nome → e-mail). Se a Edge não existir (404), faz fallback local.
+      try {
+        const r = await fetch(RESOLVE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier })
+        });
+        const j = await r.json().catch(()=> ({}));
+        if (r.ok && j?.email) return j.email.toLowerCase();
+        // Se Edge respondeu erro conhecido, repassa mensagem
+        if (!r.ok && j?.error) throw new Error(j.error);
+      } catch (_) {
+        // Fallback: se já parece e-mail, usa direto
+        if (isEmail(identifier)) return identifier.toLowerCase();
+      }
+      throw new Error("Usuário não encontrado.");
+    }
+
+    async function doLogin(){
+      msgEl.textContent = "";
+      const identifier = idInput.value.trim();
+      const password   = pwdInput.value;
+
+      if (!identifier || !password){
+        msgEl.textContent = "Preencha usuário/e-mail e senha.";
+        return;
+      }
+
+      try {
+        const email = await resolveIdentifier(identifier);
+
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error){
+          msgEl.textContent = error.message || "Falha no login.";
+          return;
+        }
+
+        // Persistência simples: se não marcar "manter", encerra ao fechar a aba
+        if (!keepCk.checked) {
+          window.addEventListener("beforeunload", () => { supabase.auth.signOut(); });
+        }
+
+        window.location.href = "menu.html";
+      } catch (e){
+        msgEl.textContent = e?.message || "Usuário não encontrado.";
       }
     }
-
-    async function logout() {
-      await supabaseClient.auth.signOut();
-      window.location.href = "login.html";
-    }
-
-    document.addEventListener("DOMContentLoaded", getUserInfo);
   </script>
-</head>
-<body class="bg-gray-100 min-h-screen">
-  <!-- Header -->
-  <header class="bg-blue-800 text-white p-4 flex justify-between items-center shadow">
-    <div class="flex items-center space-x-4">
-      <img src="logo.png" alt="IPEV" class="h-10">
-      <h1 class="text-xl font-bold">Painel Administrativo - IPEV</h1>
-    </div>
-    <div class="flex items-center space-x-4">
-      <span id="user-name" class="font-semibold"></span>
-      <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600">Sair</button>
-    </div>
-  </header>
-
-  <!-- Conteúdo principal -->
-  <main class="p-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Botão Gerenciar Usuários -->
-      <a href="usuarios.html" class="bg-white rounded shadow p-6 flex flex-col items-center justify-center hover:shadow-lg transition">
-        <img src="icons/users.png" alt="Usuários" class="h-16 mb-4">
-        <h2 class="text-lg font-semibold text-gray-700">Gerenciar Usuários</h2>
-      </a>
-
-      <!-- Botão Controle de Logística -->
-      <a href="index_final_motorista.html" class="bg-white rounded shadow p-6 flex flex-col items-center justify-center hover:shadow-lg transition">
-        <img src="icons/logistica.png" alt="Logística" class="h-16 mb-4">
-        <h2 class="text-lg font-semibold text-gray-700">Controle de Logística</h2>
-      </a>
-
-      <!-- Botão Consumo Total Motoristas -->
-      <a href="consumo_total_motoristas_alerta.html" class="bg-white rounded shadow p-6 flex flex-col items-center justify-center hover:shadow-lg transition">
-        <img src="icons/combustivel.png" alt="Consumo" class="h-16 mb-4">
-        <h2 class="text-lg font-semibold text-gray-700">Consumo Total Motoristas</h2>
-      </a>
-
-      <!-- Botão Relatório Mensal -->
-      <a href="relatorio_mensal_dinamico.html" class="bg-white rounded shadow p-6 flex flex-col items-center justify-center hover:shadow-lg transition">
-        <img src="icons/relatorio.png" alt="Relatório" class="h-16 mb-4">
-        <h2 class="text-lg font-semibold text-gray-700">Relatório Mensal</h2>
-      </a>
-    </div>
-  </main>
 </body>
 </html>
