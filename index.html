@@ -1,155 +1,626 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <title>Controle de Logística IPEV — Acesso</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      --bg:#dfecff;
-      --card:#ffffff;
-      --text:#0f172a;
-      --muted:#6b7280;
-      --primary:#2563eb;
-      --primary-hover:#1d4ed8;
-      --error:#dc2626;
-      --border:#d7e3f7;
-      --shadow:0 25px 60px rgba(15,23,42,.15);
-      --focus-ring:0 0 0 3px rgba(37,99,235,.2);
-    }
-    *{ box-sizing:border-box; }
-    body{
-      margin:0; color:var(--text);
-      font-family: "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
-      background:var(--bg);
-      min-height:100vh; display:flex; flex-direction:column;
-    }
-    .site-header{ padding:18px 24px 6px; font-weight:800; color:#123a84; font-size:30px; }
-    .wrap{ flex:1; display:flex; justify-content:center; align-items:flex-start; }
-    .card{
-      width:100%; max-width:980px; background:var(--card);
-      border-radius:14px; box-shadow:var(--shadow);
-      padding:24px 28px 22px; margin:36px 16px 0;
-    }
-    h1{ margin:0 0 18px; font-size:28px; font-weight:800; letter-spacing:.2px; }
-    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:end; }
-    label{ display:block; font-weight:700; color:#374151; margin:10px 0 8px; }
-    input[type="text"],input[type="password"]{
-      width:100%; height:46px; border:1px solid var(--border);
-      background:#f9fbff; border-radius:10px; padding:10px 12px; font-size:16px; outline:none;
-    }
-    input[type="text"]:focus,input[type="password"]:focus{ border-color:#93c5fd; background:#fff; box-shadow:var(--focus-ring); }
-    .row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px; flex-wrap:wrap; }
-    .muted{ color:var(--muted); font-size:14px; }
-    .btn{
-      height:44px; min-width:116px; padding:0 20px;
-      background:var(--primary); color:#fff; border:0; border-radius:10px;
-      font-weight:800; cursor:pointer; transition:.15s;
-    }
-    .btn:hover{ background:var(--primary-hover); }
-    .error{ color:var(--error); margin-top:12px; min-height:20px; }
-    footer{ text-align:center; color:var(--muted); font-size:14px; padding:10px 0 22px; }
-    @media (max-width:820px){ .grid{ grid-template-columns:1fr; } .site-header{ font-size:24px; } .card{ margin-top:18px; } }
-  </style>
-</head>
-<body>
-  <div class="site-header">Controle de Logística IPEV</div>
+-- ============================================
+-- ✅ PATCH CONSOLIDADO (SEGURO, IDEMPOTENTE)
+-- - Sem DROP TABLE / não apaga dados
+-- - Cria/ajusta estruturas se não existirem
+-- - HOTFIX usuarios_app.user_id + backfill + FK
+-- - Helpers com SECURITY DEFINER + row_security=off
+-- - RPCs (list_users, set_permissoes) com DROP seguro de versões antigas
+-- - Habilita e FORÇA RLS
+-- - Limpa policies antigas e recria as oficiais
+-- ============================================
 
-  <main class="wrap">
-    <section class="card" aria-labelledby="titulo">
-      <h1 id="titulo">Acesso ao Sistema</h1>
+BEGIN;
 
-      <div class="grid" role="group" aria-label="Credenciais">
-        <div>
-          <label for="ident_input">Usuário ou E-mail</label>
-          <input id="ident_input" type="text" inputmode="text" autocomplete="username"
-                 placeholder="seu usuário (ex.: Guilherme) ou seuemail@ipev.com.br" />
-        </div>
-        <div>
-          <label for="senha_input">Senha</label>
-          <input id="senha_input" type="password" autocomplete="current-password" placeholder="Sua senha" />
-        </div>
-      </div>
+-- ============================================================
+-- 0) EXTENSÕES
+-- ============================================================
+CREATE EXTENSION IF NOT EXISTS pgcrypto;   -- gen_random_uuid()
+-- CREATE EXTENSION IF NOT EXISTS citext;  -- opcional p/ email case-insensitive
 
-      <div class="row">
-        <label class="muted" style="display:flex;align-items:center;gap:8px;user-select:none;">
-          <input id="keep" type="checkbox" /> Manter-me conectado neste dispositivo
-        </label>
-        <button id="btnEntrar" class="btn">Entrar</button>
-      </div>
+-- ============================================================
+-- 1) TABELAS (criar se não existirem)
+-- ============================================================
 
-      <p id="msg" class="error" role="alert" aria-live="polite"></p>
-    </section>
-  </main>
+-- 1.1) Permissões do app
+CREATE TABLE IF NOT EXISTS public.permissoes_app (
+  user_id uuid PRIMARY KEY,
+  is_admin boolean NOT NULL DEFAULT false,
+  perm_controle_diario boolean NOT NULL DEFAULT false,
+  perm_consumo_total boolean NOT NULL DEFAULT false,
+  granted_by uuid NULL,
+  granted_at timestamptz NOT NULL DEFAULT now()
+);
 
-  <footer>© IPEV — Sistema interno de logística</footer>
+-- FK para auth.users (id)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname='permissoes_app_user_id_fkey'
+  ) THEN
+    ALTER TABLE public.permissoes_app
+      ADD CONSTRAINT permissoes_app_user_id_fkey
+      FOREIGN KEY (user_id) REFERENCES auth.users (id)
+      ON UPDATE CASCADE ON DELETE CASCADE;
+  END IF;
+END$$;
 
-  <script type="module">
-    import { createClient } from "https://cdn.skypack.dev/@supabase/supabase-js";
+-- Índices auxiliares
+CREATE INDEX IF NOT EXISTS idx_permissoes_admin ON public.permissoes_app (is_admin);
+CREATE INDEX IF NOT EXISTS idx_permissoes_flags ON public.permissoes_app (perm_controle_diario, perm_consumo_total);
 
-    const SUPABASE_URL  = "https://ilsbyrvnrkutwynujfhs.supabase.co";
-    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ";
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+-- 1.2) Perfil/usuários do app (usada pela UI)
+CREATE TABLE IF NOT EXISTS public.usuarios_app (
+  user_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text UNIQUE,
+  display_name text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
-    const identInput = document.getElementById("ident_input");
-    const pwdInput   = document.getElementById("senha_input");
-    const keepCk     = document.getElementById("keep");
-    const btn        = document.getElementById("btnEntrar");
-    const msgEl      = document.getElementById("msg");
+-- ===== HOTFIX integrado: garantir user_id + backfill + FK =====
+DO $$
+BEGIN
+  -- 1) Coluna user_id (se faltar)
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='usuarios_app' AND column_name='user_id'
+  ) THEN
+    ALTER TABLE public.usuarios_app ADD COLUMN user_id uuid;
+  END IF;
 
-    const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s ?? "");
+  -- 2) Backfill via email (case-insensitive), sem sobrescrever quem já tem
+  UPDATE public.usuarios_app ua
+  SET user_id = u.id
+  FROM auth.users u
+  WHERE ua.user_id IS NULL
+    AND ua.email IS NOT NULL
+    AND lower(ua.email) = lower(u.email);
 
-    // já logado? vai pro menu
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) window.location.href = "menu.html";
-    })();
+  -- 3) Índice auxiliar
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid=c.relnamespace
+    WHERE c.relkind='i' AND c.relname='idx_usuarios_app_user_id' AND n.nspname='public'
+  ) THEN
+    CREATE INDEX idx_usuarios_app_user_id ON public.usuarios_app(user_id);
+  END IF;
 
-    btn.addEventListener("click", doLogin);
-    identInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") doLogin(); });
-    pwdInput.addEventListener("keydown",   (e)=>{ if (e.key === "Enter") doLogin(); });
+  -- 4) FK (se faltar)
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname='usuarios_app_user_id_fkey'
+  ) THEN
+    ALTER TABLE public.usuarios_app
+      ADD CONSTRAINT usuarios_app_user_id_fkey
+      FOREIGN KEY (user_id) REFERENCES auth.users (id)
+      ON UPDATE CASCADE ON DELETE SET NULL;
+  END IF;
+END$$;
+-- ===== /HOTFIX integrado =====
 
-    async function resolveEmail(ident){
-      // Se já for e-mail, só normaliza
-      if (isEmail(ident)) return ident.toLowerCase();
+-- ============================================================
+-- 2) GRANTS BÁSICOS
+-- ============================================================
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
 
-      // Se for username, chama o RPC (funciona sem login)
-      const { data, error } = await supabase.rpc("resolve_login_identifier", { p_ident: ident });
-      if (error) throw error;
-      return data || null; // null se não encontrou
-    }
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.permissoes_app TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.usuarios_app   TO authenticated;
 
-    async function doLogin(){
-      msgEl.textContent = "";
-      const ident = (identInput.value || "").trim();
-      const password = pwdInput.value;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='motoristas') THEN
+    GRANT SELECT, INSERT, UPDATE, DELETE ON public.motoristas TO authenticated;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='controle_diario') THEN
+    GRANT SELECT, INSERT, UPDATE, DELETE ON public.controle_diario TO authenticated;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='recargas_motoristas') THEN
+    GRANT SELECT, INSERT, UPDATE, DELETE ON public.recargas_motoristas TO authenticated;
+  END IF;
+END$$;
 
-      if (!ident || !password){
-        msgEl.textContent = "Preencha usuário/e-mail e senha.";
-        return;
-      }
+-- ============================================================
+-- 3) FUNÇÕES HELPER (SECURITY DEFINER + row_security=off)
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.is_admin(uid uuid DEFAULT auth.uid())
+RETURNS boolean
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+SET row_security = off
+AS $$
+DECLARE v_uid uuid := COALESCE(uid, auth.uid()); v_is boolean;
+BEGIN
+  SELECT EXISTS(SELECT 1 FROM public.permissoes_app pa WHERE pa.user_id=v_uid AND pa.is_admin)
+    INTO v_is;
+  RETURN COALESCE(v_is, false);
+END$$;
 
-      try{
-        const email = await resolveEmail(ident);
-        if (!email){
-          msgEl.textContent = "Usuário não encontrado.";
-          return;
-        }
+CREATE OR REPLACE FUNCTION public.has_perm_controle_diario(uid uuid DEFAULT auth.uid())
+RETURNS boolean
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+SET row_security = off
+AS $$
+DECLARE v_uid uuid := COALESCE(uid, auth.uid()); v_ok boolean;
+BEGIN
+  SELECT EXISTS(
+    SELECT 1 FROM public.permissoes_app pa
+    WHERE pa.user_id = v_uid AND (pa.is_admin OR pa.perm_controle_diario)
+  ) INTO v_ok;
+  RETURN COALESCE(v_ok, false);
+END$$;
 
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error){
-          msgEl.textContent = error.message || "Falha no login.";
-          return;
-        }
+CREATE OR REPLACE FUNCTION public.has_perm_consumo_total(uid uuid DEFAULT auth.uid())
+RETURNS boolean
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+SET row_security = off
+AS $$
+DECLARE v_uid uuid := COALESCE(uid, auth.uid()); v_ok boolean;
+BEGIN
+  SELECT EXISTS(
+    SELECT 1 FROM public.permissoes_app pa
+    WHERE pa.user_id = v_uid AND (pa.is_admin OR pa.perm_consumo_total)
+  ) INTO v_ok;
+  RETURN COALESCE(v_ok, false);
+END$$;
 
-        if (!keepCk.checked){
-          window.addEventListener("beforeunload", () => { supabase.auth.signOut(); });
-        }
-        window.location.href = "menu.html";
-      }catch(e){
-        msgEl.textContent = "Erro ao validar credenciais. Tente novamente.";
-      }
-    }
-  </script>
-</body>
-</html>
+GRANT EXECUTE ON FUNCTION public.is_admin(uuid)                 TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.has_perm_controle_diario(uuid) TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.has_perm_consumo_total(uuid)   TO authenticated, anon;
+
+-- ============================================================
+-- 4) FUNÇÕES RPC (UI) — DROP seguro de versões antigas
+-- ============================================================
+
+-- 4.1) list_users — dropar qualquer variação e recriar
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT n.nspname AS schema_name,
+           p.proname AS fn_name,
+           pg_get_function_identity_arguments(p.oid) AS args
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = 'list_users'
+  LOOP
+    EXECUTE format('DROP FUNCTION IF EXISTS %I.%I(%s);', r.schema_name, r.fn_name, r.args);
+  END LOOP;
+END$$;
+
+CREATE OR REPLACE FUNCTION public.list_users()
+RETURNS TABLE (
+  user_id uuid,
+  email text,
+  last_sign_in_at timestamptz,
+  created_at timestamptz
+)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public, auth, pg_temp
+AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'forbidden: admin required' USING ERRCODE = '42501';
+  END IF;
+
+  RETURN QUERY
+    SELECT u.id, u.email, u.last_sign_in_at, u.created_at
+    FROM auth.users u
+    ORDER BY u.email NULLS LAST;
+END$$;
+
+COMMENT ON FUNCTION public.list_users() IS 'Lista usuários (auth.users). Restrito a admins.';
+GRANT EXECUTE ON FUNCTION public.list_users() TO authenticated;
+
+-- 4.2) set_permissoes — dropar qualquer variação e recriar
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT n.nspname AS schema_name,
+           p.proname AS fn_name,
+           pg_get_function_identity_arguments(p.oid) AS args
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = 'set_permissoes'
+  LOOP
+    EXECUTE format('DROP FUNCTION IF EXISTS %I.%I(%s);', r.schema_name, r.fn_name, r.args);
+  END LOOP;
+END$$;
+
+CREATE OR REPLACE FUNCTION public.set_permissoes(
+  p_user_id uuid,
+  p_perm_controle boolean,
+  p_perm_consumo boolean,
+  p_is_admin boolean
+)
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+SET row_security = off
+AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'forbidden: admin required' USING ERRCODE = '42501';
+  END IF;
+
+  INSERT INTO public.permissoes_app AS pa
+    (user_id, is_admin, perm_controle_diario, perm_consumo_total, granted_by, granted_at)
+  VALUES
+    (p_user_id, COALESCE(p_is_admin,false), COALESCE(p_perm_controle,false), COALESCE(p_perm_consumo,false), auth.uid(), now())
+  ON CONFLICT (user_id) DO UPDATE
+    SET is_admin             = EXCLUDED.is_admin,
+        perm_controle_diario = EXCLUDED.perm_controle_diario,
+        perm_consumo_total   = EXCLUDED.perm_consumo_total,
+        granted_by           = EXCLUDED.granted_by,
+        granted_at           = EXCLUDED.granted_at;
+END$$;
+
+COMMENT ON FUNCTION public.set_permissoes(uuid,boolean,boolean,boolean)
+  IS 'Upsert de permissões. Restrito a admins.';
+GRANT EXECUTE ON FUNCTION public.set_permissoes(uuid,boolean,boolean,boolean) TO authenticated;
+
+-- ============================================================
+-- 5) RLS: HABILITAR + FORÇAR
+-- ============================================================
+ALTER TABLE public.permissoes_app ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.usuarios_app   ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='motoristas') THEN
+    EXECUTE 'ALTER TABLE public.motoristas ENABLE ROW LEVEL SECURITY';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='controle_diario') THEN
+    EXECUTE 'ALTER TABLE public.controle_diario ENABLE ROW LEVEL SECURITY';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='recargas_motoristas') THEN
+    EXECUTE 'ALTER TABLE public.recargas_motoristas ENABLE ROW LEVEL SECURITY';
+  END IF;
+END$$;
+
+ALTER TABLE public.permissoes_app FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.usuarios_app   FORCE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='motoristas') THEN
+    EXECUTE 'ALTER TABLE public.motoristas FORCE ROW LEVEL SECURITY';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='controle_diario') THEN
+    EXECUTE 'ALTER TABLE public.controle_diario FORCE ROW LEVEL SECURITY';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='recargas_motoristas') THEN
+    EXECUTE 'ALTER TABLE public.recargas_motoristas FORCE ROW LEVEL SECURITY';
+  END IF;
+END$$;
+
+-- ============================================================
+-- 6) LIMPEZA DE POLICIES ANTIGAS/PERMISSIVAS
+-- ============================================================
+DROP POLICY IF EXISTS recargas_read   ON public.recargas_motoristas;
+DROP POLICY IF EXISTS recargas_write  ON public.recargas_motoristas;
+DROP POLICY IF EXISTS recargas_update ON public.recargas_motoristas;
+
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT schemaname, tablename, policyname
+    FROM pg_policies
+    WHERE schemaname='public'
+      AND tablename IN ('permissoes_app','usuarios_app','motoristas','controle_diario','recargas_motoristas')
+      AND policyname NOT IN (
+        -- permissoes_app
+        'permissoes_select_self_or_admin','permissoes_insert_self',
+        'permissoes_update_admin','permissoes_delete_admin',
+        -- usuarios_app
+        'uapp_select_self_or_admin','uapp_insert_self','uapp_update_self_or_admin',
+        -- motoristas
+        'motoristas_select_all','motoristas_insert_perm','motoristas_update_perm','motoristas_delete_perm',
+        -- controle_diario
+        'cd_select_all','cd_insert_perm','cd_update_perm','cd_delete_perm',
+        -- recargas_motoristas
+        'recargas_select_perm','recargas_insert_perm','recargas_update_perm','recargas_delete_perm'
+      )
+  LOOP
+    EXECUTE format('DROP POLICY %I ON public.%I', r.policyname, r.tablename);
+  END LOOP;
+END$$;
+
+-- ============================================================
+-- 7) POLICIES OFICIAIS (sem recursão)
+-- ============================================================
+
+-- 7.1) permissoes_app
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='permissoes_app' AND policyname='permissoes_select_self_or_admin'
+  ) THEN
+    CREATE POLICY permissoes_select_self_or_admin
+    ON public.permissoes_app
+    FOR SELECT TO authenticated
+    USING (user_id = auth.uid() OR public.is_admin());
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='permissoes_app' AND policyname='permissoes_insert_self'
+  ) THEN
+    CREATE POLICY permissoes_insert_self
+    ON public.permissoes_app
+    FOR INSERT TO authenticated
+    WITH CHECK (user_id = auth.uid());
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='permissoes_app' AND policyname='permissoes_update_admin'
+  ) THEN
+    CREATE POLICY permissoes_update_admin
+    ON public.permissoes_app
+    FOR UPDATE TO authenticated
+    USING (public.is_admin())
+    WITH CHECK (public.is_admin());
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='permissoes_app' AND policyname='permissoes_delete_admin'
+  ) THEN
+    CREATE POLICY permissoes_delete_admin
+    ON public.permissoes_app
+    FOR DELETE TO authenticated
+    USING (public.is_admin());
+  END IF;
+END$$;
+
+-- 7.2) usuarios_app (autogerenciável + admin)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='usuarios_app' AND policyname='uapp_select_self_or_admin'
+  ) THEN
+    CREATE POLICY uapp_select_self_or_admin
+    ON public.usuarios_app
+    FOR SELECT TO authenticated
+    USING (
+      email = (SELECT email FROM auth.users WHERE id = auth.uid())
+      OR user_id = auth.uid()
+      OR public.is_admin()
+    );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='usuarios_app' AND policyname='uapp_insert_self'
+  ) THEN
+    CREATE POLICY uapp_insert_self
+    ON public.usuarios_app
+    FOR INSERT TO authenticated
+    WITH CHECK (
+      email = (SELECT email FROM auth.users WHERE id = auth.uid())
+      OR user_id = auth.uid()
+    );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='usuarios_app' AND policyname='uapp_update_self_or_admin'
+  ) THEN
+    CREATE POLICY uapp_update_self_or_admin
+    ON public.usuarios_app
+    FOR UPDATE TO authenticated
+    USING (
+      email = (SELECT email FROM auth.users WHERE id = auth.uid())
+      OR user_id = auth.uid()
+      OR public.is_admin()
+    )
+    WITH CHECK (
+      email = (SELECT email FROM auth.users WHERE id = auth.uid())
+      OR user_id = auth.uid()
+      OR public.is_admin()
+    );
+  END IF;
+END$$;
+
+-- 7.3) motoristas — escrita só com perm_controle_diario (ou admin)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='motoristas') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='motoristas' AND policyname='motoristas_select_all') THEN
+      CREATE POLICY motoristas_select_all
+      ON public.motoristas
+      FOR SELECT TO authenticated
+      USING (true);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='motoristas' AND policyname='motoristas_insert_perm') THEN
+      CREATE POLICY motoristas_insert_perm
+      ON public.motoristas
+      FOR INSERT TO authenticated
+      WITH CHECK (public.has_perm_controle_diario());
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='motoristas' AND policyname='motoristas_update_perm') THEN
+      CREATE POLICY motoristas_update_perm
+      ON public.motoristas
+      FOR UPDATE TO authenticated
+      USING (public.has_perm_controle_diario())
+      WITH CHECK (public.has_perm_controle_diario());
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='motoristas' AND policyname='motoristas_delete_perm') THEN
+      CREATE POLICY motoristas_delete_perm
+      ON public.motoristas
+      FOR DELETE TO authenticated
+      USING (public.has_perm_controle_diario());
+    END IF;
+  END IF;
+END$$;
+
+-- 7.4) controle_diario — mesma regra de motoristas
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='controle_diario') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='controle_diario' AND policyname='cd_select_all') THEN
+      CREATE POLICY cd_select_all
+      ON public.controle_diario
+      FOR SELECT TO authenticated
+      USING (true);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='controle_diario' AND policyname='cd_insert_perm') THEN
+      CREATE POLICY cd_insert_perm
+      ON public.controle_diario
+      FOR INSERT TO authenticated
+      WITH CHECK (public.has_perm_controle_diario());
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='controle_diario' AND policyname='cd_update_perm') THEN
+      CREATE POLICY cd_update_perm
+      ON public.controle_diario
+      FOR UPDATE TO authenticated
+      USING (public.has_perm_controle_diario())
+      WITH CHECK (public.has_perm_controle_diario());
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='controle_diario' AND policyname='cd_delete_perm') THEN
+      CREATE POLICY cd_delete_perm
+      ON public.controle_diario
+      FOR DELETE TO authenticated
+      USING (public.has_perm_controle_diario());
+    END IF;
+  END IF;
+END$$;
+
+-- 7.5) recargas_motoristas — acesso restrito a consumo_total (ou admin)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='recargas_motoristas') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='recargas_motoristas' AND policyname='recargas_select_perm') THEN
+      CREATE POLICY recargas_select_perm
+      ON public.recargas_motoristas
+      FOR SELECT TO authenticated
+      USING (public.has_perm_consumo_total());
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='recargas_motoristas' AND policyname='recargas_insert_perm') THEN
+      CREATE POLICY recargas_insert_perm
+      ON public.recargas_motoristas
+      FOR INSERT TO authenticated
+      WITH CHECK (public.has_perm_consumo_total());
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='recargas_motoristas' AND policyname='recargas_update_perm') THEN
+      CREATE POLICY recargas_update_perm
+      ON public.recargas_motoristas
+      FOR UPDATE TO authenticated
+      USING (public.has_perm_consumo_total())
+      WITH CHECK (public.has_perm_consumo_total());
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='recargas_motoristas' AND policyname='recargas_delete_perm') THEN
+      CREATE POLICY recargas_delete_perm
+      ON public.recargas_motoristas
+      FOR DELETE TO authenticated
+      USING (public.has_perm_consumo_total());
+    END IF;
+  END IF;
+END$$;
+
+COMMIT;
+
+-- ============================================================
+-- 8) DIAGNÓSTICO (opcional)
+-- ============================================================
+-- SELECT tablename, policyname, cmd, roles
+-- FROM pg_policies
+-- WHERE schemaname='public'
+--   AND tablename IN ('permissoes_app','usuarios_app','motoristas','controle_diario','recargas_motoristas')
+-- ORDER BY tablename, policyname;
+--
+-- SELECT auth.uid(), public.is_admin() AS sou_admin,
+--        public.has_perm_controle_diario() AS pode_controle,
+--        public.has_perm_consumo_total()  AS pode_consumo;
+--
+-- Observações:
+-- * No front, sempre usar a chave ANON + sessão do usuário.
+-- * Chamadas com SERVICE ROLE ignoram RLS (apenas no backend confiável).
+-- ============================================
+-- FIM DO PATCH CONSOLIDADO
+-- ============================================
+
+
+/* =======================================================================
+   ADD-ON: resolve_login_identifier(p_ident text) -> text (email)
+   - NÃO altera o patch acima
+   - Idempotente (drop seguro da função)
+   - Permite login por "username" OU "email" no front
+   ======================================================================= */
+
+BEGIN;
+
+-- Drop seguro de quaisquer versões antigas
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT n.nspname AS schema_name,
+           p.proname AS fn_name,
+           pg_get_function_identity_arguments(p.oid) AS args
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = 'resolve_login_identifier'
+  LOOP
+    EXECUTE format('DROP FUNCTION IF EXISTS %I.%I(%s);', r.schema_name, r.fn_name, r.args);
+  END LOOP;
+END$$;
+
+CREATE OR REPLACE FUNCTION public.resolve_login_identifier(p_ident text)
+RETURNS text
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public, auth, pg_temp
+SET row_security = off
+AS $$
+DECLARE
+  v_ident text := trim(lower(p_ident));
+  v_email text;
+BEGIN
+  IF v_ident IS NULL OR v_ident = '' THEN
+    RETURN NULL;
+  END IF;
+
+  -- Se já parece e-mail, só normaliza
+  IF v_ident LIKE '%@%._%' THEN
+    RETURN v_ident;
+  END IF;
+
+  -- Resolver "username" -> e-mail (case-insensitive)
+  SELECT lower(u.email)
+    INTO v_email
+    FROM public.usuarios_app ua
+    JOIN auth.users u ON u.id = ua.user_id
+   WHERE lower(ua.username) = v_ident
+   LIMIT 1;
+
+  RETURN v_email; -- pode ser NULL se não achar
+END
+$$;
+
+COMMENT ON FUNCTION public.resolve_login_identifier(text)
+  IS 'Resolve username ou email informado para um email válido de login. Usado na tela de login.';
+
+GRANT EXECUTE ON FUNCTION public.resolve_login_identifier(text) TO anon, authenticated;
+
+COMMIT;
