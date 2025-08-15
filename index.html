@@ -63,11 +63,11 @@
         <div>
           <label for="ident_input">Usuário ou E-mail</label>
           <input id="ident_input" type="text" inputmode="text" autocomplete="username"
-                 placeholder="Nome ou e-mail" />
+                 placeholder="seu usuário (ex.: Guilherme) ou seuemail@ipev.com.br" />
         </div>
         <div>
           <label for="senha_input">Senha</label>
-          <input id="senha_input" type="password" autocomplete="current-password" placeholder="Sua senha de 8 dígitos" />
+          <input id="senha_input" type="password" autocomplete="current-password" placeholder="Sua senha" />
         </div>
       </div>
 
@@ -99,10 +99,17 @@
 
     const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s ?? "");
 
-    // já logado? vai pro menu
+    // já logado? vai pro destino certo
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) window.location.href = "menu.html";
+      if (session) {
+        try {
+          const { data: isAdm } = await supabase.rpc("is_admin");
+          window.location.href = isAdm ? "admin.html" : "menu.html";
+        } catch {
+          window.location.href = "menu.html";
+        }
+      }
     })();
 
     btn.addEventListener("click", doLogin);
@@ -110,13 +117,10 @@
     pwdInput.addEventListener("keydown",   (e)=>{ if (e.key === "Enter") doLogin(); });
 
     async function resolveEmail(ident){
-      // Se já for e-mail, só normaliza
       if (isEmail(ident)) return ident.toLowerCase();
-
-      // Se for username, chama o RPC (funciona sem login)
       const { data, error } = await supabase.rpc("resolve_login_identifier", { p_ident: ident });
       if (error) throw error;
-      return data || null; // null se não encontrou
+      return data || null;
     }
 
     async function doLogin(){
@@ -142,10 +146,14 @@
           return;
         }
 
-        if (!keepCk.checked){
-          window.addEventListener("beforeunload", () => { supabase.auth.signOut(); });
+        // Redireciona conforme perfil (admin => admin.html, senão => menu.html)
+        try {
+          const { data: isAdm } = await supabase.rpc("is_admin");
+          window.location.href = isAdm ? "admin.html" : "menu.html";
+        } catch {
+          // fallback seguro
+          window.location.href = "menu.html";
         }
-        window.location.href = "menu.html";
       }catch(e){
         msgEl.textContent = "Erro ao validar credenciais. Tente novamente.";
       }
