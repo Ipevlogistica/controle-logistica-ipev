@@ -155,44 +155,6 @@
     </form>
   </dialog>
 
-  <!-- Modal Permissões (clássico, mantido para compatibilidade) -->
-  <dialog id="dlgPerm" style="border:0; border-radius:12px; padding:0; width:95%; max-width:620px;">
-    <form method="dialog" style="padding:18px" id="formPerm">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-        <h3 style="margin:0">Gerenciar permissões</h3>
-        <button class="btn-secondary btn" value="cancel">Fechar</button>
-      </div>
-
-      <label>Usuário
-        <select id="perm_sel_user" class="input" style="width:100%; margin-top:6px">
-          <option value="">Selecione um usuário…</option>
-        </select>
-      </label>
-      <p class="muted" id="perm_hint" style="margin:6px 0 0; display:none;">
-        Se o usuário não aparecer, ele ainda não fez login no sistema.
-      </p>
-
-      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;">
-        <label class="input" style="display:flex; align-items:center; gap:10px;">
-          <input id="perm_admin" type="checkbox"> Administrador
-        </label>
-        <label class="input" style="display:flex; align-items:center; gap:10px;">
-          <input id="perm_controle" type="checkbox"> Controle Diário
-        </label>
-        <label class="input" style="display:flex; align-items:center; gap:10px;">
-          <input id="perm_consumo" type="checkbox"> Consumo Total
-        </label>
-      </div>
-
-      <p id="perm_msg" class="muted" style="margin:10px 0 0;"></p>
-
-      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px">
-        <button class="btn-secondary btn" value="cancel">Cancelar</button>
-        <button id="perm_salvar" type="button" class="btn">Salvar</button>
-      </div>
-    </form>
-  </dialog>
-
   <!-- Script principal -->
   <script type="module">
     import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
@@ -379,95 +341,6 @@
       if (state.raw.length === 1 && state.page > 1) state.page--;
       await loadUsers(true);
     }
-
-    // === Modal Permissões clássico (mantém compat) ===
-    const btnOpenPerm = document.getElementById('btnOpenPerm');
-    const dlgPerm = document.getElementById('dlgPerm');
-    const selUser = document.getElementById('perm_sel_user');
-    const chkAdmin = document.getElementById('perm_admin');
-    const chkCtrl  = document.getElementById('perm_controle');
-    const chkCons  = document.getElementById('perm_consumo');
-    const msgPerm  = document.getElementById('perm_msg');
-    const hintPerm = document.getElementById('perm_hint');
-    const btnPermSalvar = document.getElementById('perm_salvar');
-
-    function openDialog(el) { try { el.showModal(); } catch { el.setAttribute('open',''); } }
-    function closeDialog(el){ try { el.close(); }      catch { el.removeAttribute('open'); } }
-
-    document.getElementById('formPerm')?.addEventListener('submit', e => { e.preventDefault(); closeDialog(dlgPerm); });
-    dlgPerm?.addEventListener('cancel', (e) => { e.preventDefault(); closeDialog(dlgPerm); });
-
-    btnOpenPerm.onclick = async () => {
-      openDialog(dlgPerm);
-      setTimeout(() => selUser?.focus(), 0);
-      await carregarUsuariosPerm();
-    };
-
-    document.addEventListener('keydown', (e) => {
-      const modalAberto = dlgPerm?.hasAttribute('open');
-      if (!modalAberto) return;
-      if (e.key === 'Escape') { e.preventDefault(); closeDialog(dlgPerm); }
-      else if (e.key === 'Enter') {
-        if (dlgPerm.contains(document.activeElement)) { e.preventDefault(); btnPermSalvar?.click(); }
-      }
-    });
-
-    async function carregarUsuariosPerm() {
-      msgPerm.textContent = 'Carregando usuários…';
-      selUser.innerHTML = '<option value="">Selecione um usuário…</option>';
-      hintPerm.style.display = 'none';
-
-      // Usa a RPC segura para refletir exatamente usuarios_app
-      const { data, error } = await supabase.rpc('list_usuarios_app');
-      if (error) { msgPerm.textContent = 'Erro ao listar usuários: ' + (error.message || error); return; }
-      if (!data || data.length === 0) { msgPerm.textContent = 'Nenhum usuário encontrado.'; hintPerm.style.display = 'block'; return; }
-
-      data.sort((a,b) => (a.email || '').localeCompare(b.email || ''));
-      for (const u of data) {
-        const opt = document.createElement('option');
-        opt.value = u.user_id;
-        opt.textContent = `${u.email}`;
-        selUser.appendChild(opt);
-      }
-      msgPerm.textContent = 'Selecione um usuário e ajuste as permissões.';
-    }
-
-    selUser.addEventListener('change', async (e) => {
-      const id = e.target.value;
-      chkAdmin.checked = chkCtrl.checked = chkCons.checked = false;
-      if (!id) { msgPerm.textContent = ''; return; }
-
-      msgPerm.textContent = 'Lendo permissões…';
-      const { data, error } = await supabase
-        .from('permissoes_app')
-        .select('is_admin, perm_controle_diario, perm_consumo_total')
-        .eq('user_id', id)
-        .maybeSingle();
-
-      if (error) { msgPerm.textContent = 'Erro: ' + (error.message || error); return; }
-
-      chkAdmin.checked = !!data?.is_admin;
-      chkCtrl.checked  = !!data?.perm_controle_diario;
-      chkCons.checked  = !!data?.perm_consumo_total;
-      msgPerm.textContent = data ? 'Permissões carregadas.' : 'Usuário ainda sem registro; ao salvar será criado.';
-    });
-
-    btnPermSalvar.onclick = async () => {
-      const id = selUser.value;
-      if (!id) { msgPerm.textContent = 'Selecione um usuário.'; return; }
-
-      msgPerm.textContent = 'Salvando…';
-      const { error } = await supabase.rpc('set_permissoes', {
-        p_user_id: id,
-        p_perm_controle: chkCtrl.checked,
-        p_perm_consumo: chkCons.checked,
-        p_is_admin: chkAdmin.checked
-      });
-
-      if (error) { msgPerm.textContent = 'Erro ao salvar: ' + (error.message || error); return; }
-      msgPerm.textContent = 'Permissões salvas com sucesso.';
-      closeDialog(dlgPerm);
-    };
   </script>
 
   <!-- Modal Permissões NOVO (UI aprimorada) -->
@@ -616,7 +489,7 @@
 
     async function loadUsers() {
       msg.textContent = 'Carregando usuários…';
-      // Busca direto do usuarios_app via RPC segura (ignora RLS)
+      // Busca do usuarios_app via RPC segura
       const { data, error } = await supabase.rpc('list_usuarios_app');
       if (error) {
         msg.textContent = 'Erro ao carregar: ' + (error.message || error);
