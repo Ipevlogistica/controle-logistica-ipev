@@ -689,98 +689,279 @@
   </script>
   <!-- /ADDON NÃO-DESTRUTIVO -->
 
-  <!-- ===========================================================
-       ADDON CREATE-USER (idempotente)
-       - Garante a chamada da Edge Function `create-user`
-       - Não sobrescreve handlers existentes
-     =========================================================== -->
-  <script type="module" id="create-user-addon">
-    (async () => {
-      // 1) Client supabase (reutiliza se já existir)
-      const { createClient } = await import('https://cdn.skypack.dev/@supabase/supabase-js');
-      const SUPABASE_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
-      const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
-      const supabase = window.supabase || createClient(SUPABASE_URL, SUPABASE_ANON);
+  <!-- ========= ADDON: Novo modal de Permissões (lista usuarios_app + 2 checkboxes) ========= -->
+  <style id="perm2-style">
+    .perm2-dialog{border:0;border-radius:16px;padding:0;width:95%;max-width:860px;}
+    .perm2-wrap{display:grid;grid-template-columns:340px 1fr;gap:0;min-height:480px}
+    @media(max-width:900px){.perm2-wrap{grid-template-columns:1fr;min-height:0}}
+    .perm2-col{padding:16px}
+    .perm2-left{border-right:1px solid #eef2f7;background:#fbfdff}
+    .perm2-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .perm2-title{margin:0;font-size:18px;color:#0f172a}
+    .perm2-close{background:#6b7280;color:#fff;border:0;border-radius:8px;padding:8px 10px;cursor:pointer}
+    .perm2-input{width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;background:#fff}
+    .perm2-list{margin-top:10px;border:1px solid #eef2f7;border-radius:12px;max-height:380px;overflow:auto;background:#fff}
+    .perm2-item{display:flex;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid #f3f4f6;cursor:pointer}
+    .perm2-item:hover{background:#f8fafc}
+    .perm2-item.active{background:#e8f0ff}
+    .perm2-avatar{width:30px;height:30px;border-radius:999px;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-weight:800;color:#334155}
+    .perm2-name{font-weight:700;color:#0f172a}
+    .perm2-email{font-size:12px;color:#6b7280}
+    .perm2-right h4{margin:0 0 10px}
+    .perm2-role{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+    .perm2-check{display:flex;align-items:center;gap:10px;border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fff}
+    .perm2-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .perm2-badge{font-size:12px;background:#eef2ff;color:#1e3a8a;padding:4px 8px;border-radius:999px}
+    .perm2-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+    .perm2-btn{background:#0ea5b7;color:#fff;border:0;border-radius:10px;padding:10px 14px;cursor:pointer}
+    .perm2-btn:hover{background:#12849a}
+    .perm2-btn-sec{background:#6b7280}
+    .perm2-btn-sec:hover{background:#4b5563}
+    .perm2-msg{color:#6b7280;font-size:13px;margin-top:8px;min-height:18px}
+    dialog#dlgPerm2::backdrop { background: rgba(0,0,0,.45); }
+    dialog[open]{display:block}
+  </style>
 
-      // 2) Garante CREATE_URL global sem sobrescrever
-      if (!window.CREATE_URL) window.CREATE_URL = `${SUPABASE_URL}/functions/v1/create-user`;
+  <dialog id="dlgPerm2" class="perm2-dialog">
+    <div class="perm2-wrap" role="dialog" aria-labelledby="perm2-title">
+      <!-- Coluna esquerda: lista de usuários -->
+      <div class="perm2-col perm2-left">
+        <div class="perm2-head">
+          <h3 id="perm2-title" class="perm2-title">Permissões</h3>
+          <button type="button" class="perm2-close" id="perm2-close">Fechar</button>
+        </div>
+        <input id="perm2-search" class="perm2-input" placeholder="Buscar por nome ou e-mail…">
+        <div id="perm2-list" class="perm2-list" role="listbox" aria-label="Usuários"></div>
+      </div>
 
-      // 3) Botão "Salvar" do modal Cadastrar
-      const btnSalvar = document.getElementById('c_salvar');
-      if (!btnSalvar) return;
+      <!-- Coluna direita: papéis -->
+      <div class="perm2-col perm2-right">
+        <h4 id="perm2-userTitle" style="margin-top:2px">Selecione um usuário</h4>
+        <div class="perm2-badges" id="perm2-userBadges"></div>
 
-      // Se já existe onclick ou já foi “wired”, não duplicar
-      if (btnSalvar.getAttribute('onclick') || btnSalvar.dataset.wired === '1') return;
+        <div class="perm2-role" aria-label="Definir papel">
+          <label class="perm2-check">
+            <input type="checkbox" id="perm2-admin">
+            <div>
+              <div style="font-weight:700">Administrador</div>
+              <div style="font-size:12px;color:#6b7280">Acesso total ao sistema.</div>
+            </div>
+          </label>
 
-      // Tentativa de detectar listeners já existentes (heurística simples)
-      // Se o texto do erro já muda quando clica, assumimos que já há handler e saímos.
-      // (para não ser intrusivo, vamos só conectar se necessário)
-      let wired = false;
+          <label class="perm2-check">
+            <input type="checkbox" id="perm2-user">
+            <div>
+              <div style="font-weight:700">Usuário</div>
+              <div style="font-size:12px;color:#6b7280">Sem privilégios administrativos.</div>
+            </div>
+          </label>
+        </div>
 
-      const handler = async () => {
-        const nomeEl  = document.getElementById('c_nome');
-        const userEl  = document.getElementById('c_user');
-        const emailEl = document.getElementById('c_email');
-        const passEl  = document.getElementById('c_senha');
-        const errEl   = document.getElementById('c_erro');
+        <div class="perm2-msg" id="perm2-msg"></div>
 
-        const nome  = (nomeEl?.value || '').trim();
-        const user  = (userEl?.value || '').trim();
-        const email = (emailEl?.value || '').trim().toLowerCase();
-        const pass  = (passEl?.value || '');
+        <div class="perm2-footer">
+          <button type="button" class="perm2-btn perm2-btn-sec" id="perm2-cancel">Cancelar</button>
+          <button type="button" class="perm2-btn" id="perm2-save">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
 
-        if (errEl) errEl.textContent = '';
+  <script type="module" id="perm2-script">
+    import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
 
-        if (!nome || !user || !email || !pass) {
-          if (errEl) errEl.textContent = 'Preencha todos os campos.';
-          return;
+    // Usa as mesmas credenciais do seu admin
+    const SUPABASE_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    // Elementos
+    const dlg     = document.getElementById('dlgPerm2');
+    const btnOpen = document.getElementById('btnOpenPerm'); // usa seu botão atual
+    const btnClose= document.getElementById('perm2-close');
+    const btnCancel = document.getElementById('perm2-cancel');
+    const btnSave = document.getElementById('perm2-save');
+    const listEl  = document.getElementById('perm2-list');
+    const search  = document.getElementById('perm2-search');
+    const chkAdm  = document.getElementById('perm2-admin');
+    const chkUser = document.getElementById('perm2-user');
+    const msg     = document.getElementById('perm2-msg');
+    const title   = document.getElementById('perm2-userTitle');
+    const badges  = document.getElementById('perm2-userBadges');
+
+    // Estado
+    let users = [];
+    let filtered = [];
+    let selected = null; // { user_id, email, display_name, username }
+
+    // Helpers diálogo
+    function openDialog(){ try{ dlg.showModal(); } catch{ dlg.setAttribute('open',''); } }
+    function closeDialog(){ try{ dlg.close(); } catch{ dlg.removeAttribute('open'); } }
+
+    // Mutuamente exclusivos (2 checkboxes funcionando como radios)
+    function wireExclusive() {
+      chkAdm.addEventListener('change', () => {
+        if (chkAdm.checked) chkUser.checked = false;
+        else chkUser.checked = true; // sempre um papel ativo
+      });
+      chkUser.addEventListener('change', () => {
+        if (chkUser.checked) chkAdm.checked = false;
+        else chkAdm.checked = true;
+      });
+    }
+    wireExclusive();
+
+    // Monta item da lista
+    function userRow(u, isActive) {
+      const div = document.createElement('div');
+      div.className = 'perm2-item' + (isActive ? ' active' : '');
+      div.setAttribute('role', 'option');
+      div.dataset.uid = u.user_id;
+
+      const initials = (u.display_name || u.username || (u.email||'').split('@')[0] || '?')
+        .split(/\s+/).map(p=>p[0]).join('').slice(0,2).toUpperCase();
+
+      div.innerHTML = `
+        <div class="perm2-avatar">${initials || '?'}</div>
+        <div>
+          <div class="perm2-name">${u.display_name || u.username || (u.email||'').split('@')[0] || '(sem nome)'}</div>
+          <div class="perm2-email">${u.email || ''}</div>
+        </div>
+      `;
+      div.onclick = () => selectUser(u.user_id);
+      return div;
+    }
+
+    function renderList() {
+      listEl.innerHTML = '';
+      for (const u of filtered) listEl.appendChild(userRow(u, selected?.user_id === u.user_id));
+    }
+
+    function applyFilter(term) {
+      const t = (term||'').trim().toLowerCase();
+      if (!t) filtered = users.slice();
+      else {
+        filtered = users.filter(u =>
+          (u.display_name||'').toLowerCase().includes(t) ||
+          (u.username||'').toLowerCase().includes(t) ||
+          (u.email||'').toLowerCase().includes(t)
+        );
+      }
+      renderList();
+    }
+
+    async function loadUsers() {
+      msg.textContent = 'Carregando usuários…';
+      // carrega de public.usuarios_app
+      const { data, error } = await supabase
+        .from('usuarios_app')
+        .select('user_id, email, display_name, username')
+        .order('email', { ascending: true });
+
+      if (error) {
+        msg.textContent = 'Erro ao carregar: ' + (error.message || error);
+        users = []; filtered = []; renderList();
+        return;
+      }
+
+      users = data || [];
+      filtered = users.slice();
+      renderList();
+      msg.textContent = users.length ? 'Selecione um usuário na lista.' : 'Nenhum usuário cadastrado.';
+    }
+
+    async function selectUser(user_id) {
+      selected = users.find(u => u.user_id === user_id) || null;
+      document.querySelectorAll('.perm2-item').forEach(i => i.classList.toggle('active', i.dataset.uid === user_id));
+
+      if (!selected) {
+        title.textContent = 'Selecione um usuário';
+        chkAdm.checked = false; chkUser.checked = true;
+        badges.innerHTML = '';
+        msg.textContent = '';
+        return;
+      }
+
+      title.textContent = (selected.display_name || selected.username || selected.email || 'Usuário') + ' — papel';
+      badges.innerHTML = '';
+      if (selected.username) {
+        const b = document.createElement('span'); b.className='perm2-badge'; b.textContent='@' + selected.username; badges.appendChild(b);
+      }
+      if (selected.email) {
+        const b = document.createElement('span'); b.className='perm2-badge'; b.textContent=selected.email; badges.appendChild(b);
+      }
+
+      // Lê papel atual em permissoes_app
+      msg.textContent = 'Lendo permissões…';
+      const { data, error } = await supabase
+        .from('permissoes_app')
+        .select('is_admin')
+        .eq('user_id', user_id)
+        .maybeSingle();
+
+      if (error) { msg.textContent = 'Erro: ' + (error.message || error); return; }
+
+      const isAdmin = !!data?.is_admin;
+      chkAdm.checked = isAdmin;
+      chkUser.checked = !isAdmin;
+      msg.textContent = data ? 'Permissões carregadas.' : 'Usuário sem registro em permissoes_app; será criado ao salvar.';
+    }
+
+    async function saveRole() {
+      if (!selected) { msg.textContent = 'Selecione um usuário.'; return; }
+      msg.textContent = 'Salvando…';
+
+      // p_is_admin conforme checkboxes; demais flags zeradas
+      const { error } = await supabase.rpc('set_permissoes', {
+        p_user_id: selected.user_id,
+        p_perm_controle: false,
+        p_perm_consumo: false,
+        p_is_admin: chkAdm.checked
+      });
+
+      if (error) { msg.textContent = 'Erro ao salvar: ' + (error.message || error); return; }
+      msg.textContent = 'Permissões salvas com sucesso.';
+      // fecha após breve delay
+      setTimeout(() => { try{ dlg.close(); } catch{ dlg.removeAttribute('open'); } }, 300);
+    }
+
+    // Abertura do modal (usa o seu botão existente)
+    btnOpen?.addEventListener('click', async () => {
+      openDialog();
+      search.value = '';
+      selected = null;
+      chkAdm.checked = false;
+      chkUser.checked = true; // default: usuário
+      title.textContent = 'Selecione um usuário';
+      badges.innerHTML = '';
+      await loadUsers();
+      setTimeout(() => search.focus(), 0);
+    });
+
+    // Fechar/cancelar
+    btnClose.addEventListener('click', closeDialog);
+    btnCancel.addEventListener('click', closeDialog);
+
+    // Buscar
+    search.addEventListener('input', (e) => applyFilter(e.target.value));
+
+    // Salvar
+    btnSave.addEventListener('click', saveRole);
+
+    // Acessibilidade: ESC fecha; ENTER salva se foco estiver na coluna direita
+    document.addEventListener('keydown', (e) => {
+      const aberto = dlg.hasAttribute('open');
+      if (!aberto) return;
+      if (e.key === 'Escape') { e.preventDefault(); closeDialog(); }
+      else if (e.key === 'Enter') {
+        const right = document.querySelector('.perm2-right');
+        if (right && right.contains(document.activeElement)) {
+          e.preventDefault(); saveRole();
         }
-
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) {
-          if (errEl) errEl.textContent = 'Sessão expirada. Faça login novamente.';
-          return;
-        }
-
-        try {
-          const resp = await fetch(window.CREATE_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`
-            },
-            body: JSON.stringify({
-              email, password: pass, username: user, display_name: nome
-            })
-          });
-          const json = await resp.json();
-          if (!resp.ok || json?.ok === false) {
-            const msg = json?.error || `Erro HTTP ${resp.status}`;
-            const det = json?.detail ? ` — ${JSON.stringify(json.detail)}` : '';
-            if (errEl) errEl.textContent = 'Erro: ' + msg + det;
-            return;
-          }
-
-          // Fecha o modal de cadastro
-          const dlg = document.getElementById('dlgCreate');
-          if (dlg && typeof dlg.close === 'function') dlg.close(); else dlg?.removeAttribute('open');
-
-          // Se a listagem estiver aberta, recarrega (compatível com seu código)
-          const cardList = document.getElementById('cardList');
-          if (cardList && cardList.style.display !== 'none' && typeof window.loadUsers === 'function') {
-            try { await window.loadUsers(true); } catch {}
-          }
-        } catch (e) {
-          if (errEl) errEl.textContent = 'Erro: ' + (e?.message || e);
-        }
-      };
-
-      // Conecta
-      btnSalvar.addEventListener('click', handler);
-      btnSalvar.dataset.wired = '1';
-    })();
+      }
+    });
   </script>
-  <!-- /ADDON CREATE-USER -->
+  <!-- ========= /ADDON Permissões ========= -->
 
 </body>
 </html>
