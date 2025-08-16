@@ -159,7 +159,7 @@
     </form>
   </dialog>
 
-  <!-- NOVO: Modal Permissões (compatível com fallback) -->
+  <!-- Modal Permissões (original, mantido) -->
   <dialog id="dlgPerm" style="border:0; border-radius:12px; padding:0; width:95%; max-width:620px;">
     <form method="dialog" style="padding:18px" id="formPerm">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
@@ -196,8 +196,8 @@
       </div>
     </form>
   </dialog>
-  <!-- /NOVO: Modal Permissões -->
 
+  <!-- Script principal (seu original) -->
   <script type="module">
     import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
 
@@ -260,7 +260,6 @@
       const json = await resp.json();
       if (!resp.ok) { err.textContent = 'Erro: ' + (json.details || json.error || 'falha'); return; }
       dlgCreate.close();
-      // se a listagem estiver aberta, atualiza
       if (cardList.style.display !== 'none') await loadUsers(true);
     };
 
@@ -392,12 +391,7 @@
       await loadUsers(true);
     }
 
-    // ============================================
-    // NOVO (PASSO 2): Acessibilidade do modal Permissões
-    // - Foco automático ao abrir
-    // - ESC fecha
-    // - ENTER confirma (Salvar) quando foco estiver dentro do modal
-    // ============================================
+    // ======= (perm modal antigo segue igual) =======
     const btnOpenPerm = document.getElementById('btnOpenPerm');
     const dlgPerm = document.getElementById('dlgPerm');
     const selUser = document.getElementById('perm_sel_user');
@@ -424,14 +418,13 @@
       e.preventDefault(); closeDialog(dlgPerm);
     });
 
+    // OBS: esse handler será sobrescrito pelo modal novo (perm2) abaixo
     btnOpenPerm.onclick = async () => {
       openDialog(dlgPerm);
-      // PASSO 2: foco automático após abrir
       setTimeout(() => selUser?.focus(), 0);
       await carregarUsuariosPerm();
     };
 
-    // PASSO 2: ESC fecha e ENTER salva quando o foco estiver dentro do modal de permissões
     document.addEventListener('keydown', (e) => {
       const modalAberto = dlgPerm?.hasAttribute('open');
       if (!modalAberto) return;
@@ -440,7 +433,6 @@
         e.preventDefault();
         closeDialog(dlgPerm);
       } else if (e.key === 'Enter') {
-        // Confirma somente se o foco está dentro do modal
         if (dlgPerm.contains(document.activeElement)) {
           e.preventDefault();
           btnPermSalvar?.click();
@@ -456,7 +448,6 @@
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { msgPerm.textContent = 'É necessário estar logado.'; return; }
 
-      // RPC do SQL (retorna apenas para admin)
       const { data, error } = await supabase.rpc('list_users');
       if (error) { msgPerm.textContent = 'Erro ao listar usuários: ' + (error.message || error); return; }
       if (!data || data.length === 0) {
@@ -512,30 +503,17 @@
 
       if (error) { msgPerm.textContent = 'Erro ao salvar: ' + (error.message || error); return; }
       msgPerm.textContent = 'Permissões salvas com sucesso.';
-      // fecha após salvar
       closeDialog(dlgPerm);
     };
-
-    // Não carregamos nada ao abrir a página.
-    // A listagem só abre/carrega ao clicar em "👥 Listar usuários".
   </script>
 
-  <!-- ===========================================================
-       ADDON NÃO-DESTRUTIVO (idempotente)
-       - Só atua se NÃO existirem btnOpenPerm/dlgPerm/JS acima
-       - Não remove/edita nada do arquivo original
-     =========================================================== -->
+  <!-- =================== ADDON NÃO-DESTRUTIVO (igual ao seu) =================== -->
   <script type="module" id="permissoes-addon">
-    // Evita rodar 2x
     if (!window.__permissoes_addon_init__) {
       window.__permissoes_addon_init__ = true;
 
-      // Se já existem o botão e o modal, não faz nada
       const alreadyHas = document.getElementById('btnOpenPerm') && document.getElementById('dlgPerm');
-      if (alreadyHas) {
-        // Já está tudo no arquivo principal; addon não interfere.
-      } else {
-        // Injeta CSS de fallback se necessário
+      if (!alreadyHas) {
         if (!document.getElementById('dlg-perm-style')) {
           const st = document.createElement('style');
           st.id = 'dlg-perm-style';
@@ -543,7 +521,6 @@
           document.head.appendChild(st);
         }
 
-        // Garante botão Permissões
         (function ensurePermButton(){
           if (document.getElementById('btnOpenPerm')) return;
           const toolbar = document.querySelector('.toolbar');
@@ -556,7 +533,6 @@
           toolbar.insertBefore(btn, muted || null);
         })();
 
-        // Garante modal Permissões
         (function ensurePermModal(){
           if (document.getElementById('dlgPerm')) return;
           const dlg = document.createElement('dialog');
@@ -593,103 +569,11 @@
             </form>`;
           document.body.appendChild(dlg);
         })();
-
-        // Liga a lógica somente se ainda não existir no arquivo principal
-        (async function wireLogic(){
-          const { createClient } = await import('https://cdn.skypack.dev/@supabase/supabase-js');
-
-          const SUPABASE_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
-          const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
-          const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
-
-          const btnOpenPerm = document.getElementById('btnOpenPerm');
-          const dlgPerm = document.getElementById('dlgPerm');
-          const selUser = document.getElementById('perm_sel_user');
-          const chkAdmin = document.getElementById('perm_admin');
-          const chkCtrl  = document.getElementById('perm_controle');
-          const chkCons  = document.getElementById('perm_consumo');
-          const msgPerm  = document.getElementById('perm_msg');
-          const hintPerm = document.getElementById('perm_hint');
-          const btnPermSalvar = document.getElementById('perm_salvar');
-
-          function openDialog(el){ try{ if(el.showModal) el.showModal(); else el.setAttribute('open',''); } catch{ el.setAttribute('open',''); } }
-          function closeDialog(el){ try{ if(el.close) el.close(); else el.removeAttribute('open'); } catch{ el.removeAttribute('open'); } }
-
-          document.getElementById('formPerm')?.addEventListener('submit', e => { e.preventDefault(); closeDialog(dlgPerm); });
-          dlgPerm?.addEventListener('cancel', e => { e.preventDefault(); closeDialog(dlgPerm); });
-
-          btnOpenPerm.onclick = async () => {
-            openDialog(dlgPerm);
-            setTimeout(() => selUser?.focus(), 0); // PASSO 2: foco ao abrir
-            await carregarUsuariosPerm();
-          };
-
-          // PASSO 2: ESC fecha e ENTER salva quando o foco estiver dentro do modal
-          document.addEventListener('keydown', (e) => {
-            const aberto = dlgPerm?.hasAttribute('open');
-            if (!aberto) return;
-            if (e.key === 'Escape') { e.preventDefault(); closeDialog(dlgPerm); }
-            else if (e.key === 'Enter' && dlgPerm.contains(document.activeElement)) { e.preventDefault(); btnPermSalvar?.click(); }
-          });
-
-          async function carregarUsuariosPerm() {
-            msgPerm.textContent = 'Carregando usuários…';
-            selUser.innerHTML = '<option value="">Selecione um usuário…</option>';
-            hintPerm.style.display = 'none';
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) { msgPerm.textContent = 'É necessário estar logado.'; return; }
-            const { data, error } = await supabase.rpc('list_users');
-            if (error) { msgPerm.textContent = 'Erro ao listar usuários: ' + (error.message || error); return; }
-            if (!data || data.length === 0) { msgPerm.textContent = 'Nenhum usuário encontrado.'; hintPerm.style.display = 'block'; return; }
-            data.sort((a,b) => (a.email || '').localeCompare(b.email || ''));
-            for (const u of data) {
-              const opt = document.createElement('option');
-              opt.value = u.user_id;
-              const last = u.last_sign_in_at ? ` — ${new Date(u.last_sign_in_at).toLocaleString('pt-BR')}` : '';
-              opt.textContent = `${u.email}${last}`;
-              selUser.appendChild(opt);
-            }
-            msgPerm.textContent = 'Selecione um usuário e ajuste as permissões.';
-          }
-
-          selUser.addEventListener('change', async (e) => {
-            const id = e.target.value;
-            chkAdmin.checked = chkCtrl.checked = chkCons.checked = false;
-            if (!id) { msgPerm.textContent = ''; return; }
-            msgPerm.textContent = 'Lendo permissões…';
-            const { data, error } = await supabase
-              .from('permissoes_app')
-              .select('is_admin, perm_controle_diario, perm_consumo_total')
-              .eq('user_id', id)
-              .maybeSingle();
-            if (error) { msgPerm.textContent = 'Erro: ' + (error.message || error); return; }
-            chkAdmin.checked = !!data?.is_admin;
-            chkCtrl.checked  = !!data?.perm_controle_diario;
-            chkCons.checked  = !!data?.perm_consumo_total;
-            msgPerm.textContent = data ? 'Permissões carregadas.' : 'Usuário ainda sem registro; ao salvar será criado.';
-          });
-
-          btnPermSalvar.onclick = async () => {
-            const id = selUser.value;
-            if (!id) { msgPerm.textContent = 'Selecione um usuário.'; return; }
-            msgPerm.textContent = 'Salvando…';
-            const { error } = await supabase.rpc('set_permissoes', {
-              p_user_id: id,
-              p_perm_controle: chkCtrl.checked,
-              p_perm_consumo: chkCons.checked,
-              p_is_admin: chkAdmin.checked
-            });
-            if (error) { msgPerm.textContent = 'Erro ao salvar: ' + (error.message || error); return; }
-            msgPerm.textContent = 'Permissões salvas com sucesso.';
-            closeDialog(dlgPerm);
-          };
-        })();
       }
     }
   </script>
-  <!-- /ADDON NÃO-DESTRUTIVO -->
 
-  <!-- ========= ADDON: Novo modal de Permissões (lista usuarios_app + 2 checkboxes) ========= -->
+  <!-- ========= NOVO MODAL PERMISSÕES (UI melhor) + LISTA via list-users ========= -->
   <style id="perm2-style">
     .perm2-dialog{border:0;border-radius:16px;padding:0;width:95%;max-width:860px;}
     .perm2-wrap{display:grid;grid-template-columns:340px 1fr;gap:0;min-height:480px}
@@ -724,7 +608,6 @@
 
   <dialog id="dlgPerm2" class="perm2-dialog">
     <div class="perm2-wrap" role="dialog" aria-labelledby="perm2-title">
-      <!-- Coluna esquerda: lista de usuários -->
       <div class="perm2-col perm2-left">
         <div class="perm2-head">
           <h3 id="perm2-title" class="perm2-title">Permissões</h3>
@@ -734,7 +617,6 @@
         <div id="perm2-list" class="perm2-list" role="listbox" aria-label="Usuários"></div>
       </div>
 
-      <!-- Coluna direita: papéis -->
       <div class="perm2-col perm2-right">
         <h4 id="perm2-userTitle" style="margin-top:2px">Selecione um usuário</h4>
         <div class="perm2-badges" id="perm2-userBadges"></div>
@@ -770,14 +652,14 @@
   <script type="module" id="perm2-script">
     import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
 
-    // Usa as mesmas credenciais do seu admin
     const SUPABASE_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
+    const LIST_URL   = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/list-users';
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-    // Elementos
     const dlg     = document.getElementById('dlgPerm2');
-    const btnOpen = document.getElementById('btnOpenPerm'); // usa seu botão atual
+    const btnOpen = document.getElementById('btnOpenPerm');
     const btnClose= document.getElementById('perm2-close');
     const btnCancel = document.getElementById('perm2-cancel');
     const btnSave = document.getElementById('perm2-save');
@@ -789,34 +671,21 @@
     const title   = document.getElementById('perm2-userTitle');
     const badges  = document.getElementById('perm2-userBadges');
 
-    // Estado
     let users = [];
     let filtered = [];
-    let selected = null; // { user_id, email, display_name, username }
+    let selected = null;
 
-    // Helpers diálogo
     function openDialog(){ try{ dlg.showModal(); } catch{ dlg.setAttribute('open',''); } }
     function closeDialog(){ try{ dlg.close(); } catch{ dlg.removeAttribute('open'); } }
 
-    // Mutuamente exclusivos (2 checkboxes funcionando como radios)
-    function wireExclusive() {
-      chkAdm.addEventListener('change', () => {
-        if (chkAdm.checked) chkUser.checked = false;
-        else chkUser.checked = true; // sempre um papel ativo
-      });
-      chkUser.addEventListener('change', () => {
-        if (chkUser.checked) chkAdm.checked = false;
-        else chkAdm.checked = true;
-      });
-    }
-    wireExclusive();
+    chkAdm.addEventListener('change', () => { if (chkAdm.checked) chkUser.checked = false; else chkUser.checked = true; });
+    chkUser.addEventListener('change', () => { if (chkUser.checked) chkAdm.checked = false; else chkAdm.checked = true; });
 
-    // Monta item da lista
-    function userRow(u, isActive) {
+    function userRow(u, active) {
       const div = document.createElement('div');
-      div.className = 'perm2-item' + (isActive ? ' active' : '');
+      div.className = 'perm2-item' + (active ? ' active' : '');
       div.setAttribute('role', 'option');
-      div.dataset.uid = u.user_id;
+      div.dataset.uid = u.id || u.user_id;
 
       const initials = (u.display_name || u.username || (u.email||'').split('@')[0] || '?')
         .split(/\s+/).map(p=>p[0]).join('').slice(0,2).toUpperCase();
@@ -828,13 +697,13 @@
           <div class="perm2-email">${u.email || ''}</div>
         </div>
       `;
-      div.onclick = () => selectUser(u.user_id);
+      div.onclick = () => selectUser(u.id || u.user_id);
       return div;
     }
 
     function renderList() {
       listEl.innerHTML = '';
-      for (const u of filtered) listEl.appendChild(userRow(u, selected?.user_id === u.user_id));
+      for (const u of filtered) listEl.appendChild(userRow(u, (selected?.user_id || selected?.id) === (u.id || u.user_id)));
     }
 
     function applyFilter(term) {
@@ -852,27 +721,37 @@
 
     async function loadUsers() {
       msg.textContent = 'Carregando usuários…';
-      // carrega de public.usuarios_app
-      const { data, error } = await supabase
-        .from('usuarios_app')
-        .select('user_id, email, display_name, username')
-        .order('email', { ascending: true });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { msg.textContent = 'Sessão expirada.'; return; }
 
-      if (error) {
-        msg.textContent = 'Erro ao carregar: ' + (error.message || error);
+      // Usa a Edge Function list-users (service role) para listar sem esbarrar em RLS
+      const url = new URL(LIST_URL);
+      url.searchParams.set('page','1');
+      url.searchParams.set('perPage','1000');
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` }});
+      const json = await resp.json().catch(()=> ({}));
+
+      if (!resp.ok) {
+        msg.textContent = 'Erro ao carregar: ' + (json.error || json.details || resp.statusText);
         users = []; filtered = []; renderList();
         return;
       }
 
-      users = data || [];
+      // Normaliza (id -> user_id p/ evitar confusão)
+      users = (json.users || []).map(u => ({
+        user_id: u.id,
+        email: u.email,
+        display_name: u.display_name || '',
+        username: u.username || ''
+      }));
       filtered = users.slice();
       renderList();
       msg.textContent = users.length ? 'Selecione um usuário na lista.' : 'Nenhum usuário cadastrado.';
     }
 
     async function selectUser(user_id) {
-      selected = users.find(u => u.user_id === user_id) || null;
-      document.querySelectorAll('.perm2-item').forEach(i => i.classList.toggle('active', i.dataset.uid === user_id));
+      selected = users.find(u => (u.user_id || u.id) === user_id) || null;
+      document.querySelectorAll('.perm2-item').forEach(i => i.classList.toggle('active', (i.dataset.uid) === String(user_id)));
 
       if (!selected) {
         title.textContent = 'Selecione um usuário';
@@ -891,7 +770,6 @@
         const b = document.createElement('span'); b.className='perm2-badge'; b.textContent=selected.email; badges.appendChild(b);
       }
 
-      // Lê papel atual em permissoes_app
       msg.textContent = 'Lendo permissões…';
       const { data, error } = await supabase
         .from('permissoes_app')
@@ -911,7 +789,6 @@
       if (!selected) { msg.textContent = 'Selecione um usuário.'; return; }
       msg.textContent = 'Salvando…';
 
-      // p_is_admin conforme checkboxes; demais flags zeradas
       const { error } = await supabase.rpc('set_permissoes', {
         p_user_id: selected.user_id,
         p_perm_controle: false,
@@ -921,34 +798,27 @@
 
       if (error) { msg.textContent = 'Erro ao salvar: ' + (error.message || error); return; }
       msg.textContent = 'Permissões salvas com sucesso.';
-      // fecha após breve delay
       setTimeout(() => { try{ dlg.close(); } catch{ dlg.removeAttribute('open'); } }, 300);
     }
 
-    // Abertura do modal (usa o seu botão existente)
+    // Abre o modal novo (sobrescreve o onclick antigo)
     btnOpen?.addEventListener('click', async () => {
       openDialog();
       search.value = '';
       selected = null;
       chkAdm.checked = false;
-      chkUser.checked = true; // default: usuário
+      chkUser.checked = true;
       title.textContent = 'Selecione um usuário';
       badges.innerHTML = '';
       await loadUsers();
       setTimeout(() => search.focus(), 0);
     });
 
-    // Fechar/cancelar
     btnClose.addEventListener('click', closeDialog);
     btnCancel.addEventListener('click', closeDialog);
-
-    // Buscar
     search.addEventListener('input', (e) => applyFilter(e.target.value));
-
-    // Salvar
     btnSave.addEventListener('click', saveRole);
 
-    // Acessibilidade: ESC fecha; ENTER salva se foco estiver na coluna direita
     document.addEventListener('keydown', (e) => {
       const aberto = dlg.hasAttribute('open');
       if (!aberto) return;
@@ -961,7 +831,7 @@
       }
     });
   </script>
-  <!-- ========= /ADDON Permissões ========= -->
+  <!-- ========= /NOVO MODAL ========= -->
 
 </body>
 </html>
