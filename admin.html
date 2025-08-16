@@ -35,8 +35,6 @@
     .danger:hover{ background:#b91c1c; }
     .pagination{ display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px; }
     .empty{ padding:16px; color:#6b7280; }
-
-    /* === PATCH: dialog/backdrop + fallback === */
     dialog::backdrop { background: rgba(0,0,0,.45); }
     dialog[open] { display: block; }
   </style>
@@ -63,15 +61,13 @@
       <div class="toolbar">
         <button class="btn" id="btnOpenCreate">👨 Cadastrar usuário</button>
         <button class="btn" id="btnOpenReset">🔑 Redefinir senha</button>
-        <!-- NOVO: botão que abre a listagem -->
         <button class="btn" id="btnOpenList">👥 Listar usuários</button>
-        <!-- NOVO: botão Permissões -->
         <button class="btn" id="btnOpenPerm">🛡️ Permissões</button>
         <span class="muted">Em breve: papéis, permissões, auditoria…</span>
       </div>
     </div>
 
-    <!-- Listagem fica escondida até clicar em "Listar usuários" -->
+    <!-- Listagem -->
     <div class="card" id="cardList" style="display:none;">
       <h3 style="display:flex;justify-content:space-between;align-items:center;">
         Usuários
@@ -159,7 +155,7 @@
     </form>
   </dialog>
 
-  <!-- Modal Permissões (original, mantido) -->
+  <!-- Modal Permissões (clássico, mantido para compatibilidade) -->
   <dialog id="dlgPerm" style="border:0; border-radius:12px; padding:0; width:95%; max-width:620px;">
     <form method="dialog" style="padding:18px" id="formPerm">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
@@ -197,22 +193,20 @@
     </form>
   </dialog>
 
-  <!-- Script principal (seu original) -->
+  <!-- Script principal -->
   <script type="module">
     import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
 
-    // === CONFIG ===
     const SUPABASE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
 
-    // URLs das Edge Functions:
     const CREATE_URL = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/create-user';
     const RESET_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/reset-password';
     const LIST_URL   = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/list-users';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-    // === Sessão/boas-vindas ===
+    // Sessão
     const chipUser = document.getElementById('chipUser');
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) window.location.href = 'index.html';
@@ -225,24 +219,21 @@
     document.getElementById('btnSairMenu').onclick = () => window.location.href = 'menu.html';
     document.getElementById('btnLogout').onclick = async () => { await supabase.auth.signOut(); window.location.href = 'index.html'; };
 
-    // === Modais cadastro/reset ===
+    // Modais
     const dlgCreate = document.getElementById('dlgCreate');
     const dlgReset  = document.getElementById('dlgReset');
     document.getElementById('btnOpenCreate').onclick = () => dlgCreate.showModal();
     document.getElementById('btnOpenReset').onclick  = () => dlgReset.showModal();
 
-    // === Mostrar/ocultar listagem ===
+    // Listagem
     const cardList = document.getElementById('cardList');
     document.getElementById('btnOpenList').onclick = async () => {
       cardList.style.display = '';
       await loadUsers(true);
       cardList.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
-    document.getElementById('btnCloseList').onclick = () => {
-      cardList.style.display = 'none';
-    };
+    document.getElementById('btnCloseList').onclick = () => { cardList.style.display = 'none'; };
 
-    // Criar usuário
     document.getElementById('c_salvar').onclick = async () => {
       const nome  = document.getElementById('c_nome').value.trim();
       const user  = document.getElementById('c_user').value.trim();
@@ -263,7 +254,6 @@
       if (cardList.style.display !== 'none') await loadUsers(true);
     };
 
-    // Reset de senha
     document.getElementById('r_salvar').onclick = async () => {
       const email = document.getElementById('r_email').value.trim().toLowerCase();
       const pass  = document.getElementById('r_senha').value;
@@ -281,7 +271,6 @@
       dlgReset.close();
     };
 
-    // === Lista de usuários (Edge Function list-users) ===
     const tbody = document.getElementById('tbody');
     const busca = document.getElementById('busca');
     const perPageSel = document.getElementById('perPage');
@@ -391,7 +380,7 @@
       await loadUsers(true);
     }
 
-    // ======= (perm modal antigo segue igual) =======
+    // === Modal Permissões clássico (mantém compat) ===
     const btnOpenPerm = document.getElementById('btnOpenPerm');
     const dlgPerm = document.getElementById('dlgPerm');
     const selUser = document.getElementById('perm_sel_user');
@@ -402,23 +391,12 @@
     const hintPerm = document.getElementById('perm_hint');
     const btnPermSalvar = document.getElementById('perm_salvar');
 
-    function openDialog(el) {
-      try { if (typeof el.showModal === 'function') el.showModal(); else el.setAttribute('open',''); }
-      catch { el.setAttribute('open',''); }
-    }
-    function closeDialog(el) {
-      try { if (typeof el.close === 'function') el.close(); else el.removeAttribute('open'); }
-      catch { el.removeAttribute('open'); }
-    }
+    function openDialog(el) { try { el.showModal(); } catch { el.setAttribute('open',''); } }
+    function closeDialog(el){ try { el.close(); }      catch { el.removeAttribute('open'); } }
 
-    document.getElementById('formPerm')?.addEventListener('submit', e => {
-      e.preventDefault(); closeDialog(dlgPerm);
-    });
-    dlgPerm?.addEventListener('cancel', (e) => {
-      e.preventDefault(); closeDialog(dlgPerm);
-    });
+    document.getElementById('formPerm')?.addEventListener('submit', e => { e.preventDefault(); closeDialog(dlgPerm); });
+    dlgPerm?.addEventListener('cancel', (e) => { e.preventDefault(); closeDialog(dlgPerm); });
 
-    // OBS: esse handler será sobrescrito pelo modal novo (perm2) abaixo
     btnOpenPerm.onclick = async () => {
       openDialog(dlgPerm);
       setTimeout(() => selUser?.focus(), 0);
@@ -428,15 +406,9 @@
     document.addEventListener('keydown', (e) => {
       const modalAberto = dlgPerm?.hasAttribute('open');
       if (!modalAberto) return;
-
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        closeDialog(dlgPerm);
-      } else if (e.key === 'Enter') {
-        if (dlgPerm.contains(document.activeElement)) {
-          e.preventDefault();
-          btnPermSalvar?.click();
-        }
+      if (e.key === 'Escape') { e.preventDefault(); closeDialog(dlgPerm); }
+      else if (e.key === 'Enter') {
+        if (dlgPerm.contains(document.activeElement)) { e.preventDefault(); btnPermSalvar?.click(); }
       }
     });
 
@@ -445,23 +417,16 @@
       selUser.innerHTML = '<option value="">Selecione um usuário…</option>';
       hintPerm.style.display = 'none';
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { msgPerm.textContent = 'É necessário estar logado.'; return; }
-
-      const { data, error } = await supabase.rpc('list_users');
+      // Usa a RPC segura para refletir exatamente usuarios_app
+      const { data, error } = await supabase.rpc('list_usuarios_app');
       if (error) { msgPerm.textContent = 'Erro ao listar usuários: ' + (error.message || error); return; }
-      if (!data || data.length === 0) {
-        msgPerm.textContent = 'Nenhum usuário encontrado.';
-        hintPerm.style.display = 'block';
-        return;
-      }
+      if (!data || data.length === 0) { msgPerm.textContent = 'Nenhum usuário encontrado.'; hintPerm.style.display = 'block'; return; }
 
       data.sort((a,b) => (a.email || '').localeCompare(b.email || ''));
       for (const u of data) {
         const opt = document.createElement('option');
         opt.value = u.user_id;
-        const last = u.last_sign_in_at ? ` — ${new Date(u.last_sign_in_at).toLocaleString('pt-BR')}` : '';
-        opt.textContent = `${u.email}${last}`;
+        opt.textContent = `${u.email}`;
         selUser.appendChild(opt);
       }
       msgPerm.textContent = 'Selecione um usuário e ajuste as permissões.';
@@ -469,9 +434,7 @@
 
     selUser.addEventListener('change', async (e) => {
       const id = e.target.value;
-      chkAdmin.checked = false;
-      chkCtrl.checked  = false;
-      chkCons.checked  = false;
+      chkAdmin.checked = chkCtrl.checked = chkCons.checked = false;
       if (!id) { msgPerm.textContent = ''; return; }
 
       msgPerm.textContent = 'Lendo permissões…';
@@ -507,73 +470,7 @@
     };
   </script>
 
-  <!-- =================== ADDON NÃO-DESTRUTIVO (igual ao seu) =================== -->
-  <script type="module" id="permissoes-addon">
-    if (!window.__permissoes_addon_init__) {
-      window.__permissoes_addon_init__ = true;
-
-      const alreadyHas = document.getElementById('btnOpenPerm') && document.getElementById('dlgPerm');
-      if (!alreadyHas) {
-        if (!document.getElementById('dlg-perm-style')) {
-          const st = document.createElement('style');
-          st.id = 'dlg-perm-style';
-          st.textContent = `dialog::backdrop{background:rgba(0,0,0,.45);} dialog[open]{display:block;}`;
-          document.head.appendChild(st);
-        }
-
-        (function ensurePermButton(){
-          if (document.getElementById('btnOpenPerm')) return;
-          const toolbar = document.querySelector('.toolbar');
-          if (!toolbar) return;
-          const btn = document.createElement('button');
-          btn.className = 'btn';
-          btn.id = 'btnOpenPerm';
-          btn.textContent = '🛡️ Permissões';
-          const muted = toolbar.querySelector('.muted');
-          toolbar.insertBefore(btn, muted || null);
-        })();
-
-        (function ensurePermModal(){
-          if (document.getElementById('dlgPerm')) return;
-          const dlg = document.createElement('dialog');
-          dlg.id = 'dlgPerm';
-          dlg.style.cssText = 'border:0; border-radius:12px; padding:0; width:95%; max-width:620px;';
-          dlg.innerHTML = `
-            <form method="dialog" style="padding:18px" id="formPerm">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-                <h3 style="margin:0">Gerenciar permissões</h3>
-                <button class="btn-secondary btn" value="cancel">Fechar</button>
-              </div>
-              <label>Usuário
-                <select id="perm_sel_user" class="input" style="width:100%; margin-top:6px">
-                  <option value="">Selecione um usuário…</option>
-                </select>
-              </label>
-              <p class="muted" id="perm_hint" style="margin:6px 0 0; display:none;">Se o usuário não aparecer, ele ainda não fez login no sistema.</p>
-              <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;">
-                <label class="input" style="display:flex; align-items:center; gap:10px;">
-                  <input id="perm_admin" type="checkbox"> Administrador
-                </label>
-                <label class="input" style="display:flex; align-items:center; gap:10px;">
-                  <input id="perm_controle" type="checkbox"> Controle Diário
-                </label>
-                <label class="input" style="display:flex; align-items:center; gap:10px;">
-                  <input id="perm_consumo" type="checkbox"> Consumo Total
-                </label>
-              </div>
-              <p id="perm_msg" class="muted" style="margin:10px 0 0;"></p>
-              <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px">
-                <button class="btn-secondary btn" value="cancel">Cancelar</button>
-                <button id="perm_salvar" type="button" class="btn">Salvar</button>
-              </div>
-            </form>`;
-          document.body.appendChild(dlg);
-        })();
-      }
-    }
-  </script>
-
-  <!-- ========= NOVO MODAL PERMISSÕES (UI melhor) + LISTA via list-users ========= -->
+  <!-- Modal Permissões NOVO (UI aprimorada) -->
   <style id="perm2-style">
     .perm2-dialog{border:0;border-radius:16px;padding:0;width:95%;max-width:860px;}
     .perm2-wrap{display:grid;grid-template-columns:340px 1fr;gap:0;min-height:480px}
@@ -631,7 +528,7 @@
           </label>
 
           <label class="perm2-check">
-            <input type="checkbox" id="perm2-user">
+            <input type="checkbox" id="perm2-user" checked>
             <div>
               <div style="font-weight:700">Usuário</div>
               <div style="font-size:12px;color:#6b7280">Sem privilégios administrativos.</div>
@@ -654,8 +551,6 @@
 
     const SUPABASE_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
-    const LIST_URL   = 'https://ilsbyrvnrkutwynujfhs.supabase.co/functions/v1/list-users';
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
     const dlg     = document.getElementById('dlgPerm2');
@@ -685,7 +580,7 @@
       const div = document.createElement('div');
       div.className = 'perm2-item' + (active ? ' active' : '');
       div.setAttribute('role', 'option');
-      div.dataset.uid = u.id || u.user_id;
+      div.dataset.uid = u.user_id;
 
       const initials = (u.display_name || u.username || (u.email||'').split('@')[0] || '?')
         .split(/\s+/).map(p=>p[0]).join('').slice(0,2).toUpperCase();
@@ -697,13 +592,13 @@
           <div class="perm2-email">${u.email || ''}</div>
         </div>
       `;
-      div.onclick = () => selectUser(u.id || u.user_id);
+      div.onclick = () => selectUser(u.user_id);
       return div;
     }
 
     function renderList() {
       listEl.innerHTML = '';
-      for (const u of filtered) listEl.appendChild(userRow(u, (selected?.user_id || selected?.id) === (u.id || u.user_id)));
+      for (const u of filtered) listEl.appendChild(userRow(u, (selected?.user_id) === (u.user_id)));
     }
 
     function applyFilter(term) {
@@ -721,28 +616,20 @@
 
     async function loadUsers() {
       msg.textContent = 'Carregando usuários…';
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { msg.textContent = 'Sessão expirada.'; return; }
-
-      // Usa a Edge Function list-users (service role) para listar sem esbarrar em RLS
-      const url = new URL(LIST_URL);
-      url.searchParams.set('page','1');
-      url.searchParams.set('perPage','1000');
-      const resp = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` }});
-      const json = await resp.json().catch(()=> ({}));
-
-      if (!resp.ok) {
-        msg.textContent = 'Erro ao carregar: ' + (json.error || json.details || resp.statusText);
+      // Busca direto do usuarios_app via RPC segura (ignora RLS)
+      const { data, error } = await supabase.rpc('list_usuarios_app');
+      if (error) {
+        msg.textContent = 'Erro ao carregar: ' + (error.message || error);
         users = []; filtered = []; renderList();
         return;
       }
 
-      // Normaliza (id -> user_id p/ evitar confusão)
-      users = (json.users || []).map(u => ({
-        user_id: u.id,
+      users = (data || []).map(u => ({
+        user_id: u.user_id,
         email: u.email,
         display_name: u.display_name || '',
-        username: u.username || ''
+        username: u.username || '',
+        created_at: u.created_at
       }));
       filtered = users.slice();
       renderList();
@@ -750,7 +637,7 @@
     }
 
     async function selectUser(user_id) {
-      selected = users.find(u => (u.user_id || u.id) === user_id) || null;
+      selected = users.find(u => u.user_id === user_id) || null;
       document.querySelectorAll('.perm2-item').forEach(i => i.classList.toggle('active', (i.dataset.uid) === String(user_id)));
 
       if (!selected) {
@@ -763,12 +650,8 @@
 
       title.textContent = (selected.display_name || selected.username || selected.email || 'Usuário') + ' — papel';
       badges.innerHTML = '';
-      if (selected.username) {
-        const b = document.createElement('span'); b.className='perm2-badge'; b.textContent='@' + selected.username; badges.appendChild(b);
-      }
-      if (selected.email) {
-        const b = document.createElement('span'); b.className='perm2-badge'; b.textContent=selected.email; badges.appendChild(b);
-      }
+      if (selected.username) { const b = document.createElement('span'); b.className='perm2-badge'; b.textContent='@' + selected.username; badges.appendChild(b); }
+      if (selected.email)    { const b = document.createElement('span'); b.className='perm2-badge'; b.textContent=selected.email; badges.appendChild(b); }
 
       msg.textContent = 'Lendo permissões…';
       const { data, error } = await supabase
@@ -782,7 +665,7 @@
       const isAdmin = !!data?.is_admin;
       chkAdm.checked = isAdmin;
       chkUser.checked = !isAdmin;
-      msg.textContent = data ? 'Permissões carregadas.' : 'Usuário sem registro em permissoes_app; será criado ao salvar.';
+      msg.textContent = data ? 'Permissões carregadas.' : 'Usuário sem registro; será criado ao salvar.';
     }
 
     async function saveRole() {
@@ -801,7 +684,7 @@
       setTimeout(() => { try{ dlg.close(); } catch{ dlg.removeAttribute('open'); } }, 300);
     }
 
-    // Abre o modal novo (sobrescreve o onclick antigo)
+    // Abre o modal novo
     btnOpen?.addEventListener('click', async () => {
       openDialog();
       search.value = '';
@@ -831,7 +714,6 @@
       }
     });
   </script>
-  <!-- ========= /NOVO MODAL ========= -->
 
 </body>
 </html>
