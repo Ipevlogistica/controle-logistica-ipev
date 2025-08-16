@@ -689,5 +689,98 @@
   </script>
   <!-- /ADDON NÃO-DESTRUTIVO -->
 
+  <!-- ===========================================================
+       ADDON CREATE-USER (idempotente)
+       - Garante a chamada da Edge Function `create-user`
+       - Não sobrescreve handlers existentes
+     =========================================================== -->
+  <script type="module" id="create-user-addon">
+    (async () => {
+      // 1) Client supabase (reutiliza se já existir)
+      const { createClient } = await import('https://cdn.skypack.dev/@supabase/supabase-js');
+      const SUPABASE_URL  = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
+      const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
+      const supabase = window.supabase || createClient(SUPABASE_URL, SUPABASE_ANON);
+
+      // 2) Garante CREATE_URL global sem sobrescrever
+      if (!window.CREATE_URL) window.CREATE_URL = `${SUPABASE_URL}/functions/v1/create-user`;
+
+      // 3) Botão "Salvar" do modal Cadastrar
+      const btnSalvar = document.getElementById('c_salvar');
+      if (!btnSalvar) return;
+
+      // Se já existe onclick ou já foi “wired”, não duplicar
+      if (btnSalvar.getAttribute('onclick') || btnSalvar.dataset.wired === '1') return;
+
+      // Tentativa de detectar listeners já existentes (heurística simples)
+      // Se o texto do erro já muda quando clica, assumimos que já há handler e saímos.
+      // (para não ser intrusivo, vamos só conectar se necessário)
+      let wired = false;
+
+      const handler = async () => {
+        const nomeEl  = document.getElementById('c_nome');
+        const userEl  = document.getElementById('c_user');
+        const emailEl = document.getElementById('c_email');
+        const passEl  = document.getElementById('c_senha');
+        const errEl   = document.getElementById('c_erro');
+
+        const nome  = (nomeEl?.value || '').trim();
+        const user  = (userEl?.value || '').trim();
+        const email = (emailEl?.value || '').trim().toLowerCase();
+        const pass  = (passEl?.value || '');
+
+        if (errEl) errEl.textContent = '';
+
+        if (!nome || !user || !email || !pass) {
+          if (errEl) errEl.textContent = 'Preencha todos os campos.';
+          return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          if (errEl) errEl.textContent = 'Sessão expirada. Faça login novamente.';
+          return;
+        }
+
+        try {
+          const resp = await fetch(window.CREATE_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              email, password: pass, username: user, display_name: nome
+            })
+          });
+          const json = await resp.json();
+          if (!resp.ok || json?.ok === false) {
+            const msg = json?.error || `Erro HTTP ${resp.status}`;
+            const det = json?.detail ? ` — ${JSON.stringify(json.detail)}` : '';
+            if (errEl) errEl.textContent = 'Erro: ' + msg + det;
+            return;
+          }
+
+          // Fecha o modal de cadastro
+          const dlg = document.getElementById('dlgCreate');
+          if (dlg && typeof dlg.close === 'function') dlg.close(); else dlg?.removeAttribute('open');
+
+          // Se a listagem estiver aberta, recarrega (compatível com seu código)
+          const cardList = document.getElementById('cardList');
+          if (cardList && cardList.style.display !== 'none' && typeof window.loadUsers === 'function') {
+            try { await window.loadUsers(true); } catch {}
+          }
+        } catch (e) {
+          if (errEl) errEl.textContent = 'Erro: ' + (e?.message || e);
+        }
+      };
+
+      // Conecta
+      btnSalvar.addEventListener('click', handler);
+      btnSalvar.dataset.wired = '1';
+    })();
+  </script>
+  <!-- /ADDON CREATE-USER -->
+
 </body>
 </html>
