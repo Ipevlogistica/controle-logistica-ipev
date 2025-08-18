@@ -28,7 +28,28 @@
       min-height: 100vh;
     }
 
-    /* Topo: quem está logado + sair */
+    /* LOGO circular na posição do “logo aqui” */
+    .brand {
+      position: fixed;
+      /* ajuste fino da posição para bater com o círculo da sua referência */
+      top: 42px;         /* ↑ diminui para subir | aumenta para descer */
+      left: 118px;       /* ↑ diminui para ir mais à esquerda | aumenta p/ direita */
+      z-index: 12;
+      width: 140px;      /* diâmetro aproximado do círculo */
+      height: 140px;
+      border-radius: 50%;
+      overflow: hidden;  /* recorte circular */
+      box-shadow: 0 10px 28px rgba(0,0,0,.25);
+      border: 4px solid #fff; /* aro branco para destacar */
+      pointer-events: none;    /* não interfere em cliques */
+    }
+    .brand img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* preenche o círculo sem distorcer */
+    }
+
+    /* Topo: quem está logado + sair (canto direito) */
     .topbar {
       position: fixed;
       top: 10px;
@@ -36,10 +57,10 @@
       display: flex;
       gap: 8px;
       align-items: center;
-      z-index: 10;
+      z-index: 11;
     }
     .btn-sair {
-      background-color: #6b7280; /* cinza */
+      background-color: #6b7280;
       color: #fff;
       border: none;
       border-radius: 6px;
@@ -59,7 +80,7 @@
     .container {
       display: flex;
       align-items: center;
-      justify-content: flex-end;      /* empurra para a direita */
+      justify-content: flex-end;
       height: 100vh;
       padding: 40px;
       box-sizing: border-box;
@@ -67,7 +88,7 @@
 
     .panel {
       width: 100%;
-      max-width: 520px;               /* largura do card */
+      max-width: 520px;
       background: var(--card-bg);
       border-radius: 16px;
       box-shadow: var(--card-shadow);
@@ -104,17 +125,22 @@
     .btn-relatorio:hover { background-color: var(--verde-hover); }
 
     @media (max-width: 900px) {
-      .container {
-        justify-content: center;      /* no mobile, card centraliza */
-        padding: 20px;
-      }
+      .container { justify-content: center; padding: 20px; }
       .panel { max-width: 520px; }
       h1 { font-size: 26px; }
       .btn { font-size: 17px; }
+      .brand {
+        top: 18px; left: 14px; width: 104px; height: 104px; border-width: 3px;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- LOGO IPEV (circular, na posição do círculo da referência) -->
+  <div class="brand" aria-hidden="true">
+    <img src="Logo Ipev Registrado.jpg" alt="Logo IPEV">
+  </div>
+
   <!-- Topo: quem está logado + sair -->
   <div class="topbar">
     <span id="who" class="who" title="Usuário logado"></span>
