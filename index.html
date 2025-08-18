@@ -21,7 +21,9 @@
     body{
       margin:0; color:var(--text);
       font-family: "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
-      background:var(--bg);
+      /* Alteração: fundo em tela cheia com a imagem */
+      background: url("95d95cde-dae4-4ded-8ac6-3d42117cf223.png") no-repeat center center fixed;
+      background-size: cover;
       min-height:100vh; display:flex; flex-direction:column;
     }
     .site-header{ padding:18px 24px 6px; font-weight:800; color:#123a84; font-size:30px; }
@@ -99,9 +101,6 @@
 
     const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s ?? "");
 
-    // -------------------------------
-    // já logado? vai pro destino certo (checa admin com uid explícito)
-    // -------------------------------
     (async () => {
       const { data: { session} } = await supabase.auth.getSession();
       if (session?.user?.id) {
@@ -144,13 +143,8 @@
           return;
         }
 
-        // manter conectado
         if (keepCk.checked) {
-          // padrão já usa localStorage (persistente). se quiser forçar:
-          supabase.auth.setSession; // noop, mantemos padrão
-        } else {
-          // se não quiser persistir, troca storage para sessionStorage nesta aba:
-          // (apenas informativo; a criação do client lá em cima é com padrão)
+          supabase.auth.setSession; 
         }
 
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -159,9 +153,6 @@
           return;
         }
 
-        // -------------------------------
-        // Redireciona conforme perfil (usa uid explícito)
-        // -------------------------------
         try {
           const { data: userInfo } = await supabase.auth.getUser();
           const uid = userInfo?.user?.id;
