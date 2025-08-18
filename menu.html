@@ -163,13 +163,29 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
     )
 
+    // 1) Exigir sessão para ver o menu
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { window.location.replace('index.html') }
 
+    // 2) Mostrar quem está logado (NOME se houver, senão e-mail)
     const who = document.getElementById('who')
     const { data: { user } } = await supabase.auth.getUser()
-    if (who) { who.textContent = user?.email ? `Logado: ${user.email}` : '' }
+    if (who && user) {
+      try {
+        const { data: perfil, error } = await supabase
+          .from('usuarios_app')
+          .select('username')
+          .eq('id', user.id)
+          .single()
 
+        const nomeOuEmail = (!error && perfil?.username) ? perfil.username : user.email
+        who.textContent = `Logado: ${nomeOuEmail}`
+      } catch(e) {
+        who.textContent = `Logado: ${user.email}`
+      }
+    }
+
+    // 3) Botão Sair
     const btnSair = document.getElementById('btnSair')
     if (btnSair) {
       btnSair.addEventListener('click', async () => {
@@ -178,10 +194,12 @@
       })
     }
 
+    // 4) Se o usuário for deslogado em outra aba, sair daqui também
     supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') window.location.replace('index.html')
     })
 
+    // 5) Evitar que o botão "Voltar" mostre a página em cache após logout
     window.addEventListener('pageshow', async (e) => {
       if (e.persisted) {
         const { data: { session } } = await supabase.auth.getSession()
