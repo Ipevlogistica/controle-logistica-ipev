@@ -172,15 +172,17 @@
     const { data: { user } } = await supabase.auth.getUser()
     if (who && user) {
       try {
+        // Tenta casar por user_id OU por email (caso o user_id não esteja preenchido corretamente)
         const { data: perfil, error } = await supabase
           .from('usuarios_app')
           .select('display_name, username')
-          .eq('user_id', user.id)
-          .single()
+          .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+          .maybeSingle()
 
-        const nomeOuEmail = (!error && (perfil?.display_name || perfil?.username))
-          ? (perfil.display_name || perfil.username)
-          : user.email
+        const nomeOuEmail =
+          (perfil?.display_name && perfil.display_name.trim()) ||
+          (perfil?.username && perfil.username.trim()) ||
+          user.email
 
         who.textContent = `Logado: ${nomeOuEmail}`
       } catch(e) {
@@ -212,3 +214,4 @@
   </script>
 </body>
 </html>
+
