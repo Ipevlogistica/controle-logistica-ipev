@@ -28,13 +28,13 @@
       min-height: 100vh;
     }
 
-    /* LOGO circular na posição do “logo aqui” */
+    /* LOGO circular */
     .brand {
       position: fixed;
-      top: 50px;         /* ↓ aumentei para descer mais */
-      left: 160px;       /* → aumentei para aproximar do centro */
+      top: 50px;
+      left: 160px;
       z-index: 12;
-      width: 180px;      /* aumentei o tamanho */
+      width: 180px;
       height: 180px;
       border-radius: 50%;
       overflow: hidden;
@@ -48,7 +48,7 @@
       object-fit: cover;
     }
 
-    /* Topo: quem está logado + sair (canto direito) */
+    /* Topo: usuário logado + sair */
     .topbar {
       position: fixed;
       top: 10px;
@@ -75,7 +75,7 @@
       border-radius: 6px;
     }
 
-    /* Área principal: card à direita */
+    /* Área principal */
     .container {
       display: flex;
       align-items: center;
@@ -140,7 +140,7 @@
     <img src="Logo Ipev Registrado.jpg" alt="Logo IPEV">
   </div>
 
-  <!-- Topo: quem está logado + sair -->
+  <!-- Topo: usuário logado + sair -->
   <div class="topbar">
     <span id="who" class="who" title="Usuário logado"></span>
     <button id="btnSair" class="btn-sair">Sair</button>
@@ -167,16 +167,15 @@
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { window.location.replace('index.html') }
 
-    // 2) Mostrar quem está logado (NOME se houver, senão e-mail)
+    // 2) Mostrar quem está logado (display_name, senão username, senão e-mail)
     const who = document.getElementById('who')
     const { data: { user } } = await supabase.auth.getUser()
     if (who && user) {
       try {
-        // sua tabela tem as colunas user_id, username e display_name
         const { data: perfil, error } = await supabase
           .from('usuarios_app')
           .select('display_name, username')
-          .eq('user_id', user.id)   // usa o user_id para ligar com o auth.user.id
+          .eq('user_id', user.id)
           .single()
 
         const nomeOuEmail = (!error && (perfil?.display_name || perfil?.username))
