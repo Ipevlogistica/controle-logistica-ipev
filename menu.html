@@ -14,28 +14,17 @@
       margin: 0;
       padding: 0;
       font-family: Arial, sans-serif;
-      background-color: #AFEEEE;
+      /* Alterado: fundo com bg-motos.jpg */
+      background: url("bg-motos.jpg") no-repeat center center fixed;
+      background-size: cover;
     }
 
     .container {
       display: flex;
       height: 100vh;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center; /* Centralizei para equilibrar sem o logo */
       padding: 40px;
-    }
-
-    .logo-left {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .logo-left img {
-      max-width: 100%;
-      max-height: 80vh;
-      opacity: 15; /* mantido do original */
     }
 
     .buttons-right {
@@ -43,12 +32,16 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      z-index: 1; /* fica acima do fundo */
     }
 
     h1 {
       color: #1e3a8a;
       font-size: 32px;
       margin-bottom: 40px;
+      background: #ffffffb3; /* leve fundo branco translúcido para contraste */
+      padding: 10px 20px;
+      border-radius: 8px;
     }
 
     .btn {
@@ -114,14 +107,9 @@
         justify-content: center;
       }
 
-      .logo-left, .buttons-right {
+      .buttons-right {
         flex: unset;
         width: 100%;
-      }
-
-      .logo-left img {
-        max-height: 30vh;
-        margin-bottom: 20px;
       }
 
       .btn {
@@ -138,9 +126,6 @@
   </div>
 
   <div class="container">
-    <div class="logo-left">
-      <img src="Logo Ipev Registrado.jpg" alt="Logo IPEV">
-    </div>
     <div class="buttons-right">
       <h1>Controle de Logística IPEV</h1>
 
