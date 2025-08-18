@@ -1,58 +1,193 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Menu - Controle de Logística IPEV</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <title>Controle IPEV - Página Inicial</title>
+
+  <!-- Evitar cache após logout -->
+  <meta http-equiv="Cache-Control" content="no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <style>
+    :root{
+      --card-bg: rgba(255,255,255,.88);
+      --card-shadow: 0 25px 60px rgba(15,23,42,.25);
+      --azul:#1e40af;
+      --azul-hover:#374fc7;
+      --verde:#15803d;
+      --verde-hover:#1f9f4c;
+    }
+
     body {
       margin: 0;
       padding: 0;
-      background: url('fundo_menu.png') no-repeat center center fixed;
-      background-size: cover;
       font-family: Arial, sans-serif;
+      background: url("bg-motos.jpg") no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
     }
-    .logo-container {
-      position: absolute;
-      top: 40px;   /* desce um pouco */
-      left: 120px; /* mais para o centro */
+
+    /* LOGO circular na posição do “logo aqui” */
+    .brand {
+      position: fixed;
+      top: 50px;         /* ↓ aumentei para descer mais */
+      left: 160px;       /* → aumentei para aproximar do centro */
+      z-index: 12;
+      width: 180px;      /* aumentei o tamanho */
+      height: 180px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 10px 28px rgba(0,0,0,.25);
+      border: 4px solid #fff;
+      pointer-events: none;
     }
-    .logo-container img {
-      width: 170px;  /* aumentei o tamanho */
-      height: auto;
+    .brand img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Topo: quem está logado + sair (canto direito) */
+    .topbar {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      z-index: 11;
+    }
+    .btn-sair {
+      background-color: #6b7280;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+    .btn-sair:hover { background-color: #4b5563; }
+    .who {
+      color: #1e3a8a;
+      font-size: 12px;
+      background: #ffffffb3;
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    /* Área principal: card à direita */
+    .container {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100vh;
+      padding: 40px;
+      box-sizing: border-box;
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding: 28px 30px 26px;
+    }
+
+    h1 {
+      margin: 0 0 26px;
+      color: #1e3a8a;
+      font-size: 32px;
+      text-align: center;
+    }
+
+    .btn {
+      display: block;
+      background-color: var(--azul);
+      color: #fff;
+      padding: 16px 22px;
+      margin: 12px 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background-color .2s ease, transform .06s ease;
+      text-decoration: none;
+      text-align: center;
+    }
+    .btn:hover { background-color: var(--azul-hover); }
+    .btn:active { transform: translateY(1px); }
+
+    .btn-relatorio { background-color: var(--verde); }
+    .btn-relatorio:hover { background-color: var(--verde-hover); }
+
+    @media (max-width: 900px) {
+      .container { justify-content: center; padding: 20px; }
+      .panel { max-width: 520px; }
+      h1 { font-size: 26px; }
+      .btn { font-size: 17px; }
+      .brand {
+        top: 18px; left: 14px; width: 104px; height: 104px; border-width: 3px;
+      }
     }
   </style>
 </head>
-<body class="flex items-center justify-center min-h-screen">
-  
-  <!-- Logo -->
-  <div class="logo-container">
+<body>
+  <!-- LOGO IPEV -->
+  <div class="brand" aria-hidden="true">
     <img src="Logo Ipev Registrado.jpg" alt="Logo IPEV">
   </div>
 
-  <!-- Caixa central -->
-  <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative z-10">
-    <h2 class="text-xl font-bold text-center mb-6 text-blue-900">Controle de Logística IPEV</h2>
-    
-    <div class="space-y-4">
-      <a href="index_final_motorista.html" class="block w-full bg-blue-700 hover:bg-blue-800 text-white py-3 rounded text-center font-semibold">
-        📘 Controle Diário
-      </a>
-      <a href="consumo_total_motoristas_alerta.html" class="block w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded text-center font-semibold">
-        📕 Consumo Total
-      </a>
-      <a href="relatorio_mensal_dinamico.html" class="block w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded text-center font-semibold">
-        📗 Relatório Mensal
-      </a>
+  <!-- Topo: quem está logado + sair -->
+  <div class="topbar">
+    <span id="who" class="who" title="Usuário logado"></span>
+    <button id="btnSair" class="btn-sair">Sair</button>
+  </div>
+
+  <div class="container">
+    <div class="panel">
+      <h1>Controle de Logística IPEV</h1>
+      <a href="index_final_motorista.html" class="btn">📝 Controle Diário</a>
+      <a href="consumo_total_motoristas_alerta.html" class="btn">⛽ Consumo Total</a>
+      <a href="relatorio_mensal_dinamico.html" class="btn btn-relatorio">📊 Relatório Mensal</a>
     </div>
   </div>
 
-  <!-- Login no canto superior direito -->
-  <div class="absolute top-2 right-4 flex items-center space-x-2 text-sm text-gray-700">
-    <span>Logado: test@teste.com</span>
-    <button onclick="window.location.href='index.html'" class="bg-gray-600 text-white px-3 py-1 rounded">Sair</button>
-  </div>
+  <!-- Script -->
+  <script type="module">
+    import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
+    const supabase = createClient(
+      'https://ilsbyrvnrkutwynujfhs.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
+    )
 
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { window.location.replace('index.html') }
+
+    const who = document.getElementById('who')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (who) { who.textContent = user?.email ? `Logado: ${user.email}` : '' }
+
+    const btnSair = document.getElementById('btnSair')
+    if (btnSair) {
+      btnSair.addEventListener('click', async () => {
+        await supabase.auth.signOut()
+        window.location.replace('index.html')
+      })
+    }
+
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') window.location.replace('index.html')
+    })
+
+    window.addEventListener('pageshow', async (e) => {
+      if (e.persisted) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) window.location.replace('index.html')
+      }
+    })
+  </script>
 </body>
 </html>
