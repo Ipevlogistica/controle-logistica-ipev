@@ -7,11 +7,8 @@
   <script type="module" src="js/logica.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
-    /* BACKGROUND: aplica a imagem no body */
-    body {
-      background: url("background_moto.jpg") no-repeat center center fixed;
-      background-size: cover;
-    }
+    /* Mantemos o padding e a cor base (caso o background não carregue) */
+    body { background-color: #dbeafe; } /* equivalente ao bg-blue-100 */
   </style>
 </head>
 <body class="bg-blue-100 p-4">
@@ -144,6 +141,33 @@
     function fecharGerenciar() {
       document.getElementById("gerenciarMotoristasBox").classList.add("hidden");
     }
+  </script>
+
+  <!-- Aplica o background resolvendo automaticamente o caminho (evita 404) -->
+  <script>
+    (function applyBackground() {
+      const candidates = [
+        "background_moto.jpg",
+        "./background_moto.jpg",
+        "../background_moto.jpg",
+        "img/background_moto.jpg",
+        "images/background_moto.jpg",
+        "/background_moto.jpg"
+      ];
+
+      function tryNext(i) {
+        if (i >= candidates.length) return;
+        const test = new Image();
+        test.onload = function () {
+          document.body.style.background = `url("${candidates[i]}") no-repeat center center fixed`;
+          document.body.style.backgroundSize = "cover";
+        };
+        test.onerror = function () { tryNext(i + 1); };
+        test.src = candidates[i] + (candidates[i].includes("?") ? "" : `?v=${Date.now()}`); // bust cache
+      }
+
+      tryNext(0);
+    })();
   </script>
 
   <!-- Exibir usuário logado sem duplicar o client -->
