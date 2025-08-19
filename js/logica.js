@@ -296,9 +296,52 @@ async function initAuthHeader() {
 
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
-    userName.textContent =
-      (user.user_metadata && (user.user_metadata.username || user.user_metadata.full_name)) ||
-      user.email;
+    let display = null;
+
+    // 1) tenta por user_id (padrão mais recente)
+    try {
+      const { data: u1 } = await supabase
+        .from('usuarios_app')
+        .select('username,nome')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (u1 && (u1.username || u1.nome)) display = u1.username || u1.nome;
+    } catch {}
+
+    // 2) tenta por auth_user_id (variante antiga)
+    if (!display) {
+      try {
+        const { data: u2 } = await supabase
+          .from('usuarios_app')
+          .select('username,nome')
+          .eq('auth_user_id', user.id)
+          .maybeSingle();
+        if (u2 && (u2.username || u2.nome)) display = u2.username || u2.nome;
+      } catch {}
+    }
+
+    // 3) tenta por email (compatibilidade)
+    if (!display && user.email) {
+      try {
+        const { data: u3 } = await supabase
+          .from('usuarios_app')
+          .select('username,nome')
+          .eq('email', user.email)
+          .maybeSingle();
+        if (u3 && (u3.username || u3.nome)) display = u3.username || u3.nome;
+      } catch {}
+    }
+
+    // 4) metadata do Auth
+    if (!display && user.user_metadata) {
+      display =
+        user.user_metadata.username ||
+        user.user_metadata.full_name ||
+        user.user_metadata.name ||
+        null;
+    }
+
+    userName.textContent = display || user.email;
     userInfo.classList.remove('hidden');
   }
 
