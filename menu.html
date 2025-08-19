@@ -232,8 +232,9 @@
 
         const nomePreferido = metaNome || perfilNome
 
+        // 🔹 ALTERAÇÃO AQUI: mostra só o nome se existir
         whoEl.textContent = nomePreferido
-          ? `Logado: ${nomePreferido} (${user.email})`
+          ? `Logado: ${nomePreferido}`
           : `Logado: ${user.email}`
 
         if (!nomePreferido) {
