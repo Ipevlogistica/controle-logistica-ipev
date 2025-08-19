@@ -5,16 +5,23 @@ import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
 const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
 const supabase = createClient(supabaseUrl, supabaseKey);
+// expõe globalmente para evitar múltiplas instâncias e permitir reuso no HTML
+window.supabase = supabase;
 
 // helpers
 const toNum = (v) => Number(String(v ?? '').replace(',', '.')) || 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await carregarMotoristas();
-  carregarListaRegistros();
+  // Data inicia em branco + defaults
   document.getElementById('data').value = '';
   document.getElementById('kmAdicional').value = 10;
   document.getElementById('valorGasolina').value = 5.99;
+
+  // Exibe usuário logado no cabeçalho (se os elementos existirem no HTML)
+  await initAuthHeader();
+
+  await carregarMotoristas();
+  carregarListaRegistros();
 
   ['km1', 'km2', 'kmAdicional', 'valorGasolina'].forEach(id => {
     const el = document.getElementById(id);
@@ -243,12 +250,19 @@ async function carregarListaGerenciamento() {
 
 async function carregarListaRegistros() {
   const dataSelecionada = document.getElementById('data').value;
+  const container = document.getElementById('listaRegistrosPorData');
+
+  // evita erro 400 quando data está vazia
+  if (!dataSelecionada) {
+    if (container) container.innerHTML = '';
+    return;
+  }
+
   const { data: registros, error } = await supabase
     .from('controle_diario')
     .select('motorista, rota, km_rota1, km_rota2, km_adicional')
     .eq('data', dataSelecionada);
 
-  const container = document.getElementById('listaRegistrosPorData');
   container.innerHTML = '';
 
   if (error) {
@@ -272,8 +286,30 @@ async function carregarListaRegistros() {
   container.appendChild(ul);
 }
 
+// Cabeçalho de autenticação: mostra usuário e botão sair (se existir no HTML)
+async function initAuthHeader() {
+  const userInfo = document.getElementById('userInfo');
+  const userName = document.getElementById('userName');
+  const btnSair  = document.getElementById('btnSair');
+
+  if (!userInfo || !userName || !btnSair) return; // página sem cabeçalho de auth
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    userName.textContent =
+      (user.user_metadata && (user.user_metadata.username || user.user_metadata.full_name)) ||
+      user.email;
+    userInfo.classList.remove('hidden');
+  }
+
+  btnSair.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = 'index.html';
+  });
+}
+
 // disponibiliza para HTML inline
 window.abrirGerenciar = abrirGerenciar;
 window.fecharGerenciar = fecharGerenciar;
 window.incluirMotorista = incluirMotorista;
-window.atualizarPlaca = atualizarPlac
+window.atualizarPlaca = atualizarPlaca;
