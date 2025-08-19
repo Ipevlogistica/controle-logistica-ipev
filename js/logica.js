@@ -298,16 +298,16 @@ async function initAuthHeader() {
   if (user) {
     let display = null;
 
-    // Busca em usuarios_app por user_id (padrão do seu baseline)
     try {
+      // usa usuarios_app por user_id (seu baseline)
       const { data: u } = await supabase
         .from('usuarios_app')
-        .select('username,nome,email')
+        .select('username,display_name,email')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (u) {
-        display = u.username || u.nome || u.email;
+        display = u.username || u.display_name || u.email;
       }
     } catch (err) {
       console.error('Erro buscando usuarios_app:', err);
