@@ -6,131 +6,144 @@
   <title>Controle de Logística IPEV</title>
   <script type="module" src="js/logica.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <!-- evita 404 do favicon -->
+  <link rel="icon" href="data:,">
+
   <style>
-    /* Mantemos o padding e a cor base (caso o background não carregue) */
+    /* Cor de fundo base (caso nenhuma imagem seja encontrada) */
     body { background-color: #dbeafe; } /* equivalente ao bg-blue-100 */
+    /* Camada de contraste para o conteúdo ficar legível sobre a foto */
+    .page-overlay {
+      backdrop-filter: saturate(120%) brightness(1);
+      background: rgba(255, 255, 255, 0.12);
+      min-height: 100vh;
+    }
   </style>
 </head>
-<body class="bg-blue-100 p-4">
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold text-blue-900">Controle de Logística IPEV</h1>
+<body class="bg-blue-100">
+  <!-- overlay apenas para manter legibilidade sem mudar seu layout -->
+  <div class="page-overlay p-4">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold text-blue-900">Controle de Logística IPEV</h1>
 
-    <!-- Bloco à direita: info do usuário + Voltar -->
-    <div class="flex items-center gap-3">
-      <div id="userInfo" class="hidden text-sm text-blue-900">
-        <span class="font-semibold">Logado:</span>
-        <span id="userName"></span>
-        <button id="btnSair" class="ml-2 bg-red-600 text-white px-3 py-1 rounded">Sair</button>
+      <!-- Bloco à direita: info do usuário + Voltar -->
+      <div class="flex items-center gap-3">
+        <div id="userInfo" class="hidden text-sm text-blue-900">
+          <span class="font-semibold">Logado:</span>
+          <span id="userName"></span>
+          <button id="btnSair" class="ml-2 bg-red-600 text-white px-3 py-1 rounded">Sair</button>
+        </div>
+        <a href="index.html" class="bg-blue-700 text-white px-4 py-2 rounded">Voltar ao Menu</a>
       </div>
-      <a href="index.html" class="bg-blue-700 text-white px-4 py-2 rounded">Voltar ao Menu</a>
     </div>
-  </div>
 
-  <form id="formulario" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white p-4 rounded shadow max-w-4xl mx-auto">
-    <label class="block">
-      <span class="text-gray-700">Data</span>
-      <input type="date" id="data" class="mt-1 block w-full rounded border-gray-300 text-sm" />
-      <div id="minhaDiv" class="text-sm text-gray-600 italic mt-1"></div>
-    </label>
+    <form id="formulario" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white p-4 rounded shadow max-w-4xl mx-auto">
+      <label class="block">
+        <span class="text-gray-700">Data</span>
+        <input type="date" id="data" class="mt-1 block w-full rounded border-gray-300 text-sm" />
+        <div id="minhaDiv" class="text-sm text-gray-600 italic mt-1"></div>
+      </label>
 
-    <label class="block">
-      <span class="text-gray-700">Motorista</span>
-      <div class="flex">
-        <select id="motorista" class="mt-1 block w-full rounded border-gray-300 text-sm" onchange="atualizarPlaca()">
-          <option value="">Selecione</option>
-        </select>
-        <button type="button" onclick="abrirGerenciar()" class="ml-2 bg-yellow-500 text-white px-4 py-1 rounded text-sm">Gerenciar</button>
+      <label class="block">
+        <span class="text-gray-700">Motorista</span>
+        <div class="flex">
+          <select id="motorista" class="mt-1 block w-full rounded border-gray-300 text-sm" onchange="atualizarPlaca()">
+            <option value="">Selecione</option>
+          </select>
+          <button type="button" onclick="abrirGerenciar()" class="ml-2 bg-yellow-500 text-white px-4 py-1 rounded text-sm">Gerenciar</button>
+        </div>
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700">Placa</span>
+        <input type="text" id="placa" class="mt-1 block w-full rounded border-gray-300 bg-gray-100 text-sm" readonly />
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700">Rota</span>
+        <input list="rotas" id="rota" class="mt-1 block w-full rounded border-gray-300 text-sm" placeholder="Selecione ou digite" />
+        <datalist id="rotas">
+          <option value="A" />
+          <option value="B" />
+          <option value="C" />
+          <option value="D" />
+          <option value="E" />
+          <option value="F" />
+          <option value="G" />
+          <option value="H" />
+          <option value="A/D" />
+          <option value="B/G" />
+          <option value="C/E" />
+        </datalist>
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700">Chegada 1</span>
+        <input type="time" id="chegada1" class="mt-1 block w-full rounded border-gray-300 text-sm" />
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700">Chegada 2</span>
+        <input type="time" id="chegada2" class="mt-1 block w-full rounded border-gray-300 text-sm" />
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700">KM 1</span>
+        <input type="number" step="0.01" id="km1" class="mt-1 block w-full rounded border-gray-300 text-sm" />
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700">KM 2</span>
+        <input type="number" step="0.01" id="km2" class="mt-1 block w-full rounded border-gray-300 text-sm" />
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700">KM Adicional</span>
+        <input type="number" step="0.01" id="kmAdicional" class="mt-1 block w-full rounded border-gray-300 text-sm" value="10" />
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700">Valor da Gasolina</span>
+        <input type="number" step="0.01" id="valorGasolina" class="mt-1 block w-full rounded border-gray-300 text-sm" value="5.99" />
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700">Litros</span>
+        <input type="number" step="0.01" id="litros" readonly class="mt-1 block w-full rounded border-gray-300 bg-gray-100 text-sm" />
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700">KM Total do Dia</span>
+        <input type="number" step="0.01" id="kmTotal" readonly class="mt-1 block w-full rounded border-gray-300 bg-gray-100 text-sm" />
+      </label>
+
+      <label class="block">
+        <span class="text-gray-700">Valor Total</span>
+        <input type="number" step="0.01" id="valorTotal" readonly class="mt-1 block w-full rounded border-gray-300 bg-gray-100 text-sm" />
+      </label>
+
+      <div class="col-span-2 flex justify-center">
+        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded mt-4">Salvar</button>
       </div>
-    </label>
+    </form>
 
-    <label class="block">
-      <span class="text-gray-700">Placa</span>
-      <input type="text" id="placa" class="mt-1 block w-full rounded border-gray-300 bg-gray-100 text-sm" readonly />
-    </label>
-
-    <label class="block">
-      <span class="text-gray-700">Rota</span>
-      <input list="rotas" id="rota" class="mt-1 block w-full rounded border-gray-300 text-sm" placeholder="Selecione ou digite" />
-      <datalist id="rotas">
-        <option value="A" />
-        <option value="B" />
-        <option value="C" />
-        <option value="D" />
-        <option value="E" />
-        <option value="F" />
-        <option value="G" />
-        <option value="H" />
-        <option value="A/D" />
-        <option value="B/G" />
-        <option value="C/E" />
-      </datalist>
-    </label>
-
-    <label class="block">
-      <span class="text-gray-700">Chegada 1</span>
-      <input type="time" id="chegada1" class="mt-1 block w-full rounded border-gray-300 text-sm" />
-    </label>
-
-    <label class="block">
-      <span class="text-gray-700">Chegada 2</span>
-      <input type="time" id="chegada2" class="mt-1 block w-full rounded border-gray-300 text-sm" />
-    </label>
-
-    <label class="block">
-      <span class="text-gray-700">KM 1</span>
-      <input type="number" step="0.01" id="km1" class="mt-1 block w-full rounded border-gray-300 text-sm" />
-    </label>
-
-    <label class="block">
-      <span class="text-gray-700">KM 2</span>
-      <input type="number" step="0.01" id="km2" class="mt-1 block w-full rounded border-gray-300 text-sm" />
-    </label>
-
-    <label class="block">
-      <span class="text-gray-700">KM Adicional</span>
-      <input type="number" step="0.01" id="kmAdicional" class="mt-1 block w-full rounded border-gray-300 text-sm" value="10" />
-    </label>
-
-    <label class="block">
-      <span class="text-gray-700">Valor da Gasolina</span>
-      <input type="number" step="0.01" id="valorGasolina" class="mt-1 block w-full rounded border-gray-300 text-sm" value="5.99" />
-    </label>
-
-    <label class="block">
-      <span class="text-gray-700">Litros</span>
-      <input type="number" step="0.01" id="litros" readonly class="mt-1 block w-full rounded border-gray-300 bg-gray-100 text-sm" />
-    </label>
-
-    <label class="block">
-      <span class="text-gray-700">KM Total do Dia</span>
-      <input type="number" step="0.01" id="kmTotal" readonly class="mt-1 block w-full rounded border-gray-300 bg-gray-100 text-sm" />
-    </label>
-
-    <label class="block">
-      <span class="text-gray-700">Valor Total</span>
-      <input type="number" step="0.01" id="valorTotal" readonly class="mt-1 block w-full rounded border-gray-300 bg-gray-100 text-sm" />
-    </label>
-
-    <div class="col-span-2 flex justify-center">
-      <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded mt-4">Salvar</button>
+    <div class="mt-6 bg-white p-4 rounded shadow max-w-4xl mx-auto">
+      <h2 class="text-lg font-bold mb-2">Registros do dia</h2>
+      <div id="listaRegistrosPorData"></div>
     </div>
-  </form>
 
-  <div class="mt-6 bg-white p-4 rounded shadow max-w-4xl mx-auto">
-    <h2 class="text-lg font-bold mb-2">Registros do dia</h2>
-    <div id="listaRegistrosPorData"></div>
-  </div>
-
-  <div id="gerenciarMotoristasBox" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
-    <div class="bg-white p-6 rounded shadow-lg w-full max-w-md">
-      <h3 class="text-lg font-bold mb-4">Gerenciar Motoristas</h3>
-      <div class="mb-2">
-        <input type="text" id="novoMotorista" placeholder="Nome do Motorista" class="w-full mb-2 rounded border-gray-300 text-sm" />
-        <input type="text" id="novaPlaca" placeholder="Placa" class="w-full mb-2 rounded border-gray-300 text-sm" />
-        <button onclick="incluirMotorista()" class="bg-blue-600 text-white px-4 py-2 rounded">Incluir</button>
+    <div id="gerenciarMotoristasBox" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
+      <div class="bg-white p-6 rounded shadow-lg w-full max-w-md">
+        <h3 class="text-lg font-bold mb-4">Gerenciar Motoristas</h3>
+        <div class="mb-2">
+          <input type="text" id="novoMotorista" placeholder="Nome do Motorista" class="w-full mb-2 rounded border-gray-300 text-sm" />
+          <input type="text" id="novaPlaca" placeholder="Placa" class="w-full mb-2 rounded border-gray-300 text-sm" />
+          <button onclick="incluirMotorista()" class="bg-blue-600 text-white px-4 py-2 rounded">Incluir</button>
+        </div>
+        <div id="listaMotoristas" class="mt-4 max-h-40 overflow-y-auto"></div>
+        <button onclick="fecharGerenciar()" class="mt-4 bg-red-600 text-white px-4 py-2 rounded">Fechar</button>
       </div>
-      <div id="listaMotoristas" class="mt-4 max-h-40 overflow-y-auto"></div>
-      <button onclick="fecharGerenciar()" class="mt-4 bg-red-600 text-white px-4 py-2 rounded">Fechar</button>
     </div>
   </div>
 
@@ -143,30 +156,31 @@
     }
   </script>
 
-  <!-- Aplica o background resolvendo automaticamente o caminho (evita 404) -->
+  <!-- Aplica o primeiro background disponível (evita 404) -->
   <script>
-    (function applyBackground() {
+    (async function pickBackground() {
+      // Arquivos que você TEM na raiz (pela sua captura de tela)
       const candidates = [
         "background_moto.jpg",
-        "./background_moto.jpg",
-        "../background_moto.jpg",
-        "img/background_moto.jpg",
-        "images/background_moto.jpg",
-        "/background_moto.jpg"
+        "bg-motos.jpg",
+        "bg-sistema.jpg",
+        "frota-bg.jpg"
       ];
 
-      function tryNext(i) {
-        if (i >= candidates.length) return;
-        const test = new Image();
-        test.onload = function () {
-          document.body.style.background = `url("${candidates[i]}") no-repeat center center fixed`;
-          document.body.style.backgroundSize = "cover";
-        };
-        test.onerror = function () { tryNext(i + 1); };
-        test.src = candidates[i] + (candidates[i].includes("?") ? "" : `?v=${Date.now()}`); // bust cache
+      for (const path of candidates) {
+        try {
+          const res = await fetch(path, { method: "HEAD", cache: "no-store" });
+          if (res.ok) {
+            document.body.style.background = `url("${path}") no-repeat center center fixed`;
+            document.body.style.backgroundSize = "cover";
+            return; // aplicou, pode sair
+          }
+        } catch (e) {
+          /* silencia e tenta o próximo */
+        }
       }
-
-      tryNext(0);
+      // se nada deu certo, mantém o bg azul claro
+      console.warn("Nenhuma imagem de background encontrada ao lado do HTML.");
     })();
   </script>
 
