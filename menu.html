@@ -157,14 +157,15 @@
 
   <!-- Script -->
   <script type="module">
-    import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
+    import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2'
     const supabase = createClient(
       'https://ilsbyrvnrkutwynujfhs.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ'
     )
 
     // 1) Exigir sessão para ver o menu
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session }, error: sessErr } = await supabase.auth.getSession()
+    if (sessErr) console.error('[getSession] err:', sessErr)
     if (!session) { window.location.replace('index.html') }
 
     // Helper para pegar nos metadados várias chaves possíveis
@@ -181,30 +182,65 @@
 
     // 2) Mostrar quem está logado (prioriza name/username; senão email)
     const whoEl = document.getElementById('who')
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: getUserErr } = await supabase.auth.getUser()
+    if (getUserErr) console.error('[getUser] err:', getUserErr)
+
     if (whoEl && user) {
       try {
         // Primeiro, tenta nos metadados do Auth
         const metaNome = pickMetaName(user.user_metadata)
 
-        // Depois, tenta na tabela usuarios_app (display_name/username)
-        const { data: perfil } = await supabase
+        // Consulta em 2 passos para capturar qualquer 403/erro claramente
+
+        // Passo A: por user_id
+        let perfil = null
+        let errA = null
+        let errB = null
+
+        const qA = await supabase
           .from('usuarios_app')
-          .select('display_name, username')
-          .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+          .select('display_name, username, email, user_id')
+          .eq('user_id', user.id)
           .maybeSingle()
 
-        const perfilNome = pickMetaName({
-          display_name: perfil?.display_name,
-          username: perfil?.username
-        })
+        if (qA.error) {
+          errA = qA.error
+          console.error('[usuarios_app by user_id] error:', qA.error)
+        } else {
+          perfil = qA.data
+        }
+
+        // Passo B: se não achou, por email
+        if (!perfil) {
+          const qB = await supabase
+            .from('usuarios_app')
+            .select('display_name, username, email, user_id')
+            .eq('email', user.email)
+            .maybeSingle()
+
+          if (qB.error) {
+            errB = qB.error
+            console.error('[usuarios_app by email] error:', qB.error)
+          } else {
+            perfil = qB.data
+          }
+        }
+
+        const perfilNome =
+          (perfil?.display_name && perfil.display_name.trim()) ||
+          (perfil?.username && perfil.username.trim()) || ''
 
         const nomePreferido = metaNome || perfilNome
 
         whoEl.textContent = nomePreferido
           ? `Logado: ${nomePreferido} (${user.email})`
           : `Logado: ${user.email}`
+
+        if (!nomePreferido) {
+          console.warn('[who] Sem nome — usando e-mail.', { perfil, errA, errB })
+        }
       } catch (e) {
+        console.error('[who] catch:', e)
         whoEl.textContent = `Logado: ${user.email}`
       }
     }
