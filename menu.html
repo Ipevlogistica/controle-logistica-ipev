@@ -167,26 +167,45 @@
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { window.location.replace('index.html') }
 
-    // 2) Mostrar quem está logado (display_name, senão username, senão e-mail)
-    const who = document.getElementById('who')
+    // Helper para pegar nos metadados várias chaves possíveis
+    const pickMetaName = (meta = {}) => {
+      const cand = [
+        meta.name,
+        meta.full_name,
+        meta.username,
+        meta.user_name,
+        meta.display_name
+      ].map(v => (typeof v === 'string' ? v.trim() : '')).filter(Boolean)
+      return cand[0] || ''
+    }
+
+    // 2) Mostrar quem está logado (prioriza name/username; senão email)
+    const whoEl = document.getElementById('who')
     const { data: { user } } = await supabase.auth.getUser()
-    if (who && user) {
+    if (whoEl && user) {
       try {
-        // Tenta casar por user_id OU por email (caso o user_id não esteja preenchido corretamente)
-        const { data: perfil, error } = await supabase
+        // Primeiro, tenta nos metadados do Auth
+        const metaNome = pickMetaName(user.user_metadata)
+
+        // Depois, tenta na tabela usuarios_app (display_name/username)
+        const { data: perfil } = await supabase
           .from('usuarios_app')
           .select('display_name, username')
           .or(`user_id.eq.${user.id},email.eq.${user.email}`)
           .maybeSingle()
 
-        const nomeOuEmail =
-          (perfil?.display_name && perfil.display_name.trim()) ||
-          (perfil?.username && perfil.username.trim()) ||
-          user.email
+        const perfilNome = pickMetaName({
+          display_name: perfil?.display_name,
+          username: perfil?.username
+        })
 
-        who.textContent = `Logado: ${nomeOuEmail}`
-      } catch(e) {
-        who.textContent = `Logado: ${user.email}`
+        const nomePreferido = metaNome || perfilNome
+
+        whoEl.textContent = nomePreferido
+          ? `Logado: ${nomePreferido} (${user.email})`
+          : `Logado: ${user.email}`
+      } catch (e) {
+        whoEl.textContent = `Logado: ${user.email}`
       }
     }
 
@@ -214,4 +233,3 @@
   </script>
 </body>
 </html>
-
