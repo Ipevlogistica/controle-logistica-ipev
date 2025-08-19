@@ -298,41 +298,22 @@ async function initAuthHeader() {
   if (user) {
     let display = null;
 
-    // 1) tenta por user_id (padrão mais recente)
+    // Busca em usuarios_app por user_id (padrão do seu baseline)
     try {
-      const { data: u1 } = await supabase
+      const { data: u } = await supabase
         .from('usuarios_app')
-        .select('username,nome')
+        .select('username,nome,email')
         .eq('user_id', user.id)
         .maybeSingle();
-      if (u1 && (u1.username || u1.nome)) display = u1.username || u1.nome;
-    } catch {}
 
-    // 2) tenta por auth_user_id (variante antiga)
-    if (!display) {
-      try {
-        const { data: u2 } = await supabase
-          .from('usuarios_app')
-          .select('username,nome')
-          .eq('auth_user_id', user.id)
-          .maybeSingle();
-        if (u2 && (u2.username || u2.nome)) display = u2.username || u2.nome;
-      } catch {}
+      if (u) {
+        display = u.username || u.nome || u.email;
+      }
+    } catch (err) {
+      console.error('Erro buscando usuarios_app:', err);
     }
 
-    // 3) tenta por email (compatibilidade)
-    if (!display && user.email) {
-      try {
-        const { data: u3 } = await supabase
-          .from('usuarios_app')
-          .select('username,nome')
-          .eq('email', user.email)
-          .maybeSingle();
-        if (u3 && (u3.username || u3.nome)) display = u3.username || u3.nome;
-      } catch {}
-    }
-
-    // 4) metadata do Auth
+    // Fallback: metadata do Auth
     if (!display && user.user_metadata) {
       display =
         user.user_metadata.username ||
@@ -341,6 +322,7 @@ async function initAuthHeader() {
         null;
     }
 
+    // Fallback final: email
     userName.textContent = display || user.email;
     userInfo.classList.remove('hidden');
   }
