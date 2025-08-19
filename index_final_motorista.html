@@ -12,7 +12,11 @@
 
   <style>
     /* Cor de fundo base (caso nenhuma imagem seja encontrada) */
-    body { background-color: #dbeafe; } /* equivalente ao bg-blue-100 */
+    body { 
+      background-color: #dbeafe; /* equivalente ao bg-blue-100 */
+      background: url("js/background_moto.jpg") no-repeat center center fixed;
+      background-size: cover;
+    }
     /* Camada de contraste para o conteúdo ficar legível sobre a foto */
     .page-overlay {
       backdrop-filter: saturate(120%) brightness(1);
@@ -21,7 +25,7 @@
     }
   </style>
 </head>
-<body class="bg-blue-100">
+<body>
   <!-- overlay apenas para manter legibilidade sem mudar seu layout -->
   <div class="page-overlay p-4">
     <div class="flex justify-between items-center mb-4">
@@ -156,38 +160,9 @@
     }
   </script>
 
-  <!-- Aplica o primeiro background disponível (evita 404) -->
-  <script>
-    (async function pickBackground() {
-      // Arquivos que você TEM na raiz (pela sua captura de tela)
-      const candidates = [
-        "background_moto.jpg",
-        "bg-motos.jpg",
-        "bg-sistema.jpg",
-        "frota-bg.jpg"
-      ];
-
-      for (const path of candidates) {
-        try {
-          const res = await fetch(path, { method: "HEAD", cache: "no-store" });
-          if (res.ok) {
-            document.body.style.background = `url("${path}") no-repeat center center fixed`;
-            document.body.style.backgroundSize = "cover";
-            return; // aplicou, pode sair
-          }
-        } catch (e) {
-          /* silencia e tenta o próximo */
-        }
-      }
-      // se nada deu certo, mantém o bg azul claro
-      console.warn("Nenhuma imagem de background encontrada ao lado do HTML.");
-    })();
-  </script>
-
   <!-- Exibir usuário logado sem duplicar o client -->
   <script type="module">
     (async () => {
-      // Reusa o supabase do logica.js se existir; se não, cria um com storageKey diferente
       let supabase = window.supabase;
       if (!supabase) {
         const { createClient } = await import('https://cdn.skypack.dev/@supabase/supabase-js');
