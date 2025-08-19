@@ -10,7 +10,18 @@
 <body class="bg-blue-100 p-4">
   <div class="flex justify-between items-center mb-4">
     <h1 class="text-2xl font-bold text-blue-900">Controle de Logística IPEV</h1>
-    <a href="index.html" class="bg-blue-700 text-white px-4 py-2 rounded">Voltar ao Menu</a>
+
+    <!-- Bloco à direita: Info do usuário + Voltar ao Menu -->
+    <div class="flex items-center gap-3">
+      <!-- Mostra o usuário logado (mesma ideia do menu) -->
+      <div id="userInfo" class="hidden text-sm text-blue-900">
+        <span class="font-semibold">Logado:</span>
+        <span id="userName"></span>
+        <button id="btnSair" class="ml-2 bg-red-600 text-white px-3 py-1 rounded">Sair</button>
+      </div>
+
+      <a href="index.html" class="bg-blue-700 text-white px-4 py-2 rounded">Voltar ao Menu</a>
+    </div>
   </div>
 
   <form id="formulario" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white p-4 rounded shadow max-w-4xl mx-auto">
@@ -125,10 +136,39 @@
     function abrirGerenciar() {
       document.getElementById("gerenciarMotoristasBox").classList.remove("hidden");
     }
-
     function fecharGerenciar() {
       document.getElementById("gerenciarMotoristasBox").classList.add("hidden");
     }
+  </script>
+
+  <!-- Script para exibir usuário logado (igual ao menu) -->
+  <script type="module">
+    import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
+
+    const supabaseUrl = 'https://ilsbyrvnrkutwynujfhs.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsc2J5cnZucmt1dHd5bnVqZmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNDAwNDEsImV4cCI6MjA2OTkxNjA0MX0.o56R-bf1Nt3PiqMZbG_ghEPYZzrPnEU-jCdYKkjylTQ';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const userInfo = document.getElementById('userInfo');
+    const userName = document.getElementById('userName');
+    const btnSair  = document.getElementById('btnSair');
+
+    // Obtém usuário atual e mostra no topo (email ou username do metadata)
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        userName.textContent = (user.user_metadata && (user.user_metadata.username || user.user_metadata.full_name)) || user.email;
+        userInfo.classList.remove('hidden');
+      } else {
+        // Se preferir, redireciona para login:
+        // window.location.href = 'index.html';
+      }
+    })();
+
+    btnSair.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+    });
   </script>
 </body>
 </html>
