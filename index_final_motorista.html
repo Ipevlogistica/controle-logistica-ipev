@@ -27,7 +27,7 @@
       backdrop-filter: blur(3px) saturate(120%);
     }
 
-    /* Título: branco com sombra bem leve (sem “contorno” pesado) */
+    /* Título: branco com sombra leve */
     .title-clean {
       color: #fff;
       text-shadow: 0 1px 2px rgba(0,0,0,0.25);
@@ -39,17 +39,15 @@
   <!-- HEADER -->
   <header class="header-glass px-4 py-3">
     <div class="max-w-6xl mx-auto grid grid-cols-3 items-center">
-      <!-- espaço à esquerda para balancear -->
       <div></div>
 
-      <!-- Título centralizado e mais legível -->
+      <!-- Título centralizado -->
       <h1 class="justify-self-center text-2xl sm:text-3xl font-extrabold title-clean text-center">
         Controle de Logística IPEV
       </h1>
 
-      <!-- À direita: card só para “Logado”, e botões fora do card -->
+      <!-- À direita: card só “Logado” e botões fora do card -->
       <div class="justify-self-end flex items-center gap-2">
-        <!-- Card translúcido SOMENTE com o “Logado” -->
         <div class="glass rounded-xl shadow px-3 py-2 text-blue-900 text-sm">
           <div id="userInfo" class="hidden">
             <span class="font-semibold">Logado:</span>
@@ -57,20 +55,20 @@
           </div>
         </div>
 
-        <!-- Botões fora do card -->
+        <!-- 🔁 AJUSTE AQUI: vai direto para menu.html -->
+        <a href="menu.html" class="bg-blue-700 text-white px-3 py-1 rounded-md">
+          Menu
+        </a>
         <button id="btnSair" class="hidden sm:inline-block bg-red-600 text-white px-3 py-1 rounded-md">
           Sair
         </button>
-        <a href="index.html" class="bg-blue-700 text-white px-3 py-1 rounded-md">
-          Menu
-        </a>
       </div>
     </div>
   </header>
 
   <!-- CONTEÚDO -->
   <main class="px-4 py-6">
-    <!-- Form levemente deslocado à esquerda para deixar o motoboy aparecer mais -->
+    <!-- Form levemente deslocado à esquerda -->
     <form id="formulario"
           class="glass grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl shadow max-w-4xl mx-auto md:ml-6 lg:ml-10">
       <label class="block">
