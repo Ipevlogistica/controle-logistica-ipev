@@ -17,54 +17,60 @@
       background-size: cover;
     }
 
-    /* Card translucido padrão */
+    /* Cards translúcidos */
     .glass {
-      background: rgba(255,255,255,0.88);
+      background: rgba(255, 255, 255, 0.88);
       backdrop-filter: blur(4px);
     }
-
-    /* Cabeçalho com melhor contraste sobre a foto */
     .header-glass {
-      background: rgba(255,255,255,0.35);
+      background: rgba(255, 255, 255, 0.35);
       backdrop-filter: blur(3px) saturate(120%);
     }
 
-    /* Título com leve sombra para ganhar legibilidade */
-    .title-shadow {
-      text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+    /* Título: branco com sombra bem leve (sem “contorno” pesado) */
+    .title-clean {
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.25);
     }
   </style>
 </head>
 <body class="min-h-screen">
 
-  <!-- HEADER: grid para centralizar o título e manter ações à direita -->
+  <!-- HEADER -->
   <header class="header-glass px-4 py-3">
     <div class="max-w-6xl mx-auto grid grid-cols-3 items-center">
-      <!-- coluna esquerda vazia para balancear -->
+      <!-- espaço à esquerda para balancear -->
       <div></div>
 
-      <!-- Título centralizado -->
-      <h1 class="justify-self-center text-2xl sm:text-3xl font-extrabold text-blue-900 title-shadow text-center">
+      <!-- Título centralizado e mais legível -->
+      <h1 class="justify-self-center text-2xl sm:text-3xl font-extrabold title-clean text-center">
         Controle de Logística IPEV
       </h1>
 
-      <!-- Ações à direita em um card arredondado -->
-      <div class="justify-self-end">
-        <div class="glass rounded-xl shadow px-3 py-2 flex items-center gap-2 text-blue-900 text-sm">
+      <!-- À direita: card só para “Logado”, e botões fora do card -->
+      <div class="justify-self-end flex items-center gap-2">
+        <!-- Card translúcido SOMENTE com o “Logado” -->
+        <div class="glass rounded-xl shadow px-3 py-2 text-blue-900 text-sm">
           <div id="userInfo" class="hidden">
             <span class="font-semibold">Logado:</span>
             <span id="userName"></span>
           </div>
-          <button id="btnSair" class="hidden sm:inline-block bg-red-600 text-white px-3 py-1 rounded-md">Sair</button>
-          <a href="index.html" class="bg-blue-700 text-white px-3 py-1 rounded-md">Menu</a>
         </div>
+
+        <!-- Botões fora do card -->
+        <button id="btnSair" class="hidden sm:inline-block bg-red-600 text-white px-3 py-1 rounded-md">
+          Sair
+        </button>
+        <a href="index.html" class="bg-blue-700 text-white px-3 py-1 rounded-md">
+          Menu
+        </a>
       </div>
     </div>
   </header>
 
   <!-- CONTEÚDO -->
   <main class="px-4 py-6">
-    <!-- Form levemente deslocado à esquerda para dar mais espaço ao motoboy do fundo -->
+    <!-- Form levemente deslocado à esquerda para deixar o motoboy aparecer mais -->
     <form id="formulario"
           class="glass grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl shadow max-w-4xl mx-auto md:ml-6 lg:ml-10">
       <label class="block">
